@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>作业卡片 — homework-card</title>
+<link rel="stylesheet" href="ai-card.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;padding:24px;display:flex;flex-direction:column;align-items:center;gap:20px}h1{font-size:18px;font-weight:700;color:#111827}.sub{font-size:12px;color:#9ca3af;text-align:center}.wrap{display:flex;flex-direction:column;gap:6px;max-width:400px;width:100%}.label{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding-left:4px}
+</style></head>
+<body>
+<h1>作业卡片</h1><p class="sub">学科色条横幅 · theme 驱动学科配色 · 语文/数学/英语</p>
+<div id="root"></div>
+<script src="ai-card.js"></script>
+<script>
+var CARDS = [
+  {file:"chinese.json",data:{"schema_version":"1.0","card_type":"homework_reminder","title":"语文 · 阅读理解训练","subtitle":"张老师 · 三年级二班","description":"阅读课文《荷花》第2-4自然段，完成课后练习题第1-5题。重点体会作者对荷花的观察顺序和描写方法，用自己的话概括每段大意。","button_text":"查看作业","target_url":"https://homework.example.com/chinese","theme":"red_white","layout":{"variant":"homework_reminder","icon":"chinese"}}},
+  {file:"math.json",data:{"schema_version":"1.0","card_type":"homework_reminder","title":"数学 · 第三章分数练习","subtitle":"王老师 · 三年级二班","description":"完成课本第42-44页练习题 1-15，重点练习分数加减法的通分与约分。要求写出完整计算过程，不可只写答案。","button_text":"查看作业","target_url":"https://homework.example.com/math","theme":"blue_white","layout":{"variant":"homework_reminder","icon":"math"}}},
+  {file:"english.json",data:{"schema_version":"1.0","card_type":"homework_reminder","title":"英语 · Unit 5 My Day","subtitle":"李老师 · 三年级二班","description":"背诵 Unit 5 单词表（get up, breakfast, go to school 等 20 个词组），完成 Activity Book 第28-29页练习。录制一段「My Day」口语视频，不少于1分钟。","button_text":"查看作业","target_url":"https://homework.example.com/english","theme":"green_white","layout":{"variant":"homework_reminder","icon":"english"}}}
+];
+document.getElementById('root').innerHTML=CARDS.map(function(c){return '<div class="wrap"><span class="label">'+c.file+' · '+c.data.theme+' · icon='+c.data.layout.icon+'</span><ai-card data=\''+JSON.stringify(c.data)+'\'></ai-card></div>'}).join('');
+</script>
+</body></html>
