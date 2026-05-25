@@ -1,4 +1,4 @@
-/* text-card/ai-card.css — 文本类卡片样式 */
+/* text-card/ai-card.css — 文本类卡片样式（5端响应式） */
 
 :host {
   display: block;
@@ -81,3 +81,67 @@
 }
 .btn:active { opacity: .7; }
 .btn.primary { background: var(--c-brand); color: #fff; }
+
+/* ── 平板端 480px+ ── */
+@media (min-width: 480px) {
+  :host { max-width: 420px; }
+  .card { border-radius: 18px; }
+  .strip { height: 3px; border-radius: 18px 18px 0 0; }
+  .card-body { padding: 18px; gap: 12px; }
+  .card-body::after { top: 8px; bottom: 8px; }
+  .hdr { gap: 12px; }
+  .icon { width: 46px; height: 46px; border-radius: 11px; font-size: 22px; }
+  .title { font-size: 17px; }
+  .subtitle { font-size: 11px; }
+  .badge { font-size: 10px; padding: 2px 8px; }
+  .desc { font-size: 14px; }
+  .btn { font-size: 15px; padding: 11px 0; }
+}
+
+/* ── 大屏端 768px+ ── */
+@media (min-width: 768px) {
+  :host { max-width: 460px; }
+  .card { border-radius: 20px; }
+  .strip { height: 4px; border-radius: 20px 20px 0 0; }
+  .card-body { padding: 20px; gap: 14px; }
+  .card-body::after { top: 10px; bottom: 10px; }
+  .hdr { gap: 14px; }
+  .icon { width: 50px; height: 50px; border-radius: 12px; font-size: 24px; }
+  .title { font-size: 18px; }
+  .subtitle { font-size: 12px; }
+  .badge { font-size: 11px; padding: 3px 10px; }
+  .desc { font-size: 14px; }
+  .btn { font-size: 16px; padding: 12px 0; border-radius: 10px; }
+}
+
+/* ── 电脑端 1024px+ ── */
+@media (min-width: 1024px) {
+  :host { max-width: 500px; }
+  .card { border-radius: 22px; }
+  .strip { border-radius: 22px 22px 0 0; }
+  .card-body { padding: 24px; gap: 16px; }
+  .card-body::after { top: 12px; bottom: 12px; }
+  .hdr { gap: 16px; }
+  .icon { width: 54px; height: 54px; border-radius: 13px; font-size: 26px; }
+  .title { font-size: 19px; }
+  .subtitle { font-size: 13px; }
+  .badge { font-size: 11px; }
+  .desc { font-size: 15px; }
+  .btn { font-size: 16px; padding: 13px 0; }
+}
+
+/* ── 电视投屏端 1440px+ ── */
+@media (min-width: 1440px) {
+  :host { max-width: 560px; }
+  .card { border-radius: 24px; }
+  .strip { border-radius: 24px 24px 0 0; }
+  .card-body { padding: 28px; gap: 18px; }
+  .card-body::after { top: 14px; bottom: 14px; }
+  .hdr { gap: 18px; }
+  .icon { width: 60px; height: 60px; border-radius: 14px; font-size: 28px; }
+  .title { font-size: 21px; }
+  .subtitle { font-size: 14px; }
+  .badge { font-size: 12px; padding: 3px 12px; }
+  .desc { font-size: 16px; line-height: 1.7; }
+  .btn { font-size: 18px; padding: 14px 0; border-radius: 10px; }
+}

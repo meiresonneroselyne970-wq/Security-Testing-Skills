@@ -11,7 +11,23 @@
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>AI 卡片模板预览</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;padding:20px;display:flex;flex-direction:column;align-items:center;gap:24px}h1{font-size:18px;font-weight:700;color:#111827;margin-top:4px}.sub{font-size:12px;color:#9ca3af;text-align:center}.wrap{display:flex;flex-direction:column;gap:6px;max-width:400px;width:100%}.label{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding-left:4px}.sec{font-size:13px;font-weight:700;color:#6b7280;padding:12px 0 0 4px;border-top:1px solid #e5e7eb;margin-top:12px;width:100%;max-width:400px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;padding:20px 16px;display:flex;flex-direction:column;align-items:center;gap:24px}
+h1{font-size:18px;font-weight:700;color:#111827;margin-top:4px}
+.sub{font-size:12px;color:#9ca3af;text-align:center}
+#root{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%}
+.wrap{display:flex;flex-direction:column;gap:6px;width:100%}
+.label{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding-left:4px}
+.sec{font-size:13px;font-weight:700;color:#6b7280;padding:12px 0 0 4px;border-top:1px solid #e5e7eb;margin-top:12px;width:100%;max-width:400px}
+.grid{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:400px}
+/* 平板端 */
+@media(min-width:480px){body{padding:28px 24px}.grid{max-width:440px}}
+/* 大屏端 — 双列网格 */
+@media(min-width:768px){h1{font-size:22px}.sub{font-size:13px}#root{align-items:stretch}.sec{max-width:none;font-size:14px}.grid{max-width:none;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}.wrap{gap:4px}}
+/* 电脑端 — 三列 */
+@media(min-width:1024px){body{padding:36px 32px;gap:28px}.grid{grid-template-columns:repeat(3,1fr);gap:24px}}
+/* 电视端 — 四列 */
+@media(min-width:1440px){body{padding:48px 40px;gap:32px}h1{font-size:26px}.sub{font-size:14px}.sec{font-size:15px}.grid{grid-template-columns:repeat(4,1fr);gap:28px}}
 </style></head>
 <body>
 <h1>AI 卡片模板预览</h1>
@@ -46,14 +62,16 @@ CARDS.forEach(function(c) {
 var r = document.getElementById('root');
 Object.keys(groups).forEach(function(g) {
   var h = document.createElement('div'); h.className='sec'; h.textContent=g; r.appendChild(h);
+  var grid = document.createElement('div'); grid.className='grid';
   groups[g].forEach(function(c) {
     var w = document.createElement('div'); w.className='wrap';
     var l = document.createElement('span'); l.className='label';
     l.textContent = c.folder+'/'+c.file+' · '+c.data.theme+' · icon='+c.data.layout.icon;
     w.appendChild(l);
     var el = document.createElement('ai-card'); el.setAttribute('data', JSON.stringify(c.data)); w.appendChild(el);
-    r.appendChild(w);
+    grid.appendChild(w);
   });
+  r.appendChild(grid);
 });
 </script>
 </body></html>

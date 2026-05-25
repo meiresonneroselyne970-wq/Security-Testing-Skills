@@ -6,12 +6,25 @@
 <title>文本卡片 — text-card</title>
 <link rel="stylesheet" href="ai-card.css">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;padding:24px;display:flex;flex-direction:column;align-items:center;gap:20px}h1{font-size:18px;font-weight:700;color:#111827}.sub{font-size:12px;color:#9ca3af;text-align:center}.wrap{display:flex;flex-direction:column;gap:6px;max-width:400px;width:100%}.label{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding-left:4px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:20px}
+h1{font-size:18px;font-weight:700;color:#111827}
+.sub{font-size:12px;color:#9ca3af;text-align:center}
+#root{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:400px}
+.wrap{display:flex;flex-direction:column;gap:6px;width:100%}
+.label{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding-left:4px}
+/* 平板端 */
+@media(min-width:480px){body{padding:32px 24px}#root{max-width:440px}}
+/* 大屏端 — 双列网格 */
+@media(min-width:768px){h1{font-size:22px}.sub{font-size:13px}#root{max-width:720px;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}.wrap{gap:4px}}
+/* 电脑端 */
+@media(min-width:1024px){body{padding:40px 32px}#root{max-width:880px;gap:24px}}
+/* 电视端 — 三列 */
+@media(min-width:1440px){body{padding:48px 40px;gap:28px}h1{font-size:26px}.sub{font-size:14px}#root{max-width:1200px;grid-template-columns:repeat(3,1fr);gap:28px}}
 </style></head>
 <body>
 <h1>文本卡片</h1><p class="sub">H5 入口 · AI助手欢迎 · 内容推荐 · 任务协作 · 健康建议</p>
 <div id="root"></div>
-<script src="ai-card.js"></script>
 <script>
 var CARDS = [
   {file:"h5-ai-assistant.json",data:{"schema_version":"1.0","card_type":"h5_entry","title":"炎图 AI 助手","subtitle":"我已加入当前聊天室","description":"可以为你提供智能协同服务，点击查看推荐内容。","button_text":"打开页面","target_url":"https://www.baidu.com","theme":"blue_white","layout":{"variant":"h5_entry","icon":"ai"}}},
@@ -22,6 +35,6 @@ var CARDS = [
   {file:"weekly-report.json",data:{"schema_version":"1.0","card_type":"task","title":"班级群 · 教学周报汇总","subtitle":"由班主任发起 · 三年级组","description":"请各科老师在周五前提交本周教学周报（语文、数学、英语、科学），汇总后将统一发送至年级组存档。","button_text":"提交我的","target_url":"https://task.example.com/weekly-report","theme":"amber_white","layout":{"variant":"task","icon":"task"}}},
   {file:"medication-reminder.json",data:{"schema_version":"1.0","card_type":"health_advice","title":"服药提醒 · 阿莫西林","subtitle":"医疗 AI 助手 · 李医生随访","description":"每日 3 次，每次 1 粒，饭后服用。请勿与牛奶同服，两次用药间隔至少 6 小时。本次疗程剩余 5 天，下次服药时间：今天 18:30。","button_text":"确认已服药","target_url":"https://health.example.com/medication/confirm","theme":"emerald_white","layout":{"variant":"health_advice","icon":"health"}}}
 ];
-document.getElementById('root').innerHTML=CARDS.map(function(c){return '<div class="wrap"><span class="label">'+c.file+' · '+c.data.theme+' · icon='+c.data.layout.icon+'</span><ai-card data=\''+JSON.stringify(c.data)+'\'></ai-card></div>'}).join('');
 </script>
+<script src="ai-card.js"></script>
 </body></html>

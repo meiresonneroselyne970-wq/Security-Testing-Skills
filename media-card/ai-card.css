@@ -1,4 +1,4 @@
-/* media-card/ai-card.css — 媒体预览卡片样式 */
+/* media-card/ai-card.css — 媒体预览卡片样式（5端响应式） */
 
 :host {
   display: block;
@@ -82,3 +82,67 @@
 }
 .btn:active { opacity: .7; }
 .btn.primary { background: var(--c-brand); color: #fff; }
+
+/* ── 平板端 480px+ ── */
+@media (min-width: 480px) {
+  :host { max-width: 420px; }
+  .card { border-radius: 18px; }
+  .media-area { height: 170px; }
+  .media-play { width: 56px; height: 56px; font-size: 22px; }
+  .media-badge { top: 12px; left: 12px; font-size: 11px; }
+  .media-dur { bottom: 10px; right: 10px; font-size: 11px; }
+  .card-body { padding: 18px; gap: 12px; }
+  .hdr { gap: 12px; }
+  .icon { width: 46px; height: 46px; border-radius: 11px; font-size: 22px; }
+  .title { font-size: 17px; }
+  .desc { font-size: 14px; }
+  .btn { font-size: 15px; padding: 11px 0; }
+}
+
+/* ── 大屏端 768px+ ── */
+@media (min-width: 768px) {
+  :host { max-width: 460px; }
+  .card { border-radius: 20px; }
+  .media-area { height: 190px; }
+  .media-play { width: 60px; height: 60px; font-size: 24px; }
+  .media-badge { top: 14px; left: 14px; font-size: 11px; padding: 5px 10px; }
+  .media-dur { bottom: 12px; right: 12px; font-size: 11px; }
+  .card-body { padding: 20px; gap: 14px; }
+  .hdr { gap: 14px; }
+  .icon { width: 50px; height: 50px; border-radius: 12px; font-size: 24px; }
+  .title { font-size: 18px; }
+  .desc { font-size: 14px; }
+  .btn { font-size: 16px; padding: 12px 0; border-radius: 10px; }
+}
+
+/* ── 电脑端 1024px+ ── */
+@media (min-width: 1024px) {
+  :host { max-width: 500px; }
+  .card { border-radius: 22px; }
+  .media-area { height: 210px; }
+  .media-play { width: 66px; height: 66px; font-size: 26px; }
+  .media-badge { top: 16px; left: 16px; font-size: 12px; }
+  .media-dur { bottom: 14px; right: 14px; font-size: 12px; }
+  .card-body { padding: 24px; gap: 16px; }
+  .hdr { gap: 16px; }
+  .icon { width: 54px; height: 54px; border-radius: 13px; font-size: 26px; }
+  .title { font-size: 19px; }
+  .desc { font-size: 15px; }
+  .btn { font-size: 16px; padding: 13px 0; }
+}
+
+/* ── 电视投屏端 1440px+ ── */
+@media (min-width: 1440px) {
+  :host { max-width: 560px; }
+  .card { border-radius: 24px; }
+  .media-area { height: 240px; }
+  .media-play { width: 72px; height: 72px; font-size: 28px; }
+  .media-badge { top: 18px; left: 18px; font-size: 13px; padding: 6px 12px; }
+  .media-dur { bottom: 16px; right: 16px; font-size: 13px; padding: 4px 10px; }
+  .card-body { padding: 28px; gap: 18px; }
+  .hdr { gap: 18px; }
+  .icon { width: 60px; height: 60px; border-radius: 14px; font-size: 28px; }
+  .title { font-size: 21px; }
+  .desc { font-size: 16px; line-height: 1.7; }
+  .btn { font-size: 18px; padding: 14px 0; border-radius: 10px; }
+}

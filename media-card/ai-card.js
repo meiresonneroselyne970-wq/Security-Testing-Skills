@@ -67,3 +67,12 @@ function mediaHTML(d) {
 function esc(s) { if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 if (!customElements.get('ai-card')) customElements.define('ai-card', AICard);
+
+(function(){
+  if (typeof CARDS==='undefined') return;
+  var root=document.getElementById('root');
+  if (!root) return;
+  root.innerHTML=CARDS.map(function(c){
+    return '<div class="wrap"><span class="label">'+c.file+' · '+c.data.theme+' · icon='+c.data.layout.icon+'</span><ai-card data=\''+JSON.stringify(c.data)+'\'></ai-card></div>';
+  }).join('');
+})();

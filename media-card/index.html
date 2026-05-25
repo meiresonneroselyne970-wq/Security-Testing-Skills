@@ -6,16 +6,25 @@
 <title>媒体卡片 — media-card</title>
 <link rel="stylesheet" href="ai-card.css">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;padding:24px;display:flex;flex-direction:column;align-items:center;gap:20px}h1{font-size:18px;font-weight:700;color:#111827}.sub{font-size:12px;color:#9ca3af;text-align:center}.wrap{display:flex;flex-direction:column;gap:6px;max-width:400px;width:100%}.label{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding-left:4px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f0f2f5;padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:20px}
+h1{font-size:18px;font-weight:700;color:#111827}
+.sub{font-size:12px;color:#9ca3af;text-align:center}
+#root{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:400px}
+.wrap{display:flex;flex-direction:column;gap:6px;width:100%}
+.label{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding-left:4px}
+@media(min-width:480px){body{padding:32px 24px}#root{max-width:440px}}
+@media(min-width:768px){h1{font-size:22px}.sub{font-size:13px}#root{max-width:720px;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}.wrap{gap:4px}}
+@media(min-width:1024px){body{padding:40px 32px}#root{max-width:880px;gap:24px}}
+@media(min-width:1440px){body{padding:48px 40px;gap:28px}h1{font-size:26px}.sub{font-size:14px}#root{max-width:1200px;grid-template-columns:repeat(3,1fr);gap:28px}}
 </style></head>
 <body>
-<h1>媒体卡片</h1><p class="sub">暗色媒体预览区 · 播放按钮 · 类型标签 · 时长标签</p>
+<h1>媒体卡片</h1><p class="sub">暗色媒体预览区 · 播放按钮 · 类型/时长标签</p>
 <div id="root"></div>
-<script src="ai-card.js"></script>
 <script>
 var CARDS = [
   {file:"class-video.json",data:{"schema_version":"1.0","card_type":"media_preview","title":"课堂录像 · 分数的加减法","subtitle":"42:18","description":"张老师 · 2026/05/24 上传 · MP4 · 1080p · 1.2 GB · 86 次观看。第三章重难点讲解，包含 5 道例题精讲与课堂互动问答环节。","button_text":"播放视频","target_url":"https://media.example.com/video/math-fraction","theme":"indigo_white","layout":{"variant":"media_preview","icon":"video"}}}
 ];
-document.getElementById('root').innerHTML=CARDS.map(function(c){return '<div class="wrap"><span class="label">'+c.file+' · '+c.data.theme+' · icon='+c.data.layout.icon+'</span><ai-card data=\''+JSON.stringify(c.data)+'\'></ai-card></div>'}).join('');
 </script>
+<script src="ai-card.js"></script>
 </body></html>

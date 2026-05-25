@@ -1,4 +1,4 @@
-/* homework-card/ai-card.css — 作业提醒卡片样式 */
+/* homework-card/ai-card.css — 作业提醒卡片样式（5端响应式） */
 
 :host {
   display: block;
@@ -69,3 +69,59 @@
 }
 .btn:active { opacity: .7; }
 .btn.primary { background: var(--c-brand); color: #fff; }
+
+/* ── 平板端 480px+ ── */
+@media (min-width: 480px) {
+  :host { max-width: 420px; }
+  .card { border-radius: 18px; }
+  .bar { padding: 18px; gap: 12px; }
+  .bar .bicon { width: 46px; height: 46px; border-radius: 11px; font-size: 24px; }
+  .bar .btitle { font-size: 17px; }
+  .bar .bsub { font-size: 12px; }
+  .bar .bbadge { font-size: 10px; }
+  .card-body { padding: 18px; gap: 12px; }
+  .desc { font-size: 14px; }
+  .btn { font-size: 15px; padding: 11px 0; }
+}
+
+/* ── 大屏端 768px+ ── */
+@media (min-width: 768px) {
+  :host { max-width: 460px; }
+  .card { border-radius: 20px; }
+  .bar { padding: 20px; gap: 14px; }
+  .bar .bicon { width: 50px; height: 50px; border-radius: 12px; font-size: 26px; }
+  .bar .btitle { font-size: 18px; }
+  .bar .bsub { font-size: 12px; }
+  .bar .bbadge { font-size: 11px; padding: 3px 10px; }
+  .card-body { padding: 20px; gap: 14px; }
+  .desc { font-size: 14px; }
+  .btn { font-size: 16px; padding: 12px 0; border-radius: 10px; }
+}
+
+/* ── 电脑端 1024px+ ── */
+@media (min-width: 1024px) {
+  :host { max-width: 500px; }
+  .card { border-radius: 22px; }
+  .bar { padding: 24px; gap: 16px; }
+  .bar .bicon { width: 54px; height: 54px; border-radius: 13px; font-size: 28px; }
+  .bar .btitle { font-size: 19px; }
+  .bar .bsub { font-size: 13px; }
+  .bar .bbadge { font-size: 12px; padding: 4px 12px; }
+  .card-body { padding: 24px; gap: 16px; }
+  .desc { font-size: 15px; }
+  .btn { font-size: 16px; padding: 13px 0; }
+}
+
+/* ── 电视投屏端 1440px+ ── */
+@media (min-width: 1440px) {
+  :host { max-width: 560px; }
+  .card { border-radius: 24px; }
+  .bar { padding: 28px; gap: 18px; }
+  .bar .bicon { width: 60px; height: 60px; border-radius: 14px; font-size: 30px; }
+  .bar .btitle { font-size: 21px; }
+  .bar .bsub { font-size: 14px; }
+  .bar .bbadge { font-size: 13px; padding: 4px 14px; }
+  .card-body { padding: 28px; gap: 18px; }
+  .desc { font-size: 16px; line-height: 1.7; }
+  .btn { font-size: 18px; padding: 14px 0; border-radius: 10px; }
+}
