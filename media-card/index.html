@@ -9,9 +9,4 @@
 <body>
 <div id="root"></div>
 <script src="ai-card.js"></script>
-<script>
-var FILES = ['class-video.json'];
-Promise.all(FILES.map(function(f) { return fetch(f).then(function(r) { return r.json(); }); }))
-  .then(function(data) { renderCards('root', data.map(function(d) { return { data:d }; })); });
-</script>
 </body></html>

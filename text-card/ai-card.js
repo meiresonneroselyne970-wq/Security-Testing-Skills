@@ -79,3 +79,11 @@ window.renderCards = function(containerId, cards) {
     return '<div class="wrap"><span class="label">'+(d.layout&&d.layout.variant||d.card_type)+' · '+d.theme+' · icon='+(d.layout&&d.layout.icon)+'</span><ai-card data=\''+JSON.stringify(d)+'\'></ai-card></div>';
   }).join('');
 };
+
+(function() {
+  var root = document.getElementById('root');
+  if (!root) return;
+  var FILES = ['h5-ai-assistant.json','h5-essay.json','edu-ai.json','medical-ai.json','oral-practice.json','weekly-report.json','medication-reminder.json'];
+  Promise.all(FILES.map(function(f) { return fetch(f).then(function(r) { return r.json(); }); }))
+    .then(function(data) { renderCards('root', data.map(function(d) { return { data:d }; })); });
+})();
