@@ -2,10 +2,6 @@
  * homework-card/ai-card.js — 作业提醒卡片
  * 模板：学科色条横幅（标题+教师+学科标签）+ 描述 + 按钮
  */
-const BASE = document.currentScript
-  ? new URL('.', document.currentScript.src).href
-  : location.href;
-
 const PALETTE = {
   red:     { brand:'#dc2626', light:'#fef2f2', soft:'#fee2e2', gradStart:'#dc2626', gradEnd:'#f87171' },
   blue:    { brand:'#3b82f6', light:'#eff6ff', soft:'#dbeafe', gradStart:'#3b82f6', gradEnd:'#60a5fa' },
@@ -21,10 +17,10 @@ function subjectFromTheme(t) { const c=(t||'').split('_')[0]; return {red:'chine
 function subjectLabel(s) { return {chinese:'语文',math:'数学',english:'英语'}[s]||''; }
 
 class AICard extends HTMLElement {
-  constructor() { super(); this.attachShadow({ mode:'open' }); }
+  constructor() { super(); this.attachShadow({ mode:'open' }); this._connected = false; }
   static get observedAttributes() { return ['data']; }
-  attributeChangedCallback() { this.render(); }
-  connectedCallback() { this.render(); }
+  attributeChangedCallback() { if (this._connected) this.render(); }
+  connectedCallback() { this._connected = true; this.render(); }
 
   render() {
     const raw = this.getAttribute('data');
@@ -34,7 +30,7 @@ class AICard extends HTMLElement {
     this.shadowRoot.innerHTML='';
 
     const link = document.createElement('link');
-    link.rel='stylesheet'; link.href=new URL('./ai-card.css', BASE).href;
+    link.rel='stylesheet'; link.href='ai-card.css';
     this.shadowRoot.appendChild(link);
 
     const vars = document.createElement('style');
@@ -72,7 +68,6 @@ function esc(s) { if(s==null)return''; return String(s).replace(/&/g,'&amp;').re
 
 if (!customElements.get('ai-card')) customElements.define('ai-card', AICard);
 
-// ── 卡片列表渲染 ──
 (function(){
   if (typeof CARDS==='undefined') return;
   var root=document.getElementById('root');

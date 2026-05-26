@@ -2,10 +2,6 @@
  * media-card/ai-card.js — 媒体预览卡片
  * 模板：暗色媒体预览区（类型标签+播放按钮+时长）+ 标题 + 描述 + 按钮
  */
-const BASE = document.currentScript
-  ? new URL('.', document.currentScript.src).href
-  : location.href;
-
 const PALETTE = {
   indigo:  { brand:'#4f46e5', light:'#eef2ff', soft:'#e0e7ff', gradStart:'#4f46e5', gradEnd:'#818cf8' },
 };
@@ -15,11 +11,13 @@ function themeColor(t) { const n=(t||'indigo_white').split('_')[0]; return PALET
 const ICONS = { video:'🎬', audio:'🎧', image:'🖼', file:'📄' };
 function iconEmoji(d) { const i=(d.layout&&d.layout.icon)||'video'; return ICONS[i]||'🎬'; }
 
+const TYPE_LABEL = { video:'视频', audio:'音频', image:'图片', file:'文件' };
+
 class AICard extends HTMLElement {
-  constructor() { super(); this.attachShadow({ mode:'open' }); }
+  constructor() { super(); this.attachShadow({ mode:'open' }); this._connected = false; }
   static get observedAttributes() { return ['data']; }
-  attributeChangedCallback() { this.render(); }
-  connectedCallback() { this.render(); }
+  attributeChangedCallback() { if (this._connected) this.render(); }
+  connectedCallback() { this._connected = true; this.render(); }
 
   render() {
     const raw = this.getAttribute('data');
@@ -29,7 +27,7 @@ class AICard extends HTMLElement {
     this.shadowRoot.innerHTML='';
 
     const link = document.createElement('link');
-    link.rel='stylesheet'; link.href=new URL('./ai-card.css', BASE).href;
+    link.rel='stylesheet'; link.href='ai-card.css';
     this.shadowRoot.appendChild(link);
 
     const vars = document.createElement('style');
@@ -45,7 +43,7 @@ class AICard extends HTMLElement {
 function mediaHTML(d) {
   const btn = d.button_text || '播放视频';
   const mtype = (d.layout&&d.layout.icon)||'video';
-  const typeLabel = { video:'视频', audio:'音频', image:'图片', file:'文件' }[mtype]||'文件';
+  const typeLabel = TYPE_LABEL[mtype]||'文件';
   return `
 <div class="card">
   <div class="media-area">

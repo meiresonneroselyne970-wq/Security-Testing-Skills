@@ -2,19 +2,12 @@
  * text-card/ai-card.js — 文本类卡片（h5_entry / assistant_welcome / recommendation / task / health_advice）
  * 模板：顶部渐变装饰条 + 左侧品牌色条 + 图标标题 + 描述 + 按钮
  */
-const BASE = document.currentScript
-  ? new URL('.', document.currentScript.src).href
-  : location.href;
-
 const PALETTE = {
   blue:    { brand:'#3b82f6', light:'#eff6ff', soft:'#dbeafe', gradStart:'#3b82f6', gradEnd:'#60a5fa' },
   purple:  { brand:'#8b5cf6', light:'#f5f3ff', soft:'#ede9fe', gradStart:'#8b5cf6', gradEnd:'#a78bfa' },
-  red:     { brand:'#dc2626', light:'#fef2f2', soft:'#fee2e2', gradStart:'#dc2626', gradEnd:'#f87171' },
-  green:   { brand:'#16a34a', light:'#f0fdf4', soft:'#dcfce7', gradStart:'#16a34a', gradEnd:'#4ade80' },
   cyan:    { brand:'#0891b2', light:'#ecfeff', soft:'#cffafe', gradStart:'#0891b2', gradEnd:'#22d3ee' },
   amber:   { brand:'#d97706', light:'#fffbeb', soft:'#fef3c7', gradStart:'#d97706', gradEnd:'#fbbf24' },
   emerald: { brand:'#059669', light:'#ecfdf5', soft:'#d1fae5', gradStart:'#059669', gradEnd:'#34d399' },
-  indigo:  { brand:'#4f46e5', light:'#eef2ff', soft:'#e0e7ff', gradStart:'#4f46e5', gradEnd:'#818cf8' },
 };
 
 function themeColor(t) { const n=(t||'blue_white').split('_')[0]; return PALETTE[n]||PALETTE.blue; }
@@ -25,10 +18,10 @@ function iconEmoji(d) { const i=(d.layout&&d.layout.icon)||'link'; return ICONS[
 const BADGES = { h5_entry:'H5 入口', assistant_welcome:'AI 助手', recommendation:'AI 推荐', task:'', health_advice:'' };
 
 class AICard extends HTMLElement {
-  constructor() { super(); this.attachShadow({ mode:'open' }); }
+  constructor() { super(); this.attachShadow({ mode:'open' }); this._connected = false; }
   static get observedAttributes() { return ['data']; }
-  attributeChangedCallback() { this.render(); }
-  connectedCallback() { this.render(); }
+  attributeChangedCallback() { if (this._connected) this.render(); }
+  connectedCallback() { this._connected = true; this.render(); }
 
   render() {
     const raw = this.getAttribute('data');
@@ -38,7 +31,7 @@ class AICard extends HTMLElement {
     this.shadowRoot.innerHTML='';
 
     const link = document.createElement('link');
-    link.rel='stylesheet'; link.href=new URL('./ai-card.css', BASE).href;
+    link.rel='stylesheet'; link.href='ai-card.css';
     this.shadowRoot.appendChild(link);
 
     const vars = document.createElement('style');
