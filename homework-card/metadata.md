@@ -49,7 +49,7 @@ homework-card/
   "description": "阅读课文《荷花》第2-4自然段...",
   "button_text": "查看作业",
   "target_url": "https://homework.example.com/chinese",
-  "theme": "red_white",
+  "theme": "chinese",
   "layout": {
     "variant": "homework_reminder",
     "icon": "chinese"
@@ -70,7 +70,7 @@ homework-card/
 | `description` | string | 否 | 作业详细说明。缺失则隐藏 |
 | `button_text` | string | 否 | 按钮文案，默认"查看作业" |
 | `target_url` | string | 是 | 点击按钮跳转地址 |
-| `theme` | string | 否 | `red_white` / `blue_white` / `green_white`。驱动学科配色和标签 |
+| `theme` | string | 否 | `chinese` / `math` / `english`。语义名，THEME_MAP 映射到颜色，驱动学科配色和标签 |
 | `layout.variant` | string | 否 | 固定 `"homework_reminder"` |
 | `layout.icon` | string | 否 | `chinese` / `math` / `english`。控制图标 emoji |
 
@@ -106,9 +106,9 @@ homework-card/
 | `subtitle` 缺失 | `div.bsub` 不渲染 |
 | `description` 缺失 | `div.desc` 不渲染 |
 | `button_text` 缺失 | 按钮显示默认文案"查看作业" |
-| `theme` = `red_white` | 红色渐变横幅 + 语文标签 |
-| `theme` = `blue_white` | 蓝色渐变横幅 + 数学标签 |
-| `theme` = `green_white` | 绿色渐变横幅 + 英语标签 |
+| `theme` = `chinese` | 红色渐变横幅 + 语文标签 |
+| `theme` = `math` | 蓝色渐变横幅 + 数学标签 |
+| `theme` = `english` | 绿色渐变横幅 + 英语标签 |
 
 ---
 
@@ -119,7 +119,7 @@ homework-card/
 |------|-----|
 | 标题 | 语文 · 阅读理解训练 |
 | 学科 | 语文 |
-| theme | `red_white` |
+| theme | `chinese` |
 | icon | `chinese` |
 
 ### math.json — 数学作业
@@ -127,7 +127,7 @@ homework-card/
 |------|-----|
 | 标题 | 数学 · 第三章分数练习 |
 | 学科 | 数学 |
-| theme | `blue_white` |
+| theme | `math` |
 | icon | `math` |
 
 ### english.json — 英语作业
@@ -135,7 +135,7 @@ homework-card/
 |------|-----|
 | 标题 | 英语 · Unit 5 My Day |
 | 学科 | 英语 |
-| theme | `green_white` |
+| theme | `english` |
 | icon | `english` |
 
 ---
@@ -144,9 +144,9 @@ homework-card/
 
 | theme | 品牌色 | 渐变 | 浅色背景 | 对应学科 |
 |-------|--------|------|---------|---------|
-| `red_white` | #dc2626 | #dc2626 → #f87171 | #fef2f2 | 语文 |
-| `blue_white` | #3b82f6 | #3b82f6 → #60a5fa | #eff6ff | 数学 |
-| `green_white` | #16a34a | #16a34a → #4ade80 | #f0fdf4 | 英语 |
+| `chinese` | #dc2626 | #dc2626 → #f87171 | #fef2f2 | 语文 |
+| `math` | #3b82f6 | #3b82f6 → #60a5fa | #eff6ff | 数学 |
+| `english` | #16a34a | #16a34a → #4ade80 | #f0fdf4 | 英语 |
 
 ---
 
@@ -172,8 +172,8 @@ homework-card/
 
 ## 渲染说明
 
-1. **学科推断**：`ai-card.js` 通过 `subjectFromTheme(theme)` 解析 theme 中的颜色名，映射到学科（red→语文, blue→数学, green→英语）
-2. **标签显示**：`subjectLabel()` 将学科 key 转为中文标签，显示在横幅右下角
-3. **无 badge 冲突**：作业卡片的 `BADGES.homework_reminder` 设为空字符串，避免与学科标签重叠
+1. **语义化主题**：`theme` 直接使用学科名（`chinese`/`math`/`english`），`THEME_MAP` 映射到颜色（chinese→red, math→blue, english→green）
+2. **标签显示**：`subjectLabel(theme)` 直接将语义名转为中文标签，显示在横幅右下角
+3. **无 badge 冲突**：作业卡片不使用 BADGES 映射，学科标签由 theme 直接驱动
 4. **CSS 精简**：`ai-card.css` 只包含 `.bar`、`.card-body`、`.desc`、`.actions`、`.btn` 等作业卡片用到的样式，不含 `.strip`、`.card-body::after`、`.hdr`、`.icon`、`.media-area` 等无关样式
 5. **列表渲染**：`ai-card.js` 末尾 IIFE 读取全局 `CARDS` 变量，自动渲染所有卡片变体到 `#root` 容器

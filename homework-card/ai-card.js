@@ -8,13 +8,14 @@ const PALETTE = {
   green:   { brand:'#16a34a', light:'#f0fdf4', soft:'#dcfce7', gradStart:'#16a34a', gradEnd:'#4ade80' },
 };
 
-function themeColor(t) { const n=(t||'blue_white').split('_')[0]; return PALETTE[n]||PALETTE.blue; }
+var THEME_MAP = { chinese:'red', math:'blue', english:'green' };
+function themeColor(t) { var c = THEME_MAP[t||'math'] || 'blue'; return PALETTE[c] || PALETTE.blue; }
 
 const ICONS = { chinese:'📖', math:'📐', english:'🌐', homework:'📖' };
 function iconEmoji(d) { const i=(d.layout&&d.layout.icon)||'homework'; return ICONS[i]||'📖'; }
 
-function subjectFromTheme(t) { const c=(t||'').split('_')[0]; return {red:'chinese',blue:'math',green:'english'}[c]||''; }
-function subjectLabel(s) { return {chinese:'语文',math:'数学',english:'英语'}[s]||''; }
+var SUBJECT_LABEL = { chinese:'语文', math:'数学', english:'英语' };
+function subjectLabel(t) { return SUBJECT_LABEL[t] || ''; }
 
 class AICard extends HTMLElement {
   constructor() { super(); this.attachShadow({ mode:'open' }); this._connected = false; }
@@ -45,7 +46,7 @@ class AICard extends HTMLElement {
 
 function homeworkHTML(d) {
   const icon = iconEmoji(d);
-  const label = subjectLabel(subjectFromTheme(d.theme));
+  const label = subjectLabel(d.theme);
   const btn = d.button_text || '查看作业';
   return `
 <div class="card">
@@ -68,11 +69,11 @@ function esc(s) { if(s==null)return''; return String(s).replace(/&/g,'&amp;').re
 
 if (!customElements.get('ai-card')) customElements.define('ai-card', AICard);
 
-(function(){
-  if (typeof CARDS==='undefined') return;
-  var root=document.getElementById('root');
+window.renderCards = function(containerId, cards) {
+  var root = document.getElementById(containerId);
   if (!root) return;
-  root.innerHTML=CARDS.map(function(c){
-    return '<div class="wrap"><span class="label">'+c.file+' · '+c.data.theme+' · icon='+c.data.layout.icon+'</span><ai-card data=\''+JSON.stringify(c.data)+'\'></ai-card></div>';
+  root.innerHTML = cards.map(function(c) {
+    var d = c.data;
+    return '<div class="wrap"><span class="label">'+(d.layout&&d.layout.variant||d.card_type)+' · '+d.theme+' · icon='+(d.layout&&d.layout.icon)+'</span><ai-card data=\''+JSON.stringify(d)+'\'></ai-card></div>';
   }).join('');
-})();
+};

@@ -53,7 +53,7 @@ text-card/
   "description": "可以为你提供智能协同服务，点击查看推荐内容。",
   "button_text": "打开页面",
   "target_url": "https://www.baidu.com",
-  "theme": "blue_white",
+  "theme": "general",
   "layout": {
     "variant": "h5_entry",
     "icon": "ai"
@@ -74,7 +74,7 @@ text-card/
 | `description` | string | 否 | 卡片正文描述。缺失则隐藏 |
 | `button_text` | string | 否 | 按钮文案，默认"打开页面" |
 | `target_url` | string | 是 | 点击按钮跳转地址 |
-| `theme` | string | 否 | 8 色方案之一，格式 `{color}_white` |
+| `theme` | string | 否 | 语义名（`general`/`ai`/`recommendation`/`task`/`health`），THEME_MAP 映射到颜色 |
 | `layout.variant` | string | 否 | 与 `card_type` 一致 |
 | `layout.icon` | string | 否 | `ai` / `link` / `audio` / `sparkle` / `task` / `health` |
 
@@ -135,7 +135,7 @@ text-card/
 | 属性 | 值 |
 |------|-----|
 | card_type | `h5_entry` |
-| theme | `blue_white` |
+| theme | `general` |
 | icon | `ai` |
 | 场景 | 聊天室中 AI 助手入口卡片 |
 
@@ -143,7 +143,7 @@ text-card/
 | 属性 | 值 |
 |------|-----|
 | card_type | `h5_entry` |
-| theme | `blue_white` |
+| theme | `general` |
 | icon | `link` |
 | 场景 | 作文范文链接入口 |
 
@@ -151,7 +151,7 @@ text-card/
 | 属性 | 值 |
 |------|-----|
 | card_type | `assistant_welcome` |
-| theme | `purple_white` |
+| theme | `ai` |
 | icon | `ai` |
 | 场景 | 教育场景 AI 助手欢迎页 |
 
@@ -159,7 +159,7 @@ text-card/
 | 属性 | 值 |
 |------|-----|
 | card_type | `assistant_welcome` |
-| theme | `emerald_white` |
+| theme | `health` |
 | icon | `ai` |
 | 场景 | 医疗场景 AI 助手欢迎页 |
 
@@ -167,7 +167,7 @@ text-card/
 | 属性 | 值 |
 |------|-----|
 | card_type | `recommendation` |
-| theme | `cyan_white` |
+| theme | `recommendation` |
 | icon | `audio` |
 | 场景 | AI 推荐口语练习内容 |
 
@@ -175,7 +175,7 @@ text-card/
 | 属性 | 值 |
 |------|-----|
 | card_type | `task` |
-| theme | `amber_white` |
+| theme | `task` |
 | icon | `task` |
 | 场景 | 多人协作任务，各科老师提交周报 |
 
@@ -183,7 +183,7 @@ text-card/
 | 属性 | 值 |
 |------|-----|
 | card_type | `health_advice` |
-| theme | `emerald_white` |
+| theme | `emerald` |
 | icon | `health` |
 | 场景 | 用药提醒，含剂量、禁忌、疗程信息 |
 
@@ -193,11 +193,11 @@ text-card/
 
 | theme | 品牌色 | 浅色背景 | 适用场景 |
 |-------|--------|---------|---------|
-| `blue_white` | #3b82f6 | #eff6ff | 通用、入口 |
-| `purple_white` | #8b5cf6 | #f5f3ff | AI 助手 |
-| `cyan_white` | #0891b2 | #ecfeff | 内容推荐 |
-| `amber_white` | #d97706 | #fffbeb | 任务协作 |
-| `emerald_white` | #059669 | #ecfdf5 | 健康、医疗 |
+| `general` | #3b82f6 | #eff6ff | 通用、入口 |
+| `ai` | #8b5cf6 | #f5f3ff | AI 助手 |
+| `recommendation` | #0891b2 | #ecfeff | 内容推荐 |
+| `task` | #d97706 | #fffbeb | 任务协作 |
+| `health` | #059669 | #ecfdf5 | 健康、医疗 |
 
 ---
 
@@ -224,7 +224,7 @@ text-card/
 
 ## 渲染说明
 
-1. **多 card_type 共用模板**：5 种 card_type 使用同一个 `defaultHTML()` 模板，视觉差异仅由 `theme`、`icon`、`badge` 字段控制
+1. **语义化主题**：`theme` 使用语义名（如 `general`、`ai`），通过 `THEME_MAP` 映射到 PALETTE 颜色。视觉差异由 `theme`、`icon`、`badge` 字段控制
 2. **CSS 精简**：`ai-card.css` 包含 `.strip`、`.card-body::after`、`.hdr`、`.icon`、`.badge`、`.desc`、`.actions`、`.btn`，不含 `.bar`（作业）、`.media-area`（媒体）
 3. **列表渲染**：`ai-card.js` 末尾 IIFE 读取全局 `CARDS` 变量，自动渲染所有卡片变体到 `#root` 容器
-4. **PALETTE**：JS 中只定义了 blue、purple、cyan、amber、emerald 5 种颜色（不含 red/green/indigo）
+4. **PALETTE + THEME_MAP**：JS 中定义了 5 种颜色（blue/purple/cyan/amber/emerald），通过 THEME_MAP 将语义主题名映射到颜色

@@ -47,7 +47,7 @@ media-card/
   "description": "张老师 · 2026/05/24 上传 · MP4 · 1080p · 1.2 GB...",
   "button_text": "播放视频",
   "target_url": "https://media.example.com/video/math-fraction",
-  "theme": "indigo_white",
+  "theme": "video",
   "layout": {
     "variant": "media_preview",
     "icon": "video"
@@ -68,7 +68,7 @@ media-card/
 | `description` | string | 否 | 上传者、格式、大小、简介等元信息。缺失则隐藏 |
 | `button_text` | string | 否 | 按钮文案，默认"播放视频" |
 | `target_url` | string | 是 | 媒体资源地址 |
-| `theme` | string | 否 | 默认 `"indigo_white"` |
+| `theme` | string | 否 | 默认 `"video"`，可选 `video`/`audio`/`image`/`file`，THEME_MAP 映射到 indigo |
 | `layout.variant` | string | 否 | 固定 `"media_preview"` |
 | `layout.icon` | string | 否 | `video` / `audio` / `image` / `file`。控制媒体类型标签和图标 |
 
@@ -129,7 +129,7 @@ media-card/
 | 标题 | 课堂录像 · 分数的加减法 |
 | 时长 | 42:18 |
 | 类型 | 视频 |
-| theme | `indigo_white` |
+| theme | `video` |
 | icon | `video` |
 
 > 可扩展：添加 `audio-preview.json`（音频）、`image-gallery.json`（图片）、`file-download.json`（文件）。
@@ -140,9 +140,9 @@ media-card/
 
 | theme | 品牌色 | 浅色背景 | 适用场景 |
 |-------|--------|---------|---------|
-| `indigo_white` | #4f46e5 | #eef2ff | 媒体预览 |
+| `video` / `audio` / `image` / `file` | #4f46e5 | #eef2ff | 媒体预览 |
 
-> 媒体卡片默认只用靛蓝色，与暗色预览区（#1e1b4b）搭配。
+> 媒体卡片所有类型统一用靛蓝色（indigo），与暗色预览区（#1e1b4b）搭配。`theme` 使用媒体类型名作为语义标识。
 
 ---
 
@@ -172,5 +172,5 @@ media-card/
 1. **暗色预览区**：`.media-area` 固定 150px 高度，深紫色背景（#1e1b4b），与白色卡片主体形成对比
 2. **subtitle 特殊用途**：与其他模板不同，此处的 `subtitle` 不作为副标题显示，而是作为**时长标签**渲染在预览区右下角
 3. **CSS 精简**：`ai-card.css` 只包含 `.media-area`、`.media-play`、`.media-badge`、`.media-dur`、`.card-body`、`.hdr`、`.icon`、`.title`、`.desc`、`.actions`、`.btn`，不含 `.strip`、`.card-body::after`、`.bar`
-4. **PALETTE**：JS 中只定义了 indigo 一种颜色
+4. **PALETTE + THEME_MAP**：JS 中只定义了 indigo 一种颜色，`THEME_MAP` 将 video/audio/image/file 统一映射到 indigo
 5. **列表渲染**：`ai-card.js` 末尾 IIFE 读取全局 `CARDS` 变量，自动渲染所有卡片变体到 `#root` 容器

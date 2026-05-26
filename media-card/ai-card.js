@@ -6,7 +6,8 @@ const PALETTE = {
   indigo:  { brand:'#4f46e5', light:'#eef2ff', soft:'#e0e7ff', gradStart:'#4f46e5', gradEnd:'#818cf8' },
 };
 
-function themeColor(t) { const n=(t||'indigo_white').split('_')[0]; return PALETTE[n]||PALETTE.indigo; }
+var THEME_MAP = { video:'indigo', audio:'indigo', image:'indigo', file:'indigo' };
+function themeColor(t) { var c = THEME_MAP[t||'video'] || 'indigo'; return PALETTE[c] || PALETTE.indigo; }
 
 const ICONS = { video:'🎬', audio:'🎧', image:'🖼', file:'📄' };
 function iconEmoji(d) { const i=(d.layout&&d.layout.icon)||'video'; return ICONS[i]||'🎬'; }
@@ -66,11 +67,11 @@ function esc(s) { if(s==null)return''; return String(s).replace(/&/g,'&amp;').re
 
 if (!customElements.get('ai-card')) customElements.define('ai-card', AICard);
 
-(function(){
-  if (typeof CARDS==='undefined') return;
-  var root=document.getElementById('root');
+window.renderCards = function(containerId, cards) {
+  var root = document.getElementById(containerId);
   if (!root) return;
-  root.innerHTML=CARDS.map(function(c){
-    return '<div class="wrap"><span class="label">'+c.file+' · '+c.data.theme+' · icon='+c.data.layout.icon+'</span><ai-card data=\''+JSON.stringify(c.data)+'\'></ai-card></div>';
+  root.innerHTML = cards.map(function(c) {
+    var d = c.data;
+    return '<div class="wrap"><span class="label">'+(d.layout&&d.layout.variant||d.card_type)+' · '+d.theme+' · icon='+(d.layout&&d.layout.icon)+'</span><ai-card data=\''+JSON.stringify(d)+'\'></ai-card></div>';
   }).join('');
-})();
+};

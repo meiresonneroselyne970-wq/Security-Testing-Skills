@@ -91,7 +91,7 @@ AI 卡片的数据可以由 AI 服务、运营配置工具或后端任务生成�
   "description": "可以为你提供智能协同服务，点击查看推荐内容。",
   "button_text": "打开页面",
   "target_url": "https://www.baidu.com",
-  "theme": "blue_white",
+  "theme": "general",
   "layout": {
     "variant": "assistant_welcome",
     "icon": "ai"
@@ -122,7 +122,7 @@ chat-cards/room1/msg_10001/card.json
   "description": "可以为你提供智能协同服务，点击查看推荐内容。",
   "button_text": "打开页面",
   "target_url": "https://www.baidu.com",
-  "theme": "blue_white"
+  "theme": "general"
 }
 ```
 
@@ -239,7 +239,7 @@ GET /api/v1/chat/cards?card_key=chat-cards/room1/msg_10001/card.json
   "description": "可以为你提供智能协同服务，点击查看推荐内容。",
   "button_text": "打开页面",
   "target_url": "https://www.baidu.com",
-  "theme": "blue_white"
+  "theme": "general"
 }
 ```
 

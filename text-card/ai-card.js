@@ -10,7 +10,8 @@ const PALETTE = {
   emerald: { brand:'#059669', light:'#ecfdf5', soft:'#d1fae5', gradStart:'#059669', gradEnd:'#34d399' },
 };
 
-function themeColor(t) { const n=(t||'blue_white').split('_')[0]; return PALETTE[n]||PALETTE.blue; }
+var THEME_MAP = { general:'blue', ai:'purple', recommendation:'cyan', task:'amber', health:'emerald' };
+function themeColor(t) { var c = THEME_MAP[t||'general'] || 'blue'; return PALETTE[c] || PALETTE.blue; }
 
 const ICONS = { ai:'🤖', link:'🔗', sparkle:'✨', task:'📋', health:'💊', audio:'🎧' };
 function iconEmoji(d) { const i=(d.layout&&d.layout.icon)||'link'; return ICONS[i]||'🔗'; }
@@ -70,11 +71,11 @@ function esc(s) { if(s==null)return''; return String(s).replace(/&/g,'&amp;').re
 
 if (!customElements.get('ai-card')) customElements.define('ai-card', AICard);
 
-(function(){
-  if (typeof CARDS==='undefined') return;
-  var root=document.getElementById('root');
+window.renderCards = function(containerId, cards) {
+  var root = document.getElementById(containerId);
   if (!root) return;
-  root.innerHTML=CARDS.map(function(c){
-    return '<div class="wrap"><span class="label">'+c.file+' · '+c.data.theme+' · icon='+c.data.layout.icon+'</span><ai-card data=\''+JSON.stringify(c.data)+'\'></ai-card></div>';
+  root.innerHTML = cards.map(function(c) {
+    var d = c.data;
+    return '<div class="wrap"><span class="label">'+(d.layout&&d.layout.variant||d.card_type)+' · '+d.theme+' · icon='+(d.layout&&d.layout.icon)+'</span><ai-card data=\''+JSON.stringify(d)+'\'></ai-card></div>';
   }).join('');
-})();
+};

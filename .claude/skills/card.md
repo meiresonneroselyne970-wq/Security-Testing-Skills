@@ -66,7 +66,7 @@ card
 
 **Supported icon values:** `ai`, `link`, `sparkle`, `task`, `health`, `audio` (to add a new one, append to the ICONS object)
 
-**Supported theme values:** `blue_white`, `purple_white`, `cyan_white`, `amber_white`, `emerald_white` (to add a new color, append to PALETTE)
+**Supported theme values:** `general`, `ai`, `recommendation`, `task`, `health` — mapped to colors via THEME_MAP (to add a new theme, append to THEME_MAP and PALETTE)
 
 **Badge mapping (in JS BADGES object):**
 | card_type | badge text |
@@ -104,17 +104,17 @@ card
 
 **Existing variants:** chinese, math, english (3 JSON files)
 
-**theme → subject mapping (in JS subjectFromTheme function):**
-| theme | subject | icon |
-|-------|--------|------|
-| `red_white` | 语文 (Chinese) | `chinese` |
-| `blue_white` | 数学 (Math) | `math` |
-| `green_white` | 英语 (English) | `english` |
+**theme → subject mapping (theme IS the subject, THEME_MAP resolves the color):**
+| theme | subject | color |
+|-------|--------|-------|
+| `chinese` | 语文 (Chinese) | red |
+| `math` | 数学 (Math) | blue |
+| `english` | 英语 (English) | green |
 
 **When adding a new subject**, update 3 places in JS:
 1. `PALETTE` — add new color values
-2. `subjectFromTheme()` — add theme → subject key mapping
-3. `subjectLabel()` — add subject key → display label mapping
+2. `THEME_MAP` — add theme → color mapping
+3. `SUBJECT_LABEL` — add theme → display label mapping
 
 ---
 
@@ -171,7 +171,7 @@ Follow the schema strictly. **Do not add fields outside the spec:**
   "description": "...",
   "button_text": "...",
   "target_url": "https://...",
-  "theme": "..._white",
+  "theme": "general",
   "layout": {
     "variant": "...",
     "icon": "..."
@@ -181,7 +181,7 @@ Follow the schema strictly. **Do not add fields outside the spec:**
 
 - `card_type` and `layout.variant` must be the same value
 - `layout.icon` must be chosen from the template's supported icon list
-- `theme` must be chosen from the template's PALETTE
+- `theme` must be chosen from the template's THEME_MAP (semantic name → color)
 - Use 「」for inner quotes inside JSON strings to avoid parser conflicts
 - File name in kebab-case
 
@@ -210,7 +210,7 @@ If the new card uses an icon or theme color not yet supported by the template:
 - **New icon:** add one entry to the `ICONS` object in JS
 - **New color:** add one entry to the `PALETTE` object (brand, light, soft, gradStart, gradEnd)
 - **New badge:** add card_type → label mapping to `BADGES` object (text-card only)
-- **New subject:** update both `subjectFromTheme()` and `subjectLabel()` (homework-card only)
+- **New subject:** update `THEME_MAP` and `SUBJECT_LABEL` (homework-card only)
 
 ### Step 6: Validate
 
@@ -302,7 +302,12 @@ const PALETTE = {
   blue: { brand:'#3b82f6', light:'#eff6ff', soft:'#dbeafe', gradStart:'#3b82f6', gradEnd:'#60a5fa' },
 };
 
-function themeColor(t) { const n=(t||'blue_white').split('_')[0]; return PALETTE[n]||PALETTE.blue; }
+var THEME_MAP = {
+  // Only mappings needed by this template — semantic name → color key
+  general: 'blue',
+};
+
+function themeColor(t) { var c = THEME_MAP[t||'general'] || 'blue'; return PALETTE[c] || PALETTE.blue; }
 
 const ICONS = {
   // icon key → emoji mappings for this template
@@ -414,7 +419,7 @@ Page-level styles (body, h1, .sub, #root, .wrap, .label + responsive media queri
   "description": "...",
   "button_text": "...",
   "target_url": "https://...",
-  "theme": "..._white",
+  "theme": "general",
   "layout": {
     "variant": "...",
     "icon": "..."
@@ -431,24 +436,30 @@ Page-level styles (body, h1, .sub, #root, .wrap, .label + responsive media queri
 | `description` | No | Hidden if absent |
 | `button_text` | No | Falls back to template default if absent |
 | `target_url` | Yes | Button target URL |
-| `theme` | No | Format `{color}_white`, default depends on template |
+| `theme` | No | Semantic name (e.g. `general`, `chinese`, `video`), mapped to color via THEME_MAP |
 | `layout.variant` | No | Must match `card_type` |
 | `layout.icon` | No | Controls icon, choose from template's ICONS |
 
 ---
 
-## Color Palette
+## Theme → Color Mapping
 
-| theme | Brand Color | Used By | Typical Use |
-|-------|------------|---------|-------------|
-| `blue_white` | #3b82f6 | text, homework | General entry, Math |
-| `purple_white` | #8b5cf6 | text | AI Assistant |
-| `cyan_white` | #0891b2 | text | Recommendations |
-| `amber_white` | #d97706 | text | Task collaboration |
-| `emerald_white` | #059669 | text | Health & medical |
-| `red_white` | #dc2626 | homework | Chinese subject |
-| `green_white` | #16a34a | homework | English subject |
-| `indigo_white` | #4f46e5 | media | Media preview |
+All templates use semantic theme names that map to visual colors via `THEME_MAP`:
+
+| theme | Color | Used By | Typical Use |
+|-------|-------|---------|-------------|
+| `general` | #3b82f6 (blue) | text | General entry |
+| `ai` | #8b5cf6 (purple) | text | AI Assistant |
+| `recommendation` | #0891b2 (cyan) | text | Recommendations |
+| `task` | #d97706 (amber) | text | Task collaboration |
+| `health` | #059669 (emerald) | text | Health & medical |
+| `chinese` | #dc2626 (red) | homework | Chinese subject |
+| `math` | #3b82f6 (blue) | homework | Math subject |
+| `english` | #16a34a (green) | homework | English subject |
+| `video` | #4f46e5 (indigo) | media | Video preview |
+| `audio` | #4f46e5 (indigo) | media | Audio preview |
+| `image` | #4f46e5 (indigo) | media | Image preview |
+| `file` | #4f46e5 (indigo) | media | File download |
 
 ---
 

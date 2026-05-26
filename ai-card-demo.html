@@ -34,23 +34,133 @@ h1{font-size:18px;font-weight:700;color:#111827;margin-top:4px}
 <p class="sub">3 种视觉模板 · 每个文件夹独立的 CSS + JS + JSON · 双击任意 index.html 即可预览</p>
 <div id="root" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%"></div>
 
-<script src="text-card/ai-card.js"></script>
-<script src="homework-card/ai-card.js"></script>
-<script src="media-card/ai-card.js"></script>
+<script>
+/* ============================================================
+ * Unified AI Card Web Component
+ * Combines 3 visual templates — selected by card_type field
+ * ============================================================ */
+(function(){
+
+var PALETTE = {
+  blue:    { brand:'#3b82f6', light:'#eff6ff', soft:'#dbeafe',   gradStart:'#3b82f6', gradEnd:'#60a5fa' },
+  purple:  { brand:'#8b5cf6', light:'#f5f3ff', soft:'#ede9fe',   gradStart:'#8b5cf6', gradEnd:'#a78bfa' },
+  red:     { brand:'#dc2626', light:'#fef2f2', soft:'#fee2e2',   gradStart:'#dc2626', gradEnd:'#f87171' },
+  green:   { brand:'#16a34a', light:'#f0fdf4', soft:'#dcfce7',   gradStart:'#16a34a', gradEnd:'#4ade80' },
+  cyan:    { brand:'#0891b2', light:'#ecfeff', soft:'#cffafe',   gradStart:'#0891b2', gradEnd:'#22d3ee' },
+  amber:   { brand:'#d97706', light:'#fffbeb', soft:'#fef3c7',   gradStart:'#d97706', gradEnd:'#fbbf24' },
+  emerald: { brand:'#059669', light:'#ecfdf5', soft:'#d1fae5',   gradStart:'#059669', gradEnd:'#34d399' },
+  indigo:  { brand:'#4f46e5', light:'#eef2ff', soft:'#e0e7ff',   gradStart:'#4f46e5', gradEnd:'#818cf8' }
+};
+
+var THEME_MAP = {
+  general:'blue', ai:'purple', recommendation:'cyan', task:'amber', health:'emerald',
+  chinese:'red', math:'blue', english:'green',
+  video:'indigo', audio:'indigo', image:'indigo', file:'indigo'
+};
+
+function themeColor(t) { var c = THEME_MAP[t||'general'] || 'blue'; return PALETTE[c]||PALETTE.blue; }
+
+var ICONS = {
+  ai:'🤖', link:'🔗', sparkle:'✨', task:'📋', health:'💊', audio:'🎧',
+  chinese:'📖', math:'📐', english:'🌐', homework:'📖',
+  video:'🎬', image:'🖼', file:'📄'
+};
+function iconEmoji(d) { var i=(d.layout&&d.layout.icon)||'link'; return ICONS[i]||'🔗'; }
+
+var BADGES = { h5_entry:'H5 入口', assistant_welcome:'AI 助手', recommendation:'AI 推荐', task:'', health_advice:'' };
+
+function subjectLabel(s)    { return {chinese:'语文',math:'数学',english:'英语'}[s]||''; }
+
+var TYPE_LABEL = { video:'视频', audio:'音频', image:'图片', file:'文件' };
+
+function getTemplate(cardType) {
+  if (cardType === 'homework_reminder') return { html: homeworkHTML, css: 'homework-card/ai-card.css' };
+  if (cardType === 'media_preview')     return { html: mediaHTML,    css: 'media-card/ai-card.css' };
+  return { html: defaultHTML, css: 'text-card/ai-card.css' };
+}
+
+function defaultHTML(d) {
+  var icon = iconEmoji(d), badge = BADGES[d.card_type]||'', btn = d.button_text||'打开页面';
+  return '<div class="card"><div class="strip"></div><div class="card-body">'+
+    '<div class="hdr"><div class="icon">'+icon+'</div><div class="hinfo">'+
+      '<div class="title">'+esc(d.title)+'</div>'+
+      (d.subtitle?'<div class="subtitle">'+esc(d.subtitle)+'</div>':'')+
+      (badge?'<span class="badge">'+badge+'</span>':'')+
+    '</div></div>'+
+    (d.description?'<div class="desc">'+esc(d.description)+'</div>':'')+
+    '<div class="actions"><button class="btn primary">'+esc(btn)+'</button></div>'+
+  '</div></div>';
+}
+
+function homeworkHTML(d) {
+  var icon = iconEmoji(d), label = subjectLabel(d.theme), btn = d.button_text||'查看作业';
+  return '<div class="card"><div class="bar"><div class="bicon">'+icon+'</div><div class="binfo">'+
+    '<div class="btitle">'+esc(d.title)+'</div>'+
+    (d.subtitle?'<div class="bsub">'+esc(d.subtitle)+'</div>':'')+
+    (label?'<span class="bbadge">'+label+'</span>':'')+
+  '</div></div><div class="card-body">'+
+    (d.description?'<div class="desc">'+esc(d.description)+'</div>':'')+
+    '<div class="actions"><button class="btn primary">'+esc(btn)+'</button></div>'+
+  '</div></div>';
+}
+
+function mediaHTML(d) {
+  var btn = d.button_text||'播放视频', mtype = (d.layout&&d.layout.icon)||'video';
+  return '<div class="card"><div class="media-area">'+
+    '<span class="media-badge">'+(TYPE_LABEL[mtype]||'文件')+'</span>'+
+    '<div class="media-play">▶</div>'+
+    (d.subtitle?'<span class="media-dur">'+esc(d.subtitle)+'</span>':'')+
+  '</div><div class="card-body">'+
+    '<div class="hdr"><div class="icon">'+iconEmoji(d)+'</div><div class="hinfo"><div class="title">'+esc(d.title)+'</div></div></div>'+
+    (d.description?'<div class="desc">'+esc(d.description)+'</div>':'')+
+    '<div class="actions"><button class="btn primary">'+esc(btn)+'</button></div>'+
+  '</div></div>';
+}
+
+function esc(s) { if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+class AICard extends HTMLElement {
+  constructor() { super(); this.attachShadow({ mode:'open' }); this._connected = false; }
+  static get observedAttributes() { return ['data']; }
+  attributeChangedCallback() { if (this._connected) this._render(); }
+  connectedCallback() { this._connected = true; this._render(); }
+  _render() {
+    var raw = this.getAttribute('data');
+    if (!raw) { this.shadowRoot.innerHTML=''; return; }
+    var d; try { d=JSON.parse(raw); } catch(e) { this.shadowRoot.innerHTML=''; return; }
+    var p = themeColor(d.theme), t = getTemplate(d.card_type);
+    this.shadowRoot.innerHTML='';
+
+    var link = document.createElement('link');
+    link.rel='stylesheet'; link.href=t.css;
+    this.shadowRoot.appendChild(link);
+
+    var vars = document.createElement('style');
+    vars.textContent = ':host{--c-brand:'+p.brand+';--c-light:'+p.light+';--c-soft:'+p.soft+';--c-grad-start:'+p.gradStart+';--c-grad-end:'+p.gradEnd+'}';
+    this.shadowRoot.appendChild(vars);
+
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML = t.html(d);
+    this.shadowRoot.appendChild(wrapper.firstElementChild);
+  }
+}
+customElements.define('ai-card', AICard);
+})();
+</script>
 
 <script>
 var CARDS = [
-  {folder:'text-card', group:'文本卡片', file:'h5-ai-assistant.json', data:{"schema_version":"1.0","card_type":"h5_entry","title":"炎图 AI 助手","subtitle":"我已加入当前聊天室","description":"可以为你提供智能协同服务，点击查看推荐内容。","button_text":"打开页面","target_url":"https://www.baidu.com","theme":"blue_white","layout":{"variant":"h5_entry","icon":"ai"}}},
-  {folder:'text-card', group:'文本卡片', file:'h5-essay.json', data:{"schema_version":"1.0","card_type":"h5_entry","title":"作文范文：我的家乡","subtitle":"点击查看完整内容与老师点评","description":"三年级优秀作文展示，包含老师点评与修改建议。","button_text":"查看范文","target_url":"https://example.com/essay","theme":"blue_white","layout":{"variant":"h5_entry","icon":"link"}}},
-  {folder:'text-card', group:'文本卡片', file:'edu-ai.json', data:{"schema_version":"1.0","card_type":"assistant_welcome","title":"教育 AI 助手","subtitle":"已就绪 · 随时为你服务","description":"我可以帮你完成：布置作业、批改作文、生成课程总结、回答学科问题。试试对我说「总结今天课程」吧！","button_text":"开始对话","target_url":"https://example.com/edu-ai","theme":"purple_white","layout":{"variant":"assistant_welcome","icon":"ai"}}},
-  {folder:'text-card', group:'文本卡片', file:'medical-ai.json', data:{"schema_version":"1.0","card_type":"assistant_welcome","title":"医疗 AI 助手","subtitle":"已就绪 · 李医生随访团队","description":"我可以帮你：定时用药提醒、复诊预约、健康报告解读、饮食运动建议。对我说「今天药吃了吗」试试！","button_text":"开始对话","target_url":"https://example.com/medical-ai","theme":"emerald_white","layout":{"variant":"assistant_welcome","icon":"ai"}}},
-  {folder:'text-card', group:'文本卡片', file:'oral-practice.json', data:{"schema_version":"1.0","card_type":"recommendation","title":"英语口语 · 餐厅点餐场景","subtitle":"根据你的学习进度智能推荐","description":"包含 12 组实用对话，覆盖点餐、结账、询问优惠等常见场景。AI 实时评分并给出改进建议。约 15 分钟 · 4.8 分 · 326 人练过。","button_text":"开始练习","target_url":"https://example.com/oral-practice","theme":"cyan_white","layout":{"variant":"recommendation","icon":"audio"}}},
-  {folder:'text-card', group:'文本卡片', file:'weekly-report.json', data:{"schema_version":"1.0","card_type":"task","title":"班级群 · 教学周报汇总","subtitle":"由班主任发起 · 三年级组","description":"请各科老师在周五前提交本周教学周报（语文、数学、英语、科学），汇总后将统一发送至年级组存档。","button_text":"提交我的","target_url":"https://task.example.com/weekly-report","theme":"amber_white","layout":{"variant":"task","icon":"task"}}},
-  {folder:'text-card', group:'文本卡片', file:'medication-reminder.json', data:{"schema_version":"1.0","card_type":"health_advice","title":"服药提醒 · 阿莫西林","subtitle":"医疗 AI 助手 · 李医生随访","description":"每日 3 次，每次 1 粒，饭后服用。请勿与牛奶同服，两次用药间隔至少 6 小时。本次疗程剩余 5 天，下次服药时间：今天 18:30。","button_text":"确认已服药","target_url":"https://health.example.com/medication/confirm","theme":"emerald_white","layout":{"variant":"health_advice","icon":"health"}}},
-  {folder:'homework-card', group:'作业卡片', file:'chinese.json', data:{"schema_version":"1.0","card_type":"homework_reminder","title":"语文 · 阅读理解训练","subtitle":"张老师 · 三年级二班","description":"阅读课文《荷花》第2-4自然段，完成课后练习题第1-5题。重点体会作者对荷花的观察顺序和描写方法，用自己的话概括每段大意。","button_text":"查看作业","target_url":"https://homework.example.com/chinese","theme":"red_white","layout":{"variant":"homework_reminder","icon":"chinese"}}},
-  {folder:'homework-card', group:'作业卡片', file:'math.json', data:{"schema_version":"1.0","card_type":"homework_reminder","title":"数学 · 第三章分数练习","subtitle":"王老师 · 三年级二班","description":"完成课本第42-44页练习题 1-15，重点练习分数加减法的通分与约分。要求写出完整计算过程，不可只写答案。","button_text":"查看作业","target_url":"https://homework.example.com/math","theme":"blue_white","layout":{"variant":"homework_reminder","icon":"math"}}},
-  {folder:'homework-card', group:'作业卡片', file:'english.json', data:{"schema_version":"1.0","card_type":"homework_reminder","title":"英语 · Unit 5 My Day","subtitle":"李老师 · 三年级二班","description":"背诵 Unit 5 单词表（get up, breakfast, go to school 等 20 个词组），完成 Activity Book 第28-29页练习。录制一段「My Day」口语视频，不少于1分钟。","button_text":"查看作业","target_url":"https://homework.example.com/english","theme":"green_white","layout":{"variant":"homework_reminder","icon":"english"}}},
-  {folder:'media-card', group:'媒体卡片', file:'class-video.json', data:{"schema_version":"1.0","card_type":"media_preview","title":"课堂录像 · 分数的加减法","subtitle":"42:18","description":"张老师 · 2026/05/24 上传 · MP4 · 1080p · 1.2 GB · 86 次观看。第三章重难点讲解，包含 5 道例题精讲与课堂互动问答环节。","button_text":"播放视频","target_url":"https://media.example.com/video/math-fraction","theme":"indigo_white","layout":{"variant":"media_preview","icon":"video"}}}
+  {folder:'text-card', group:'文本卡片', file:'h5-ai-assistant.json', data:{"schema_version":"1.0","card_type":"h5_entry","title":"炎图 AI 助手","subtitle":"我已加入当前聊天室","description":"可以为你提供智能协同服务，点击查看推荐内容。","button_text":"打开页面","target_url":"https://www.baidu.com","theme":"general","layout":{"variant":"h5_entry","icon":"ai"}}},
+  {folder:'text-card', group:'文本卡片', file:'h5-essay.json', data:{"schema_version":"1.0","card_type":"h5_entry","title":"作文范文：我的家乡","subtitle":"点击查看完整内容与老师点评","description":"三年级优秀作文展示，包含老师点评与修改建议。","button_text":"查看范文","target_url":"https://example.com/essay","theme":"general","layout":{"variant":"h5_entry","icon":"link"}}},
+  {folder:'text-card', group:'文本卡片', file:'edu-ai.json', data:{"schema_version":"1.0","card_type":"assistant_welcome","title":"教育 AI 助手","subtitle":"已就绪 · 随时为你服务","description":"我可以帮你完成：布置作业、批改作文、生成课程总结、回答学科问题。试试对我说「总结今天课程」吧！","button_text":"开始对话","target_url":"https://example.com/edu-ai","theme":"ai","layout":{"variant":"assistant_welcome","icon":"ai"}}},
+  {folder:'text-card', group:'文本卡片', file:'medical-ai.json', data:{"schema_version":"1.0","card_type":"assistant_welcome","title":"医疗 AI 助手","subtitle":"已就绪 · 李医生随访团队","description":"我可以帮你：定时用药提醒、复诊预约、健康报告解读、饮食运动建议。对我说「今天药吃了吗」试试！","button_text":"开始对话","target_url":"https://example.com/medical-ai","theme":"health","layout":{"variant":"assistant_welcome","icon":"ai"}}},
+  {folder:'text-card', group:'文本卡片', file:'oral-practice.json', data:{"schema_version":"1.0","card_type":"recommendation","title":"英语口语 · 餐厅点餐场景","subtitle":"根据你的学习进度智能推荐","description":"包含 12 组实用对话，覆盖点餐、结账、询问优惠等常见场景。AI 实时评分并给出改进建议。约 15 分钟 · 4.8 分 · 326 人练过。","button_text":"开始练习","target_url":"https://example.com/oral-practice","theme":"recommendation","layout":{"variant":"recommendation","icon":"audio"}}},
+  {folder:'text-card', group:'文本卡片', file:'weekly-report.json', data:{"schema_version":"1.0","card_type":"task","title":"班级群 · 教学周报汇总","subtitle":"由班主任发起 · 三年级组","description":"请各科老师在周五前提交本周教学周报（语文、数学、英语、科学），汇总后将统一发送至年级组存档。","button_text":"提交我的","target_url":"https://task.example.com/weekly-report","theme":"task","layout":{"variant":"task","icon":"task"}}},
+  {folder:'text-card', group:'文本卡片', file:'medication-reminder.json', data:{"schema_version":"1.0","card_type":"health_advice","title":"服药提醒 · 阿莫西林","subtitle":"医疗 AI 助手 · 李医生随访","description":"每日 3 次，每次 1 粒，饭后服用。请勿与牛奶同服，两次用药间隔至少 6 小时。本次疗程剩余 5 天，下次服药时间：今天 18:30。","button_text":"确认已服药","target_url":"https://health.example.com/medication/confirm","theme":"health","layout":{"variant":"health_advice","icon":"health"}}},
+  {folder:'homework-card', group:'作业卡片', file:'chinese.json', data:{"schema_version":"1.0","card_type":"homework_reminder","title":"语文 · 阅读理解训练","subtitle":"张老师 · 三年级二班","description":"阅读课文《荷花》第2-4自然段，完成课后练习题第1-5题。重点体会作者对荷花的观察顺序和描写方法，用自己的话概括每段大意。","button_text":"查看作业","target_url":"https://homework.example.com/chinese","theme":"chinese","layout":{"variant":"homework_reminder","icon":"chinese"}}},
+  {folder:'homework-card', group:'作业卡片', file:'math.json', data:{"schema_version":"1.0","card_type":"homework_reminder","title":"数学 · 第三章分数练习","subtitle":"王老师 · 三年级二班","description":"完成课本第42-44页练习题 1-15，重点练习分数加减法的通分与约分。要求写出完整计算过程，不可只写答案。","button_text":"查看作业","target_url":"https://homework.example.com/math","theme":"math","layout":{"variant":"homework_reminder","icon":"math"}}},
+  {folder:'homework-card', group:'作业卡片', file:'english.json', data:{"schema_version":"1.0","card_type":"homework_reminder","title":"英语 · Unit 5 My Day","subtitle":"李老师 · 三年级二班","description":"背诵 Unit 5 单词表（get up, breakfast, go to school 等 20 个词组），完成 Activity Book 第28-29页练习。录制一段「My Day」口语视频，不少于1分钟。","button_text":"查看作业","target_url":"https://homework.example.com/english","theme":"english","layout":{"variant":"homework_reminder","icon":"english"}}},
+  {folder:'media-card', group:'媒体卡片', file:'class-video.json', data:{"schema_version":"1.0","card_type":"media_preview","title":"课堂录像 · 分数的加减法","subtitle":"42:18","description":"张老师 · 2026/05/24 上传 · MP4 · 1080p · 1.2 GB · 86 次观看。第三章重难点讲解，包含 5 道例题精讲与课堂互动问答环节。","button_text":"播放视频","target_url":"https://media.example.com/video/math-fraction","theme":"video","layout":{"variant":"media_preview","icon":"video"}}}
 ];
 
 var groups = {};
