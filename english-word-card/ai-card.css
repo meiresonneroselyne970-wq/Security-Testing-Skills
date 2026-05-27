@@ -1,13 +1,14 @@
 /* ================================================================
    english-word-card/ai-card.css
-   Template: Sticky note card with tape + ribbon + letter-word-image
+   Template: Sticky note card with tape + ribbon + word + image
+   Interactive: click to speak English, show Chinese meaning
    ================================================================ */
 
 /* ── Component: host ── */
 :host {
   display: block;
   max-width: 380px;
-  margin: 0px auto;
+  margin: 0 auto;
   font-family: "Patrick Hand", "Comic Sans MS", cursive, sans-serif;
 }
 
@@ -26,6 +27,20 @@
   flex-direction: column;
 }
 
+/* ── Tape decoration ── */
+.abc-card .tape-decor {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px dotted #ccc;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  opacity: 0.8;
+  z-index: 2;
+}
 
 /* ── Ribbon badge ── */
 .abc-card .abc-ribbon {
@@ -47,60 +62,66 @@
 .abc-card .abc-body {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
   margin-top: 14px;
 }
 
-/* ── Letter + Word row ── */
+/* ── Word + Image row ── */
 .abc-card .abc-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 60px;
+  gap: 24px;
+  width: 100%;
 }
 
-.abc-card .abc-left {
-  flex-shrink: 0;
-}
-
-.abc-card .abc-right {
+/* ── Word area (left side) ── */
+.abc-card .abc-word-area {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 4px;
+  min-width: 0;
 }
 
-/* ── Big letter ── */
-.abc-card .big-letter {
+/* ── Big English word (word layout) ── */
+.abc-card .big-word {
+  font-size: 52px;
   font-weight: 900;
   cursor: pointer;
-  white-space: nowrap;
   user-select: none;
+  color: #2c3e50;
+  text-shadow: 2px 2px 0 rgba(255,255,255,.8), 3px 3px 0 rgba(0,0,0,.08);
+  transition: transform 0.15s;
 }
 
-.abc-card .letter-upper {
-  font-size: 90px;
-  text-shadow: 2px 2px 0 white, 3px 3px 0 rgba(0, 0, 0, 0.1);
+.abc-card .big-word:active {
+  transform: scale(0.95);
 }
 
-.abc-card .letter-lower {
-  font-size: 40px;
-  text-shadow: 2px 2px 0 white, 2px 2px 0 rgba(0, 0, 0, 0.1);
+/* ── Chinese meaning (hidden until click) ── */
+.abc-card .word-zh {
+  font-size: 18px;
+  color: #8e44ad;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
 }
 
-/* ── Word label ── */
-.abc-card .word-label {
-  font-size: 32px;
-  font-weight: bold;
-  cursor: pointer;
-  user-select: none;
+.abc-card .word-zh.show {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* ── Image ── */
 .abc-card .abc-img {
-  width: 80px;
-  height: 80px;
+  width: 90px;
+  height: 90px;
   object-fit: contain;
-  margin-top: 2px;
+  flex-shrink: 0;
   filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.1));
   transition: transform 0.2s;
   cursor: pointer;
@@ -150,12 +171,11 @@
 @media (min-width: 480px) {
   :host { max-width: 420px; }
   .abc-card { border-radius: 12px; }
-  .abc-card .abc-row { gap: 68px; }
   .abc-card .abc-ribbon { font-size: 20px; padding: 5px 18px; top: -11px; }
-  .abc-card .letter-upper { font-size: 100px; }
-  .abc-card .letter-lower { font-size: 46px; }
-  .abc-card .word-label { font-size: 36px; }
-  .abc-card .abc-img { width: 90px; height: 90px; }
+  .abc-card .abc-row { gap: 32px; }
+  .abc-card .big-word { font-size: 60px; }
+  .abc-card .word-zh { font-size: 20px; }
+  .abc-card .abc-img { width: 100px; height: 100px; }
   .abc-card .btn { padding: 9px 32px; font-size: 16px; }
 }
 
@@ -163,12 +183,11 @@
 @media (min-width: 768px) {
   :host { max-width: 460px; }
   .abc-card { border-radius: 14px; padding: 8px 14px 14px 14px; }
-  .abc-card .abc-row { gap: 80px; }
   .abc-card .abc-ribbon { font-size: 22px; padding: 6px 22px; top: -12px; }
-  .abc-card .letter-upper { font-size: 118px; }
-  .abc-card .letter-lower { font-size: 54px; }
-  .abc-card .word-label { font-size: 40px; }
-  .abc-card .abc-img { width: 100px; height: 100px; }
+  .abc-card .abc-row { gap: 40px; }
+  .abc-card .big-word { font-size: 68px; }
+  .abc-card .word-zh { font-size: 22px; }
+  .abc-card .abc-img { width: 110px; height: 110px; }
   .abc-card .btn { padding: 10px 36px; font-size: 17px; }
 }
 
@@ -176,12 +195,11 @@
 @media (min-width: 1024px) {
   :host { max-width: 500px; }
   .abc-card { border-radius: 16px; padding: 10px 18px 18px 18px; }
-  .abc-card .abc-row { gap: 100px; }
   .abc-card .abc-ribbon { font-size: 24px; padding: 7px 26px; top: -13px; left: -6px; }
-  .abc-card .letter-upper { font-size: 140px; }
-  .abc-card .letter-lower { font-size: 64px; }
-  .abc-card .word-label { font-size: 46px; }
-  .abc-card .abc-img { width: 110px; height: 110px; }
+  .abc-card .abc-row { gap: 48px; }
+  .abc-card .big-word { font-size: 78px; }
+  .abc-card .word-zh { font-size: 24px; }
+  .abc-card .abc-img { width: 120px; height: 120px; }
   .abc-card .btn { padding: 11px 40px; font-size: 18px; }
 }
 
@@ -189,12 +207,11 @@
 @media (min-width: 1440px) {
   :host { max-width: 560px; }
   .abc-card { border-radius: 18px; padding: 12px 22px 22px 22px; }
-  .abc-card .abc-row { gap: 130px; }
   .abc-card .abc-ribbon { font-size: 28px; padding: 8px 30px; top: -15px; left: -8px; }
-  .abc-card .letter-upper { font-size: 160px; }
-  .abc-card .letter-lower { font-size: 74px; }
-  .abc-card .word-label { font-size: 52px; }
-  .abc-card .abc-img { width: 130px; height: 130px; }
+  .abc-card .abc-row { gap: 56px; }
+  .abc-card .big-word { font-size: 88px; }
+  .abc-card .word-zh { font-size: 26px; }
+  .abc-card .abc-img { width: 140px; height: 140px; }
   .abc-card .btn { padding: 13px 48px; font-size: 20px; }
 }
 
