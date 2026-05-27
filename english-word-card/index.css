@@ -1,0 +1,221 @@
+/* ================================================================
+   ABC 字母启蒙 — 课本插图页样式
+   设计基准: 375px 移动端 → 1rem = 37.5px (calc(100vw / 10))
+   所有尺寸使用 rem 以适配不同屏幕宽度
+   ================================================================ */
+
+/* ---- rem 基准: 375px 下 1rem = 37.5px ---- */
+html {
+  font-size: calc(100vw / 10);
+}
+
+/* ---- 全局重置 ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Patrick Hand", "Comic Sans MS", cursive, sans-serif;
+}
+
+/* ---- 根元素：满屏 + 禁止触摸滚动穿透 ---- */
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  touch-action: none;             /* 禁止浏览器默认手势 */
+  -webkit-tap-highlight-color: transparent;  /* 去掉移动端点按高亮 */
+  color: #2c3e50;                 /* 深蓝灰，模拟铅笔字色 */
+  font-family: "Patrick Hand", "Comic Sans MS", cursive, sans-serif;
+}
+
+/* ---- 全局隐藏滚动条（保留滚动功能） ---- */
+* {
+  scrollbar-width: none;          /* Firefox */
+}
+*::-webkit-scrollbar {
+  display: none;                  /* Chrome / Safari */
+}
+
+/* ================================================================
+   页面容器 — 笔记本横线纸背景
+   三层叠加: 径向阴影 → 横线 → 底色
+   ================================================================ */
+.page-container {
+  width: 100%;
+  max-width: 34.13333rem;         /* 375px 下 ≈ 1280px，宽屏居中 */
+  margin: 0 auto;
+  box-sizing: border-box;
+  font-family: "Patrick Hand", "Comic Sans MS", cursive, sans-serif;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* 三层背景: 纸张中心光晕 → 横线 → 米黄色底 */
+  background:
+    radial-gradient(circle at center, transparent 0%, rgba(228, 228, 228, 0.4) 100%),
+    linear-gradient(#b0b0b0 0.02667rem, transparent 0.02667rem),
+    #fffdf0;
+  background-size: auto, 100% 0.53333rem, auto;  /* 横线间距 0.53333rem ≈ 20px */
+}
+
+/* ================================================================
+   可滚动内容区 — 页面中间弹性区域
+   ================================================================ */
+.main-scroll-wrapper {
+  width: 100%;
+  max-width: 21.33333rem;         /* 375px 下 ≈ 800px */
+  margin: 0 auto;
+  padding-top: 0.53333rem;        /* ≈ 20px，给缎带和胶带留空间 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 游戏/内容区 */
+.game-area {
+  width: 100%;
+}
+
+/* ================================================================
+   ABC 便利贴卡片 — 半透明贴纸风格
+   ================================================================ */
+.abc-area {
+  width: 100%;
+}
+
+/* 便利贴主体 */
+.abc-section {
+  background: rgba(255, 255, 255, 0.6);  /* 半透明白色，可看到底层横线 */
+  border-radius: 0.26667rem;             /* ≈ 10px */
+  border: 0.02667rem solid #ddd;         /* ≈ 1px 浅灰边框 */
+  padding: 0.13333rem 0.26667rem 0.26667rem 0.26667rem;
+  position: relative;
+  box-shadow: 0 0.05333rem 0.21333rem rgba(0, 0, 0, 0.05);
+}
+
+/* ---- 胶带装饰：透明胶带压在便利贴顶部 ---- */
+.tape-decor {
+  position: absolute;
+  top: -0.32rem;                  /* ≈ 12px，伸出卡片上方 */
+  left: 50%;
+  transform: translateX(-50%);    /* 水平居中 */
+  width: 2.66667rem;              /* ≈ 100px */
+  height: 0.8rem;                 /* ≈ 30px */
+  background: rgba(255, 255, 255, 0.5);  /* 半透明白色胶带 */
+  border: 0.02667rem dotted #ccc;         /* 虚线边，模拟胶带边缘 */
+  box-shadow: 0 0.02667rem 0.08rem rgba(0, 0, 0, 0.1);
+  opacity: 0.8;
+}
+
+/* ---- ABC 标题缎带：紫色斜角徽章，伸出卡片左上角 ---- */
+.abc-header-ribbon {
+  position: absolute;
+  top: -0.26667rem;               /* ≈ 10px，伸出上方 */
+  left: -0.13333rem;              /* ≈ 5px，伸出左边 */
+  background: #8e44ad;            /* 紫色 */
+  color: white;
+  padding: 0.10667rem 0.4rem;     /* ≈ 4px 15px */
+  border-radius: 0.10667rem;      /* ≈ 4px */
+  font-weight: bold;
+  font-size: 0.48rem;             /* ≈ 18px */
+  transform: rotate(-2deg);       /* 微微左倾，手写感 */
+  z-index: 10;                    /* 盖在胶带上面 */
+  box-shadow: 0.05333rem 0.05333rem 0.13333rem rgba(0, 0, 0, 0.2);
+}
+
+/* ---- 内容纵排容器 ---- */
+.abc-content-flex.column-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05333rem;                /* ≈ 2px，各块之间间距 */
+  margin-top: 0.4rem;             /* ≈ 15px，给缎带留空间 */
+}
+
+/* ---- 每个指令块 ---- */
+.abc-part {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- 左右布局：左字母 | 右单词+图片 ---- */
+.abc-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+/* 左侧：大字母 */
+.abc-left {
+  flex-shrink: 0;
+}
+
+/* 右侧：单词在上，图片在下 */
+.abc-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+}
+
+/* 单词文字 */
+.word-label {
+  font-size: 0.9rem;          /* ≈ 40px，占两行 */
+  font-weight: bold;
+}
+
+/* 大号字母 */
+.big-letter {
+  font-weight: 900;               /* 超粗 */
+  cursor: pointer;                /* JS 会绑定点击发音 */
+  white-space: nowrap;
+}
+
+/* 大写字母：占三行高度 */
+.letter-upper {
+  font-size: 1.6rem;              /* ≈ 60px，占三行 */
+  text-shadow:
+    0.05333rem 0.05333rem 0 white,
+    0.08rem 0.08rem 0 rgba(0, 0, 0, 0.1);
+  vertical-align: baseline;
+}
+
+/* 小写字母：占两行高度，与大写同基线 */
+.letter-lower {
+  font-size: 1.06667rem;          /* ≈ 40px，占两行 */
+  text-shadow:
+    0.05333rem 0.05333rem 0 white,
+    0.05333rem 0.05333rem 0 rgba(0, 0, 0, 0.1);
+  vertical-align: baseline;
+}
+
+/* 辅助文字颜色 */
+.text-green { color: #4CAF50; }
+.text-blue  { color: #2196F3; }
+
+/* ---- 实物图片 ---- */
+.abc-real-img {
+  width: 2.13333rem;              /* ≈ 80px */
+  height: 2.13333rem;
+  object-fit: contain;            /* 等比缩放 */
+  margin-top: 0.05333rem;         /* ≈ 2px */
+  filter: drop-shadow(0 0.10667rem 0.10667rem rgba(0, 0, 0, 0.1));  /* 投影 */
+  transition: transform 0.2s;     /* 按压缩放过渡 */
+}
+
+/* 可交互图片：点击发音 */
+.abc-real-img.interactive {
+  cursor: pointer;
+}
+
+/* 按下时缩小 */
+.abc-real-img.interactive:active {
+  transform: scale(0.9);
+}
+
+/* 悬停时放大 */
+.abc-real-img.interactive:hover {
+  transform: scale(1.05);
+}

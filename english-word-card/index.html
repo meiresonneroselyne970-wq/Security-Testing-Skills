@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ABC · 字母启蒙</title>
+<!-- 谷歌手写字体: Patrick Hand，营造课本手写风格 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="index.css">
+</head>
+<body>
+<!-- ===== 页面容器：笔记本横线纸 ===== -->
+<div class="page-container" id="app">
+
+  <!-- ===== 可滚动内容区 ===== -->
+  <div class="main-scroll-wrapper">
+    <div class="game-area">
+
+      <!-- ===== ABC 便利贴卡片 ===== -->
+      <div class="abc-area">
+        <div class="abc-section">
+          <!-- 胶带装饰：模拟便利贴贴在纸上的效果 -->
+          <div class="tape-decor"></div>
+
+          <!-- ABC 标题缎带：紫色斜角徽章 -->
+          <div class="abc-header-ribbon">✨ Fun with ABCs! ✨</div>
+
+          <!-- 纵向内容区 -->
+          <div class="abc-content-flex column-layout">
+
+            <!-- 内容块：左字母 + 右单词/图片（由 JS 动态生成） -->
+            <div class="abc-part" id="abcContent"></div>
+
+          </div><!-- abc-content-flex -->
+        </div><!-- abc-section -->
+      </div><!-- abc-area -->
+
+    </div><!-- game-area -->
+  </div><!-- main-scroll-wrapper -->
+
+</div><!-- page-container -->
+
+<!-- 内联数据：作为 data.json 加载失败时的回退 -->
+<script type="application/json" id="inlineData">
+{
+  "schema_version": "1.0",
+  "card_type": "abc_illustration",
+  "title": "ABC · 字母启蒙",
+  "subtitle": "Look, Find & Learn!",
+  "description": "Aa|apple",
+  "button_text": "开始学习",
+  "target_url": "https://works.blazegraph.site/works/e02656c2-d563-4ca2-8406-33031d109b48/2-1-6-4-1779693877148/images/img16.png",
+  "theme": "abc_illustration",
+  "layout": { "variant": "abc_illustration", "icon": "abc" }
+}
+</script>
+<script src="index.js"></script>
+</body>
+</html>
