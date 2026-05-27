@@ -185,12 +185,12 @@ Follow the schema strictly. **Do not add fields outside the spec:**
 - Use 「」for inner quotes inside JSON strings to avoid parser conflicts
 - File name in kebab-case
 
-### Step 3: Update index.html
+### Step 3: Update the JS auto-fetch list
 
-In the template folder's `index.html`, find the `var CARDS = [` array and append:
+In the template folder's `ai-card.js`, find the IIFE at the bottom and add the new JSON filename to the `FILES` array:
 
 ```javascript
-{file:"new-file.json", data:{/* complete JSON data */}},
+var FILES = ['existing.json', 'new-file.json'];
 ```
 
 ### Step 4: Update ai-card-demo.html
@@ -293,10 +293,6 @@ When the card's visual layout is **fundamentally different** from all 3 existing
  * {name}-card/ai-card.js — {brief description}
  * Template: {one-line visual structure summary}
  */
-const BASE = document.currentScript
-  ? new URL('.', document.currentScript.src).href
-  : location.href;
-
 const PALETTE = {
   // Only colors needed by this template
   blue: { brand:'#3b82f6', light:'#eff6ff', soft:'#dbeafe', gradStart:'#3b82f6', gradEnd:'#60a5fa' },
@@ -316,10 +312,10 @@ const ICONS = {
 function iconEmoji(d) { const i=(d.layout&&d.layout.icon)||'default'; return ICONS[i]||'🔗'; }
 
 class AICard extends HTMLElement {
-  constructor() { super(); this.attachShadow({ mode:'open' }); }
+  constructor() { super(); this.attachShadow({ mode:'open' }); this._connected = false; }
   static get observedAttributes() { return ['data']; }
-  attributeChangedCallback() { this.render(); }
-  connectedCallback() { this.render(); }
+  attributeChangedCallback() { if (this._connected) this.render(); }
+  connectedCallback() { this._connected = true; this.render(); }
 
   render() {
     const raw = this.getAttribute('data');
@@ -329,7 +325,7 @@ class AICard extends HTMLElement {
     this.shadowRoot.innerHTML='';
 
     const link = document.createElement('link');
-    link.rel='stylesheet'; link.href=new URL('./ai-card.css', BASE).href;
+    link.rel='stylesheet'; link.href='ai-card.css';
     this.shadowRoot.appendChild(link);
 
     const vars = document.createElement('style');
@@ -360,14 +356,22 @@ function esc(s) { if(s==null)return''; return String(s).replace(/&/g,'&amp;').re
 
 if (!customElements.get('ai-card')) customElements.define('ai-card', AICard);
 
-// ── Card list rendering ──
-(function(){
-  if (typeof CARDS==='undefined') return;
-  var root=document.getElementById('root');
+window.renderCards = function(containerId, cards) {
+  var root = document.getElementById(containerId);
   if (!root) return;
-  root.innerHTML=CARDS.map(function(c){
-    return '<div class="wrap"><span class="label">'+c.file+' · '+c.data.theme+' · icon='+c.data.layout.icon+'</span><ai-card data=\''+JSON.stringify(c.data)+'\'></ai-card></div>';
+  root.innerHTML = cards.map(function(c) {
+    var d = c.data;
+    return '<div class="wrap"><span class="label">'+(d.layout&&d.layout.variant||d.card_type)+' · '+d.theme+' · icon='+(d.layout&&d.layout.icon)+'</span><ai-card data=\''+JSON.stringify(d)+'\'></ai-card></div>';
   }).join('');
+};
+
+// ── Auto-fetch and render when loaded in this folder's index.html ──
+(function() {
+  var root = document.getElementById('root');
+  if (!root) return;
+  var FILES = ['first.json'];
+  Promise.all(FILES.map(function(f) { return fetch(f).then(function(r) { return r.json(); }); }))
+    .then(function(data) { renderCards('root', data.map(function(d) { return { data:d }; })); });
 })();
 ```
 
@@ -383,25 +387,19 @@ if (!customElements.get('ai-card')) customElements.define('ai-card', AICard);
 <link rel="stylesheet" href="ai-card.css">
 </head>
 <body>
-<h1>{Display Name}</h1><p class="sub">{One-line description}</p>
 <div id="root"></div>
-<script>
-var CARDS = [
-  {file:"first.json", data:{/* JSON data */}},
-];
-</script>
 <script src="ai-card.js"></script>
 </body></html>
 ```
 
-Page-level styles (body, h1, .sub, #root, .wrap, .label + responsive media queries) live in `ai-card.css` at the bottom, after all component styles. No `<style>` block in the HTML.
+Page-level styles (body, h1, .sub, #root, .wrap, .label + responsive media queries) live in `ai-card.css` at the bottom, after all component styles. No `<style>` or inline `<script>` blocks in the HTML — the JS auto-fetches its JSON files.
 
 **5. Create at least one JSON data file.**
 
 **6. Create `metadata.md`** — must include: file structure, JSON Schema, field table, HTML render structure (DOM tree), adaptive rules, data variants, theme/palette table, responsive breakpoints table, rendering notes.
 
 **7. Update `ai-card-demo.html`:**
-- Add a new `<script src="{folder}/ai-card.js"></script>` before the inline `<script>` block
+- Add the new template's HTML function, THEME_MAP entries, ICONS, and CSS path to the unified inline Web Component
 - Append new card entries to the `CARDS` array
 
 **8. Update this skill file** — add the new template as a 4th entry under "Existing Templates."
@@ -480,7 +478,7 @@ All template CSS and index.html must adapt to 5 device targets:
 - Card width, fonts, icons, spacing, and border-radius all scale progressively (~+10% per breakpoint)
 - Button padding increases with screen size for comfortable TV-distance interaction
 - Page container (`#root`) switches to CSS Grid at large-screen breakpoints and above
-- Responsive layout for index.html and demo page goes in `<style>` media queries
+- Responsive layout for index.html and demo page goes in `ai-card.css` media queries — no `<style>` block in HTML
 
 ### New Template Responsive Checklist
 
