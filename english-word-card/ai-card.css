@@ -1,0 +1,204 @@
+/* ================================================================
+   english-word-card/ai-card.css
+   Template: Sticky note card with tape + ribbon + letter-word-image
+   ================================================================ */
+
+/* ── Component: host ── */
+:host {
+  display: block;
+  max-width: 380px;
+  margin: 0px auto;
+  font-family: "Patrick Hand", "Comic Sans MS", cursive, sans-serif;
+}
+
+/* ── Sticky Note Card ── */
+.abc-card {
+  background:
+    linear-gradient(#d0d0d0 1px, transparent 1px),
+    #fffef9;
+  background-size: 100% 20px;
+  border-radius: 10px;
+  border: 1px solid #e5e0d5;
+  padding: 6px 10px 10px 10px;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* ── Ribbon badge ── */
+.abc-card .abc-ribbon {
+  position: absolute;
+  top: -10px;
+  left: -5px;
+  background: #8e44ad;
+  color: white;
+  padding: 4px 15px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 18px;
+  transform: rotate(-2deg);
+  z-index: 10;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Card body ── */
+.abc-card .abc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+/* ── Letter + Word row ── */
+.abc-card .abc-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 60px;
+}
+
+.abc-card .abc-left {
+  flex-shrink: 0;
+}
+
+.abc-card .abc-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Big letter ── */
+.abc-card .big-letter {
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.abc-card .letter-upper {
+  font-size: 90px;
+  text-shadow: 2px 2px 0 white, 3px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.abc-card .letter-lower {
+  font-size: 40px;
+  text-shadow: 2px 2px 0 white, 2px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* ── Word label ── */
+.abc-card .word-label {
+  font-size: 32px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ── Image ── */
+.abc-card .abc-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-top: 2px;
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.1));
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+
+.abc-card .abc-img:active {
+  transform: scale(0.9);
+}
+
+.abc-card .abc-img:hover {
+  transform: scale(1.05);
+}
+
+/* ── Button ── */
+.abc-card .actions {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.abc-card .btn {
+  display: inline-block;
+  padding: 8px 28px;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+}
+
+.abc-card .btn.primary {
+  background: #8e44ad;
+  color: #fff;
+}
+
+.abc-card .btn.primary:active {
+  opacity: 0.8;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Responsive breakpoints
+   ══════════════════════════════════════════════════════════════ */
+
+/* Tablet 480px+ */
+@media (min-width: 480px) {
+  :host { max-width: 420px; }
+  .abc-card { border-radius: 12px; }
+  .abc-card .abc-row { gap: 68px; }
+  .abc-card .abc-ribbon { font-size: 20px; padding: 5px 18px; top: -11px; }
+  .abc-card .letter-upper { font-size: 100px; }
+  .abc-card .letter-lower { font-size: 46px; }
+  .abc-card .word-label { font-size: 36px; }
+  .abc-card .abc-img { width: 90px; height: 90px; }
+  .abc-card .btn { padding: 9px 32px; font-size: 16px; }
+}
+
+/* Large screen 768px+ */
+@media (min-width: 768px) {
+  :host { max-width: 460px; }
+  .abc-card { border-radius: 14px; padding: 8px 14px 14px 14px; }
+  .abc-card .abc-row { gap: 80px; }
+  .abc-card .abc-ribbon { font-size: 22px; padding: 6px 22px; top: -12px; }
+  .abc-card .letter-upper { font-size: 118px; }
+  .abc-card .letter-lower { font-size: 54px; }
+  .abc-card .word-label { font-size: 40px; }
+  .abc-card .abc-img { width: 100px; height: 100px; }
+  .abc-card .btn { padding: 10px 36px; font-size: 17px; }
+}
+
+/* Desktop 1024px+ */
+@media (min-width: 1024px) {
+  :host { max-width: 500px; }
+  .abc-card { border-radius: 16px; padding: 10px 18px 18px 18px; }
+  .abc-card .abc-row { gap: 100px; }
+  .abc-card .abc-ribbon { font-size: 24px; padding: 7px 26px; top: -13px; left: -6px; }
+  .abc-card .letter-upper { font-size: 140px; }
+  .abc-card .letter-lower { font-size: 64px; }
+  .abc-card .word-label { font-size: 46px; }
+  .abc-card .abc-img { width: 110px; height: 110px; }
+  .abc-card .btn { padding: 11px 40px; font-size: 18px; }
+}
+
+/* TV 1440px+ */
+@media (min-width: 1440px) {
+  :host { max-width: 560px; }
+  .abc-card { border-radius: 18px; padding: 12px 22px 22px 22px; }
+  .abc-card .abc-row { gap: 130px; }
+  .abc-card .abc-ribbon { font-size: 28px; padding: 8px 30px; top: -15px; left: -8px; }
+  .abc-card .letter-upper { font-size: 160px; }
+  .abc-card .letter-lower { font-size: 74px; }
+  .abc-card .word-label { font-size: 52px; }
+  .abc-card .abc-img { width: 130px; height: 130px; }
+  .abc-card .btn { padding: 13px 48px; font-size: 20px; }
+}
+
+/* ── Page-level: standalone index.html only (ignored inside Shadow DOM) ── */
+body {
+  padding-top: 20px;
+}

@@ -1,6 +1,6 @@
 ---
 name: card
-description: Generate AI cards. 3 visual templates (text / homework / media), each in its own folder with CSS + JS + JSON + metadata.
+description: Generate AI cards. 4 visual templates (text / homework / media / english-word), each in its own folder with CSS + JS + JSON + metadata.
 ---
 
 # /card — AI Card Generator
@@ -22,6 +22,7 @@ User description / JSON
 │    - Has a dark media preview area?       │
 │    - Has a colored gradient banner?       │
 │    - Has a top accent strip + left bar?   │
+│    - Has notebook paper + tape + ribbon?  │
 │    - None of the above?                   │
 └─────────────────────────────────────────┘
     │
@@ -34,7 +35,7 @@ User description / JSON
 
 ---
 
-## 3 Existing Templates
+## 4 Existing Templates
 
 ### 1. text-card — Text Content Cards
 
@@ -150,13 +151,64 @@ card
 
 ---
 
+### 4. english-word-card — English Word Learning Cards
+
+**Visual signature:** Notebook paper background (横线纸) + semi-transparent sticky note with tape decoration at top + purple ribbon badge (缎带) tilted at top-left + big letter display (Aa) on left + word label + real-object image on right + interactive click-to-speak (Web Speech API).
+
+**DOM skeleton:**
+```
+card (abc-card, semi-transparent white, rounded, shadow)
+  ├── tape-decor (centered at top, dotted border)
+  ├── abc-ribbon (purple, tilted -2deg, top-left)
+  └── abc-body
+        ├── abc-row (horizontal flex)
+        │     ├── abc-left → big-letter
+        │     │     ├── letter-upper (60px, bold, text-shadow)
+        │     │     └── letter-lower (40px, bold)
+        │     └── abc-right
+        │           ├── word-label (32px, bold)
+        │           └── abc-img (80×80, drop-shadow)
+        └── actions → button
+```
+
+**Matching rules (any one match is sufficient):**
+- Needs a notebook/school-supply visual feel (paper background, tape, ribbon)
+- Big letter display for language/alphabet learning
+- Click-to-speak pronunciation interaction
+- Image-based word association for children's education
+
+**Existing variants:** a-for-apple (1 JSON file: `data.json`)
+
+**Supported card_type values:** `english_word`
+
+**Supported icon values:** `abc` (to add a new one, append to the ICONS object)
+
+**Supported theme values:** `abc` — mapped to purple via THEME_MAP (to add a new theme, append to THEME_MAP and PALETTE)
+
+**Special behavior:**
+- `subtitle` is the letter pair (e.g. "Aa"), rendered as big letter — NOT as subtitle text. First char = uppercase, rest = lowercase.
+- `description` is the English word (e.g. "apple"), rendered as word label and used as image alt text.
+- `title` is the ribbon badge text.
+- Page-level notebook paper background (`.page-container`) only appears in standalone `index.html`, not in demo/preview cards.
+- Web Speech API for pronunciation on click — `data-speak` attributes on `.big-letter`, `.word-label`, and `.abc-img` elements.
+- Uses Google Fonts "Patrick Hand" for handwritten textbook feel.
+
+**Google Fonts requirement:** `index.html` `<head>` must include:
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+```
+
+---
+
 ## Reuse Flow (Template Matched)
 
 When the card matches one of the 3 existing templates:
 
 ### Step 1: Choose the Folder
 
-Pick `text-card/`, `homework-card/`, or `media-card/` based on visual features.
+Pick `text-card/`, `homework-card/`, `media-card/`, or `english-word-card/` based on visual features.
 
 ### Step 2: Create the JSON File
 
@@ -458,6 +510,7 @@ All templates use semantic theme names that map to visual colors via `THEME_MAP`
 | `audio` | #4f46e5 (indigo) | media | Audio preview |
 | `image` | #4f46e5 (indigo) | media | Image preview |
 | `file` | #4f46e5 (indigo) | media | File download |
+| `abc` | #8e44ad (purple) | english-word | Alphabet learning |
 
 ---
 
