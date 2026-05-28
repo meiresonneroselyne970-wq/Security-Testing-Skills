@@ -21,10 +21,18 @@
 }
 
 .media-area {
+  background: #1e1b4b;
+}
+.media-area .media-preview {
   height: 150px;
   display: flex; align-items: center; justify-content: center;
   position: relative;
-  background: #1e1b4b;
+}
+.media-area video {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
 }
 .media-play {
   width: 52px; height: 52px;
@@ -87,7 +95,8 @@
 @media (min-width: 480px) {
   :host { max-width: 420px; }
   .card { border-radius: 18px; }
-  .media-area { height: 170px; }
+  .media-area .media-preview { height: 170px; }
+  .media-area video { max-height: 260px; }
   .media-play { width: 56px; height: 56px; font-size: 22px; }
   .media-badge { top: 12px; left: 12px; font-size: 11px; }
   .media-dur { bottom: 10px; right: 10px; font-size: 11px; }
@@ -103,7 +112,8 @@
 @media (min-width: 768px) {
   :host { max-width: 460px; }
   .card { border-radius: 20px; }
-  .media-area { height: 190px; }
+  .media-area .media-preview { height: 190px; }
+  .media-area video { max-height: 280px; }
   .media-play { width: 60px; height: 60px; font-size: 24px; }
   .media-badge { top: 14px; left: 14px; font-size: 11px; padding: 5px 10px; }
   .media-dur { bottom: 12px; right: 12px; font-size: 11px; }
@@ -119,7 +129,8 @@
 @media (min-width: 1024px) {
   :host { max-width: 500px; }
   .card { border-radius: 22px; }
-  .media-area { height: 210px; }
+  .media-area .media-preview { height: 210px; }
+  .media-area video { max-height: 300px; }
   .media-play { width: 66px; height: 66px; font-size: 26px; }
   .media-badge { top: 16px; left: 16px; font-size: 12px; }
   .media-dur { bottom: 14px; right: 14px; font-size: 12px; }
@@ -135,7 +146,8 @@
 @media (min-width: 1440px) {
   :host { max-width: 560px; }
   .card { border-radius: 24px; }
-  .media-area { height: 240px; }
+  .media-area .media-preview { height: 240px; }
+  .media-area video { max-height: 340px; }
   .media-play { width: 72px; height: 72px; font-size: 28px; }
   .media-badge { top: 18px; left: 18px; font-size: 13px; padding: 6px 12px; }
   .media-dur { bottom: 16px; right: 16px; font-size: 13px; padding: 4px 10px; }

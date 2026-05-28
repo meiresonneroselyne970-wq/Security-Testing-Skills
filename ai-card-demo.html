@@ -2,11 +2,12 @@
 <!--
   AI 卡片模板总览
   ──────────────
-  4 种视觉模板，4 个文件夹，12 张卡片变体
+  5 种视觉模板，5 个文件夹，13 张卡片变体
     text-card        → 文本类（7 张）
     homework-card    → 作业类（3 张）
     media-card       → 媒体类（1 张）
     english-word-card → 英语单词（1 张）
+    comic-card       → 连环画（1 张）
 -->
 <html lang="zh-CN">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -32,7 +33,7 @@ h1{font-size:18px;font-weight:700;color:#111827;margin-top:4px}
 </style></head>
 <body>
 <h1>AI 卡片模板预览</h1>
-<p class="sub">4 种视觉模板 · 每个文件夹独立的 CSS + JS + JSON · 双击任意 index.html 即可预览</p>
+<p class="sub">5 种视觉模板 · 每个文件夹独立的 CSS + JS + JSON · 双击任意 index.html 即可预览</p>
 <div id="root" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%"></div>
 
 <script>
@@ -57,7 +58,8 @@ var THEME_MAP = {
   general:'blue', ai:'purple', recommendation:'cyan', task:'amber', health:'emerald',
   chinese:'red', math:'blue', english:'green',
   video:'indigo', audio:'indigo', image:'indigo', file:'indigo',
-  abc:'purple'
+  abc:'purple',
+  comic:'amber'
 };
 
 function themeColor(t) { var c = THEME_MAP[t||'general'] || 'blue'; return PALETTE[c]||PALETTE.blue; }
@@ -66,7 +68,8 @@ var ICONS = {
   ai:'🤖', link:'🔗', sparkle:'✨', task:'📋', health:'💊', audio:'🎧',
   chinese:'📖', math:'📐', english:'🌐', homework:'📖',
   video:'🎬', image:'🖼', file:'📄',
-  abc:'🔤'
+  abc:'🔤',
+  comic:'💬'
 };
 function iconEmoji(d) { var i=(d.layout&&d.layout.icon)||'link'; return ICONS[i]||'🔗'; }
 
@@ -80,6 +83,7 @@ function getTemplate(cardType) {
   if (cardType === 'homework_reminder') return { html: homeworkHTML, css: 'homework-card/ai-card.css' };
   if (cardType === 'media_preview')     return { html: mediaHTML,    css: 'media-card/ai-card.css' };
   if (cardType === 'english_word')      return { html: englishWordHTML, css: 'english-word-card/ai-card.css' };
+  if (cardType === 'comic_strip')       return { html: comicHTML,       css: 'comic-card/ai-card.css' };
   return { html: defaultHTML, css: 'text-card/ai-card.css' };
 }
 
@@ -110,15 +114,55 @@ function homeworkHTML(d) {
 
 function mediaHTML(d) {
   var btn = d.button_text||'播放视频', mtype = (d.layout&&d.layout.icon)||'video';
-  return '<div class="card"><div class="media-area">'+
-    '<span class="media-badge">'+(TYPE_LABEL[mtype]||'文件')+'</span>'+
-    '<div class="media-play">▶</div>'+
-    (d.subtitle?'<span class="media-dur">'+esc(d.subtitle)+'</span>':'')+
-  '</div><div class="card-body">'+
-    '<div class="hdr"><div class="icon">'+iconEmoji(d)+'</div><div class="hinfo"><div class="title">'+esc(d.title)+'</div></div></div>'+
-    (d.description?'<div class="desc">'+esc(d.description)+'</div>':'')+
-    '<div class="actions"><button class="btn primary">'+esc(btn)+'</button></div>'+
-  '</div></div>';
+  var mediaArea;
+  if (d.video_url) {
+    mediaArea = '<div class="media-area"><video controls src="'+esc(d.video_url)+'"></video></div>';
+  } else {
+    mediaArea = '<div class="media-area"><div class="media-preview">'+
+      '<span class="media-badge">'+(TYPE_LABEL[mtype]||'文件')+'</span>'+
+      '<div class="media-play">▶</div>'+
+      (d.subtitle?'<span class="media-dur">'+esc(d.subtitle)+'</span>':'')+
+    '</div></div>';
+  }
+  return '<div class="card">'+mediaArea+
+    '<div class="card-body">'+
+      '<div class="hdr"><div class="icon">'+iconEmoji(d)+'</div><div class="hinfo"><div class="title">'+esc(d.title)+'</div></div></div>'+
+      (d.description?'<div class="desc">'+esc(d.description)+'</div>':'')+
+      '<div class="actions"><button class="btn primary">'+esc(btn)+'</button></div>'+
+    '</div></div>';
+}
+
+function comicHTML(d) {
+  var title = d.title||'', subtitle = d.subtitle||'', desc = d.description||'';
+  var videoUrl = d.video_url||'';
+  var frames = d.frames||[], total = frames.length;
+  var first = frames[0] || {};
+  var bubblesHTML = '';
+  if (first.texts && first.texts.length > 0) {
+    for (var j = 0; j < first.texts.length; j++) {
+      var cls = j === 0 ? 'left' : (j === 1 ? 'right' : 'center');
+      if (j === 1 && first.texts.length === 2) cls += ' bottom';
+      bubblesHTML += '<div class="bubble '+cls+'">'+esc(first.texts[j])+'</div>';
+    }
+  }
+  return '<div class="comic-card">'+
+    (videoUrl?'<div class="video-area"><video controls src="'+esc(videoUrl)+'"></video></div>':'')+
+    '<div class="card-body">'+
+      '<div class="hdr">'+
+        '<div class="title">'+esc(title)+'</div>'+
+        (subtitle?'<div class="subtitle">'+esc(subtitle)+'</div>':'')+
+      '</div>'+
+      (desc?'<div class="desc">'+esc(desc)+'</div>':'')+
+      '<div class="comic-viewport">'+
+        '<div class="page-indicator">1 / '+total+'</div>'+
+        '<img class="frame-img" src="'+esc(first.image||'')+'" alt="panel 1">'+
+        '<div class="bubbles">'+bubblesHTML+'</div>'+
+      '</div>'+
+      '<div class="nav">'+
+        '<button class="nav-btn" disabled>← 上一页</button>'+
+        '<button class="nav-btn primary" disabled>下一页 →</button>'+
+      '</div>'+
+    '</div></div>';
 }
 
 function englishWordHTML(d) {
@@ -186,7 +230,8 @@ var CARDS = [
   {folder:'homework-card', group:'作业卡片', file:'math.json', data:{"schema_version":"1.0","card_type":"homework_reminder","title":"数学 · 第三章分数练习","subtitle":"王老师 · 三年级二班","description":"完成课本第42-44页练习题 1-15，重点练习分数加减法的通分与约分。要求写出完整计算过程，不可只写答案。","button_text":"查看作业","target_url":"https://homework.example.com/math","theme":"math","layout":{"variant":"homework_reminder","icon":"math"}}},
   {folder:'homework-card', group:'作业卡片', file:'english.json', data:{"schema_version":"1.0","card_type":"homework_reminder","title":"英语 · Unit 5 My Day","subtitle":"李老师 · 三年级二班","description":"背诵 Unit 5 单词表（get up, breakfast, go to school 等 20 个词组），完成 Activity Book 第28-29页练习。录制一段「My Day」口语视频，不少于1分钟。","button_text":"查看作业","target_url":"https://homework.example.com/english","theme":"english","layout":{"variant":"homework_reminder","icon":"english"}}},
   {folder:'media-card', group:'媒体卡片', file:'class-video.json', data:{"schema_version":"1.0","card_type":"media_preview","title":"课堂录像 · 分数的加减法","subtitle":"42:18","description":"张老师 · 2026/05/24 上传 · MP4 · 1080p · 1.2 GB · 86 次观看。第三章重难点讲解，包含 5 道例题精讲与课堂互动问答环节。","button_text":"播放视频","target_url":"https://media.example.com/video/math-fraction","theme":"video","layout":{"variant":"media_preview","icon":"video"}}},
-  {folder:'english-word-card', group:'英语单词', file:'data.json', data:{"schema_version":"1.0","card_type":"english_word","title":"ABC · 字母启蒙","subtitle":"apple","description":"苹果","button_text":"单词发音","target_url":"https://works.blazegraph.site/works/e02656c2-d563-4ca2-8406-33031d109b48/2-1-6-4-1779693877148/images/img16.png","theme":"abc","layout":{"variant":"english_word","icon":"abc"}}}
+  {folder:'english-word-card', group:'英语单词', file:'data.json', data:{"schema_version":"1.0","card_type":"english_word","title":"ABC · 字母启蒙","subtitle":"apple","description":"苹果","button_text":"单词发音","target_url":"https://works.blazegraph.site/works/e02656c2-d563-4ca2-8406-33031d109b48/2-1-6-4-1779693877148/images/img16.png","theme":"abc","layout":{"variant":"english_word","icon":"abc"}}},
+  {folder:'comic-card', group:'连环画', file:'data.json', data:{"schema_version":"1.0","card_type":"comic_strip","title":"PEP 人教版 · Unit 1 Describing People","subtitle":"Story Time — We Are Twins!","description":"Watch the video first, then flip through the comic story. Practice describing body features with Meimei and Feifei!","button_text":"查看完整内容","video_url":"../assets/video/activity1.mp4","theme":"comic","frames":[{"image":"../assets/image/panel1.jpg","texts":["Hi, I'm Meimei.","I'm Feifei.","We are twins."]},{"image":"../assets/image/panel2.jpg","texts":["I have big eyes.","Me too."]},{"image":"../assets/image/panel3.jpg","texts":["I have a small nose.","Me too."]},{"image":"../assets/image/panel4.jpg","texts":["I have a small mouth.","Me too."]},{"image":"../assets/image/panel5.jpg","texts":["We look the same.","I know!"]},{"image":"../assets/image/panel6.jpg","texts":["Now I have long hair.","I have short hair.","We are different now."]}],"layout":{"variant":"comic_strip","icon":"comic"}}}
 ];
 
 var groups = {};
