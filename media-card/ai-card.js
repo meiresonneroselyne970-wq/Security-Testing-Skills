@@ -42,25 +42,29 @@ class AICard extends HTMLElement {
 }
 
 function mediaHTML(d) {
-  const btn = d.button_text || '播放视频';
-  const mtype = (d.layout&&d.layout.icon)||'video';
-  const typeLabel = TYPE_LABEL[mtype]||'文件';
-  return `
-<div class="card">
-  <div class="media-area">
-    <span class="media-badge">${typeLabel}</span>
-    <div class="media-play">▶</div>
-    ${d.subtitle?`<span class="media-dur">${esc(d.subtitle)}</span>`:''}
-  </div>
-  <div class="card-body">
-    <div class="hdr">
-      <div class="icon">${iconEmoji(d)}</div>
-      <div class="hinfo"><div class="title">${esc(d.title)}</div></div>
-    </div>
-    ${d.description?`<div class="desc">${esc(d.description)}</div>`:''}
-    <div class="actions"><button class="btn primary">${esc(btn)}</button></div>
-  </div>
-</div>`;
+  var btn = d.button_text || '播放视频';
+  var mtype = (d.layout&&d.layout.icon)||'video';
+  var typeLabel = TYPE_LABEL[mtype]||'文件';
+  var mediaArea;
+  if (d.video_url) {
+    mediaArea = '<div class="media-area"><video controls src="' + esc(d.video_url) + '"></video></div>';
+  } else {
+    mediaArea = '<div class="media-area"><div class="media-preview">' +
+      '<span class="media-badge">' + typeLabel + '</span>' +
+      '<div class="media-play">▶</div>' +
+      (d.subtitle ? '<span class="media-dur">' + esc(d.subtitle) + '</span>' : '') +
+    '</div></div>';
+  }
+  return '<div class="card">' + mediaArea +
+    '<div class="card-body">' +
+      '<div class="hdr">' +
+        '<div class="icon">' + iconEmoji(d) + '</div>' +
+        '<div class="hinfo"><div class="title">' + esc(d.title) + '</div></div>' +
+      '</div>' +
+      (d.description ? '<div class="desc">' + esc(d.description) + '</div>' : '') +
+      '<div class="actions"><button class="btn primary">' + esc(btn) + '</button></div>' +
+    '</div>' +
+  '</div>';
 }
 
 function esc(s) { if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }

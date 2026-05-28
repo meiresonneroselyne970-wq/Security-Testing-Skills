@@ -1,6 +1,6 @@
 ---
 name: card
-description: Generate AI cards. 4 visual templates (text / homework / media / english-word), each in its own folder with CSS + JS + JSON + metadata.
+description: Generate AI cards. 5 visual templates (text / homework / media / english-word / comic), each in its own folder with CSS + JS + JSON + metadata.
 ---
 
 # /card — AI Card Generator
@@ -23,6 +23,7 @@ User description / JSON
 │    - Has a colored gradient banner?       │
 │    - Has a top accent strip + left bar?   │
 │    - Has notebook paper + tape + ribbon?  │
+│    - Has video player + comic strip grid? │
 │    - None of the above?                   │
 └─────────────────────────────────────────┘
     │
@@ -35,7 +36,7 @@ User description / JSON
 
 ---
 
-## 4 Existing Templates
+## 5 Existing Templates
 
 ### 1. text-card — Text Content Cards
 
@@ -199,6 +200,64 @@ card (abc-card, semi-transparent white, rounded, shadow)
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
 ```
+
+---
+
+### 5. comic-card — Comic Strip Cards (Paginated)
+
+**Visual signature:** `<video>` player at top (with controls) + single comic frame (image + speech bubbles) + prev/next page navigation with page indicator.
+
+**DOM skeleton:**
+```
+comic-card
+  ├── video-area
+  │     └── <video controls src="...">
+  └── card-body
+        ├── hdr (title + subtitle)
+        ├── desc (description)
+        ├── comic-viewport (single frame per page)
+        │     ├── page-indicator ("1 / 6")
+        │     ├── frame-img (single image, rounded)
+        │     └── bubbles
+        │           ├── bubble.left (blue, left-aligned)
+        │           ├── bubble.right (pink, right-aligned)
+        │           └── bubble.center (green, centered, bold)
+        └── nav
+              ├── nav-btn[data-nav="prev"] ← 上一页
+              └── nav-btn.primary[data-nav="next"] 下一页 →
+```
+
+**Matching rules (any one match is sufficient):**
+- Has a video at the top and image+text panels with page-by-page navigation
+- Comic/manga style sequential storytelling, one panel per page
+- Prev/next buttons to flip through 4-6 frames
+
+**Existing variants:** we-are-twins (1 JSON file: `data.json`)
+
+**Supported card_type values:** `comic_strip`
+
+**Supported icon values:** `comic` (to add a new one, append to the ICONS object)
+
+**Supported theme values:** `comic` — mapped to amber (#f59e0b) via THEME_MAP
+
+**Frame structure:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `image` | string | Yes | Frame character/scene image URL |
+| `texts` | string[] | Yes | Dialogue texts, rendered as alternating bubbles |
+
+**Bubble rules:**
+- texts[0] → `.bubble.left` (blue, left-aligned)
+- texts[1] → `.bubble.right` (pink, right-aligned)
+- texts[2+] → `.bubble.center` (green, centered, bold)
+
+**Special fields (not in standard schema):**
+| Field | Required | Description |
+|-------|----------|-------------|
+| `video_url` | Yes | Video source for `<video controls>` |
+| `frames` | Yes | Array of `{ image, texts[] }` objects (4-6 frames) |
+
+For full comic-card documentation, see `.claude/skills/comic.md`.
 
 ---
 
@@ -511,6 +570,7 @@ All templates use semantic theme names that map to visual colors via `THEME_MAP`
 | `image` | #4f46e5 (indigo) | media | Image preview |
 | `file` | #4f46e5 (indigo) | media | File download |
 | `abc` | #8e44ad (purple) | english-word | Alphabet learning |
+| `comic` | #f59e0b (amber) | comic | Comic strip / dialogue |
 
 ---
 

@@ -1,0 +1,252 @@
+/* ================================================================
+   comic-card/ai-card.css
+   Template: Video player + single-frame paginated comic strip
+   ================================================================ */
+
+/* ── Component: host ── */
+:host {
+  display: block;
+  max-width: 380px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* ── Card ── */
+.comic-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Video area ── */
+.comic-card .video-area {
+  width: 100%;
+  background: #000;
+}
+
+.comic-card .video-area video {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+}
+
+/* ── Card body ── */
+.comic-card .card-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Header ── */
+.comic-card .hdr {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comic-card .title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.comic-card .subtitle {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* ── Description ── */
+.comic-card .desc {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* ── Comic viewport (single frame) ── */
+.comic-card .comic-viewport {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Frame container (anchors bubbles to image) ── */
+.comic-card .frame-container {
+  position: relative;
+  width: 100%;
+}
+
+/* ── Page indicator ── */
+.comic-card .page-indicator {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+/* ── Frame image ── */
+.comic-card .frame-img {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+  background: #fafafa;
+}
+
+/* ── Speech bubbles (overlaid on image) ── */
+.comic-card .bubbles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.comic-card .bubble {
+  position: absolute;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 7px 11px;
+  border-radius: 12px;
+  max-width: 75%;
+  word-break: break-word;
+  pointer-events: auto;
+}
+
+/* Left bubble — top-left area */
+.comic-card .bubble.left {
+  background: rgba(239, 246, 255, 0.92);
+  color: #1e40af;
+  top: 6%;
+  left: 4%;
+  border-bottom-left-radius: 4px;
+}
+
+/* Right bubble — top-right (default, for 3+ texts) */
+.comic-card .bubble.right {
+  background: rgba(253, 242, 248, 0.92);
+  color: #9d174d;
+  top: 6%;
+  right: 4%;
+  border-bottom-right-radius: 4px;
+  text-align: right;
+}
+
+/* Right bubble — bottom-right (when only 2 texts total) */
+.comic-card .bubble.right.bottom {
+  top: auto;
+  bottom: 6%;
+}
+
+/* Center bubble — bottom-center */
+.comic-card .bubble.center {
+  background: rgba(240, 253, 244, 0.92);
+  color: #166534;
+  bottom: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  max-width: 85%;
+  font-weight: 600;
+}
+
+/* ── Navigation ── */
+.comic-card .nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.comic-card .nav .nav-btn {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.comic-card .nav .nav-btn:active {
+  opacity: 0.7;
+}
+
+.comic-card .nav .nav-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.comic-card .nav .nav-btn.primary {
+  background: #f59e0b;
+  color: #fff;
+  border-color: #f59e0b;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Responsive breakpoints
+   ══════════════════════════════════════════════════════════════ */
+
+/* Tablet 480px+ */
+@media (min-width: 480px) {
+  :host { max-width: 440px; }
+  .comic-card { border-radius: 18px; }
+  .comic-card .card-body { padding: 16px; gap: 14px; }
+  .comic-card .title { font-size: 18px; }
+  .comic-card .page-indicator { font-size: 13px; }
+  .comic-card .frame-img { border-radius: 12px; }
+  .comic-card .bubble { font-size: 13px; padding: 9px 14px; }
+  .comic-card .nav .nav-btn { padding: 11px 0; font-size: 15px; }
+}
+
+/* Large screen 768px+ */
+@media (min-width: 768px) {
+  :host { max-width: 520px; }
+  .comic-card { border-radius: 20px; }
+  .comic-card .card-body { padding: 18px; gap: 16px; }
+  .comic-card .title { font-size: 20px; }
+  .comic-card .subtitle { font-size: 13px; }
+  .comic-card .page-indicator { font-size: 14px; }
+  .comic-card .frame-img { border-radius: 14px; }
+  .comic-card .bubble { font-size: 14px; padding: 10px 16px; }
+  .comic-card .video-area video { max-height: 300px; }
+  .comic-card .nav .nav-btn { padding: 12px 0; font-size: 16px; }
+}
+
+/* Desktop 1024px+ */
+@media (min-width: 1024px) {
+  :host { max-width: 600px; }
+  .comic-card { border-radius: 22px; }
+  .comic-card .card-body { padding: 20px; gap: 18px; }
+  .comic-card .title { font-size: 22px; }
+  .comic-card .page-indicator { font-size: 15px; }
+  .comic-card .frame-img { border-radius: 16px; }
+  .comic-card .bubble { font-size: 15px; padding: 11px 18px; border-radius: 14px; }
+  .comic-card .nav .nav-btn { padding: 13px 0; font-size: 17px; border-radius: 22px; }
+}
+
+/* TV 1440px+ */
+@media (min-width: 1440px) {
+  :host { max-width: 720px; }
+  .comic-card { border-radius: 24px; }
+  .comic-card .card-body { padding: 24px; gap: 20px; }
+  .comic-card .title { font-size: 24px; }
+  .comic-card .subtitle { font-size: 14px; }
+  .comic-card .page-indicator { font-size: 16px; }
+  .comic-card .frame-img { border-radius: 18px; }
+  .comic-card .bubble { font-size: 16px; padding: 12px 20px; border-radius: 16px; }
+  .comic-card .video-area video { max-height: 380px; }
+  .comic-card .nav .nav-btn { padding: 14px 0; font-size: 18px; border-radius: 24px; }
+}
+
+/* ── Page-level ── */
+body {
+  padding-top: 20px;
+}
