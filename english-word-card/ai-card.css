@@ -139,6 +139,8 @@
 .abc-card .actions {
   display: flex;
   justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
   padding-top: 4px;
 }
 
@@ -163,6 +165,93 @@
   opacity: 0.8;
 }
 
+/* ── Shadow (跟读) button ── */
+.abc-card .btn.shadow {
+  background: transparent;
+  color: var(--c-brand, #8e44ad);
+  border: 2px solid var(--c-brand, #8e44ad);
+  padding: 6px 26px;
+}
+
+.abc-card .btn.shadow:active {
+  background: var(--c-soft, #ede9fe);
+  opacity: 1;
+}
+
+.abc-card .btn.shadow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Shadow feedback ── */
+.abc-card .shadow-feedback {
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  min-height: 28px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  margin-top: 6px;
+}
+
+.abc-card .shadow-feedback.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.abc-card .shadow-feedback.listening {
+  color: #8e44ad;
+  animation: shadowPulse 1.2s ease-in-out infinite;
+}
+
+.abc-card .shadow-feedback.correct {
+  color: #16a34a;
+}
+
+.abc-card .shadow-feedback.incorrect {
+  color: #dc2626;
+}
+
+.abc-card .shadow-feedback.timeout {
+  color: #d97706;
+}
+
+/* ── Playback button (inside feedback) ── */
+.abc-card .btn-play {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1.5px solid currentColor;
+  background: transparent;
+  color: inherit;
+  vertical-align: middle;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.abc-card .btn-play:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.abc-card .btn-play:active {
+  transform: scale(0.95);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* ── Pulse animation ── */
+@keyframes shadowPulse {
+  0%, 100% { opacity: 1; transform: translateY(0) scale(1); }
+  50% { opacity: 0.5; transform: translateY(0) scale(1.08); }
+}
+
 /* ══════════════════════════════════════════════════════════════
    Responsive breakpoints
    ══════════════════════════════════════════════════════════════ */
@@ -177,6 +266,10 @@
   .abc-card .word-zh { font-size: 20px; }
   .abc-card .abc-img { width: 100px; height: 100px; }
   .abc-card .btn { padding: 9px 32px; font-size: 16px; }
+  .abc-card .btn.shadow { padding: 7px 28px; font-size: 16px; border-width: 2px; }
+  .abc-card .shadow-feedback { font-size: 16px; }
+  .abc-card .btn-play { font-size: 14px; padding: 4px 14px; }
+  .abc-card .actions { gap: 12px; }
 }
 
 /* Large screen 768px+ */
@@ -189,6 +282,10 @@
   .abc-card .word-zh { font-size: 22px; }
   .abc-card .abc-img { width: 110px; height: 110px; }
   .abc-card .btn { padding: 10px 36px; font-size: 17px; }
+  .abc-card .btn.shadow { padding: 8px 30px; font-size: 17px; }
+  .abc-card .shadow-feedback { font-size: 17px; }
+  .abc-card .btn-play { font-size: 14px; padding: 4px 14px; }
+  .abc-card .actions { gap: 14px; }
 }
 
 /* Desktop 1024px+ */
@@ -201,6 +298,10 @@
   .abc-card .word-zh { font-size: 24px; }
   .abc-card .abc-img { width: 120px; height: 120px; }
   .abc-card .btn { padding: 11px 40px; font-size: 18px; }
+  .abc-card .btn.shadow { padding: 9px 34px; font-size: 18px; }
+  .abc-card .shadow-feedback { font-size: 18px; }
+  .abc-card .btn-play { font-size: 15px; padding: 5px 16px; }
+  .abc-card .actions { gap: 16px; }
 }
 
 /* TV 1440px+ */
@@ -213,6 +314,10 @@
   .abc-card .word-zh { font-size: 26px; }
   .abc-card .abc-img { width: 140px; height: 140px; }
   .abc-card .btn { padding: 13px 48px; font-size: 20px; }
+  .abc-card .btn.shadow { padding: 10px 40px; font-size: 20px; }
+  .abc-card .shadow-feedback { font-size: 19px; }
+  .abc-card .btn-play { font-size: 16px; padding: 5px 16px; }
+  .abc-card .actions { gap: 18px; }
 }
 
 /* ── Page-level: standalone index.html only (ignored inside Shadow DOM) ── */
