@@ -1,0 +1,36 @@
+{
+  "api": {
+    "base": "",
+    "qa_endpoint": "/qa",
+    "health_endpoint": "/health"
+  },
+  "ui": {
+    "title": "炎图 AI 知识问答",
+    "subtitle": "基于知识库的智能检索与回答",
+    "placeholder": "请输入你的问题…",
+    "logo": "🤖",
+    "quick_prompts": [
+      { "label": "🍱 公司餐补", "question": "公司餐补是多少？" },
+      { "label": "🎁 员工福利", "question": "员工有什么福利待遇？" },
+      { "label": "🏗️ 技术架构", "question": "公司的技术架构是怎样的？" },
+      { "label": "🚀 公司项目", "question": "公司有哪些项目？" }
+    ],
+    "category_icons": {
+      "architecture": "🏗️",
+      "company": "🏢",
+      "hr": "👥",
+      "projects": "🚀"
+    },
+    "file_icons": {
+      "md": "📘",
+      "docx": "📄",
+      "pptx": "📊"
+    },
+    "default_file_icon": "📎",
+    "default_category_icon": "📁"
+  },
+  "request": {
+    "top_k": 5,
+    "timeout_ms": 30000
+  }
+}

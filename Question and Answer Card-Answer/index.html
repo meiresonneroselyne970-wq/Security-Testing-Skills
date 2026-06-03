@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>炎图 AI 知识问答</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 问答结果卡片 -->
+<div class="qa-card" id="qaCard">
+  <div class="qa-card-body" id="qaBody">
+    <div class="qa-state" id="idleState">
+      <span class="state-icon">💡</span>
+      <p class="state-text">在下方输入问题，获取知识库中的答案</p>
+    </div>
+  </div>
+</div>
+
+<!-- 临时输入窗口（后期删掉，上传到服务器） -->
+<div class="input-row" id="qaFooter">
+  <input type="text" id="qaInput" placeholder="请输入你的问题…" autocomplete="off">
+  <button class="send-btn" id="sendBtn">➤</button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,417 @@
+/* ========================================
+   炎图 AI 知识问答 — 问答卡片样式
+   ======================================== */
+
+/* -------- Variables -------- */
+:root {
+  --bg: #f0f2f7;
+  --card-bg: #ffffff;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --primary: #6366f1;
+  --primary-light: #eef2ff;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 6px 24px rgba(0,0,0,.06);
+  --shadow-lg: 0 4px 32px rgba(0,0,0,.1);
+  --radius: 20px;
+  --radius-sm: 12px;
+  --font: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+/* -------- Reset -------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* -------- Background -------- */
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(at 20% 30%, rgba(99,102,241,.06) 0px, transparent 50%),
+    radial-gradient(at 80% 70%, rgba(139,92,246,.05) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(14,165,233,.04) 0px, transparent 50%);
+}
+
+/* ========================================
+   QA Card
+   ======================================== */
+.qa-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 520px;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: box-shadow 0.3s;
+}
+
+.qa-card:focus-within {
+  box-shadow: var(--shadow-lg);
+}
+
+/* -------- Header -------- */
+.qa-card-header {
+  padding: 28px 28px 0;
+  text-align: center;
+}
+
+.qa-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+}
+
+.qa-card-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.qa-card-header .desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* -------- Body -------- */
+.qa-card-body {
+  padding: 20px 24px;
+  min-height: 120px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+/* -------- States -------- */
+.qa-state {
+  text-align: center;
+  padding: 30px 10px;
+  animation: fadeInUp 0.35s ease both;
+}
+
+.qa-state .state-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.qa-state .state-text {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.qa-state .state-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* -------- Answer -------- */
+.qa-answer {
+  animation: fadeInUp 0.35s ease both;
+}
+
+.qa-answer .answer-text {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  margin-bottom: 16px;
+}
+
+/* -------- Knowledge Card Block -------- */
+.kc-block {
+  background: var(--primary-light);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.kc-block .kc-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+/* Category tags */
+.kc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.kc-tag {
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: 50px;
+  background: #fff;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+/* File list */
+.kc-files {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kc-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  font-size: 0.82rem;
+  transition: all 0.2s;
+  cursor: default;
+}
+
+.kc-file:hover {
+  transform: translateX(3px);
+  border-color: var(--primary);
+}
+
+.kc-file .file-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.kc-file .file-name {
+  flex: 1;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kc-file .file-type {
+  font-size: 0.65rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* -------- Loading -------- */
+.typing-dots {
+  display: flex;
+  gap: 5px;
+  padding: 20px 0;
+  justify-content: center;
+}
+
+.typing-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: bounce 1.4s ease-in-out infinite both;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: 0s; }
+.typing-dots span:nth-child(2) { animation-delay: 0.16s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.32s; }
+
+/* -------- Error -------- */
+.qa-error {
+  text-align: center;
+  padding: 16px;
+  animation: fadeInUp 0.35s ease both;
+}
+
+.qa-error .err-icon {
+  font-size: 2.2rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.qa-error .err-text {
+  font-size: 0.82rem;
+  color: var(--danger);
+  margin-bottom: 4px;
+}
+
+.qa-error .err-detail {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ========================================
+   Footer
+   ======================================== */
+.qa-card-footer {
+  padding: 0 24px 24px;
+}
+
+/* -------- Quick Prompts -------- */
+.quick-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.quick-prompt {
+  font-size: 0.73rem;
+  padding: 5px 14px;
+  border-radius: 50px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font);
+}
+
+.quick-prompt:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* -------- Input Row -------- */
+.input-row {
+  display: flex;
+  gap: 10px;
+}
+
+.input-row input {
+  flex: 1;
+  padding: 12px 18px;
+  border-radius: 50px;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  font-size: 0.9rem;
+  color: var(--text);
+  font-family: var(--font);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-row input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.input-row input:disabled {
+  opacity: 0.5;
+}
+
+.input-row .send-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.input-row .send-btn:hover {
+  opacity: 0.9;
+  transform: scale(1.04);
+}
+
+.input-row .send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* -------- API Status -------- */
+.api-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+
+.api-status .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s infinite;
+}
+
+.api-status .dot.offline {
+  background: var(--danger);
+  animation: none;
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0.5); opacity: 0.3; }
+  40%           { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+/* ========================================
+   Responsive
+   ======================================== */
+@media (max-width: 480px) {
+  body {
+    padding: 12px;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+
+  .qa-card-header { padding: 22px 20px 0; }
+  .qa-card-body   { padding: 16px 18px; max-height: 360px; }
+  .qa-card-footer { padding: 0 18px 20px; }
+}
