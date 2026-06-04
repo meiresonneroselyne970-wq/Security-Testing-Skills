@@ -1,6 +1,6 @@
 ---
 name: card
-description: Generate AI cards. 5 visual templates (text / homework / media / english-word / comic), each in its own folder with CSS + JS + JSON + metadata.
+description: Generate AI cards. 7 card templates (text / homework / media / english-word / comic / qa / qa-answer), each in its own folder with CSS + JS + JSON + metadata.
 ---
 
 # /card — AI Card Generator
@@ -17,15 +17,16 @@ When receiving a card request, follow this decision flow:
 User description / JSON
     │
     ▼
-┌─────────────────────────────────────────┐
-│ 1. Extract visual features               │
-│    - Has a dark media preview area?       │
-│    - Has a colored gradient banner?       │
-│    - Has a top accent strip + left bar?   │
-│    - Has notebook paper + tape + ribbon?  │
-│    - Has video player + comic strip grid? │
-│    - None of the above?                   │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│ 1. Extract visual features                   │
+│    - Has a dark media preview area?           │
+│    - Has a colored gradient banner?           │
+│    - Has a top accent strip + left bar?       │
+│    - Has notebook paper + tape + ribbon?      │
+│    - Has video player + paginated panels?     │
+│    - Has Q&A input + API response display?    │
+│    - None of the above?                       │
+└─────────────────────────────────────────────┘
     │
     ├─ Matches existing template ──→ [REUSE] Add JSON to the matching folder
     │
@@ -36,7 +37,22 @@ User description / JSON
 
 ---
 
-## 5 Existing Templates
+## Architecture Overview: Two Card Families
+
+This project has **two architectural families** of card templates:
+
+| Family | Pattern | Rendering | Shared Engine | Examples |
+|--------|---------|-----------|---------------|----------|
+| **Web Component** | `<ai-card>` custom element + Shadow DOM | `ai-card.js` reads `data` attribute → renders to Shadow DOM | `ai-card.css` scoped inside Shadow DOM | text, homework, media, english-word, comic |
+| **Standalone** | Plain HTML + CSS + vanilla JS | `app.js` directly manipulates DOM | CSS classes on global document | qa (完整版), qa-answer (精简版) |
+
+**Why two families?** The Q&A cards are full interactive applications (user input → API call → dynamic rendering), not static data-driven display cards. They pre-date the Web Component pattern and follow a more traditional SPA architecture.
+
+When the user asks for a card, first determine which **family** it belongs to, then match within that family.
+
+---
+
+## 7 Existing Templates
 
 ### 1. text-card — Text Content Cards
 
@@ -261,15 +277,219 @@ For full comic-card documentation, see `.claude/skills/comic.md`.
 
 ---
 
+### 6. qa-card (Question and Answer Card) — AI 知识问答卡片·完整版
+
+**Visual signature:** Centered white card with logo + title + subtitle header, dynamic body area (idle/loading/answer/error states), quick-prompt tag buttons, text input + send button, API status indicator dot.
+
+**Architecture:** Standalone (not Web Component). Plain HTML skeleton + `style.css` + `app.js`. Configuration is externalized in `data.json`.
+
+**DOM skeleton:**
+```
+body
+  ├── .bg-layer (fixed radial-gradient ambient light)
+  └── .qa-card
+        ├── .qa-card-header
+        │     ├── .qa-logo (52×52 gradient rounded square)
+        │     ├── h2 (title)
+        │     └── .desc (subtitle, optional)
+        ├── .qa-card-body (scrollable, max-height 420px)
+        │     └── [dynamic content — one of 5 states]
+        │           ├── #idleState → 💡 + guide text + hint
+        │           ├── .typing-dots → 3 bouncing dots
+        │           ├── .qa-answer → answer text + category tags + file list
+        │           ├── .qa-state  → 🤔 "未找到相关内容"
+        │           └── .qa-error  → ⚠️ error message
+        └── .qa-card-footer
+              ├── .quick-prompts → .quick-prompt × N (rounded pill buttons)
+              ├── .input-row
+              │     ├── input#qaInput (rounded pill, focus ring)
+              │     └── button.send-btn (➤ gradient circle)
+              └── .api-status
+                    ├── .dot (green = online, red = offline)
+                    └── status text
+```
+
+**Matching rules (any one match is sufficient):**
+- User needs a Q&A / chatbot-style interactive card
+- Card has an input field + send button + dynamic response area
+- Needs quick-prompt shortcut tags below the input
+- Needs API health status indicator
+- Configuration should be externalized in a JSON config file
+- Card has a branded header (logo + title + subtitle)
+
+**Existing variants:** 1 (炎图 AI 知识问答, `data.json`)
+
+**Supported card_type values:** `qa_card`
+
+**Configuration file (`data.json`):**
+```json
+{
+  "api": {
+    "base": "http://127.0.0.1:8899",
+    "qa_endpoint": "/qa",
+    "health_endpoint": "/health"
+  },
+  "ui": {
+    "title": "炎图 AI 知识问答",
+    "subtitle": "基于知识库的智能检索与回答",
+    "placeholder": "请输入你的问题…",
+    "logo": "🤖",
+    "quick_prompts": [
+      { "label": "🍱 公司餐补", "question": "公司餐补是多少？" }
+    ],
+    "category_icons": { "architecture": "🏗️" },
+    "file_icons": { "md": "📘", "docx": "📄", "pptx": "📊" },
+    "default_file_icon": "📎",
+    "default_category_icon": "📁"
+  },
+  "request": { "top_k": 5, "timeout_ms": 30000 }
+}
+```
+
+**State machine (5 states):**
+
+| State | Trigger | Rendered Content |
+|-------|---------|-----------------|
+| idle | Page load, before first question | 💡 icon + guide text + hint |
+| loading | Send clicked, awaiting API | 3 bouncing dots animation |
+| answer | API returns successfully | Answer text + category tags + file list |
+| empty | API returns but no content | 🤔 "未找到与 X 相关的内容" |
+| error | Network error / API error field | ⚠️ error icon + message + detail |
+
+**API contract:**
+- `GET /health` → `{ "status": "ok" }` for health check
+- `POST /qa` ← `{ "question": "...", "top_k": 5 }` → `{ "description": "...", "sources": ["[cat] file.ext"], "error": "" }`
+- File name format: `[category] filename.ext` — auto-parsed for category tags and file type icons
+
+**Files:**
+| File | Purpose |
+|------|---------|
+| `index.html` | Static skeleton with all DOM elements pre-declared |
+| `style.css` | All styles including 4 breakpoints, animations, states |
+| `app.js` | Config loading, health check, ask(), renderAnswer(), event binding |
+| `data.json` | UI config + API endpoints + icon mappings |
+| `metadata.md` | Full documentation |
+
+**When to reuse:** Any interactive Q&A card that needs configurable UI, quick prompts, health monitoring, and knowledge-base source display.
+
+**When to create new:** Only if the layout is fundamentally different (e.g., chat thread with history, voice-first interface, multi-turn conversation).
+
+---
+
+### 7. qa-answer (Question and Answer Card-Answer) — AI 知识问答卡片·精简版
+
+**Visual signature:** Top shimmer gradient bar (3px, 5-color, animated) + AI avatar header ("AI 回答" + green "● 基于知识库" badge) + gradient-background answer text with left color bar + color-coded file source list. Input row is OUTSIDE the card, as a separate element.
+
+**Architecture:** Standalone (not Web Component). Plain HTML skeleton + `style.css` + `app.js`. All configuration is **hardcoded** in `app.js` — no external config file.
+
+**DOM skeleton:**
+```
+body
+  └── .qa-card (::before = shimmer gradient bar, 4s loop animation)
+        └── .qa-card-body (scrollable, max-height 500px)
+              └── [dynamic content — one of 5 states]
+                    ├── #idleState → 💡 (80×80 gradient rounded square) + guide text
+                    ├── .typing-dots → 3 bouncing dots (10px, larger)
+                    ├── .qa-answer
+                    │     ├── .answer-header
+                    │     │     ├── .answer-avatar "AI" (32×32 gradient square)
+                    │     │     └── .answer-meta
+                    │     │           ├── .answer-label "AI 回答"
+                    │     │           └── .answer-badge "● 基于知识库" (green)
+                    │     ├── .answer-text (gradient bg + left 3px gradient bar)
+                    │     └── .sources-block
+                    │           ├── .sources-header
+                    │           │     ├── .sources-label 📂 "参考来源"
+                    │           │     └── .sources-count "N 个文件"
+                    │           └── .source-file × N
+                    │                 ├── .file-icon-wrap.type-{ext} (6 color variants)
+                    │                 ├── .file-info
+                    │                 │     ├── .file-name
+                    │                 │     └── .file-category (optional)
+                    │                 └── .file-type-tag.tag-{ext} (6 color variants)
+                    ├── .qa-state → 🤔 "未找到相关内容"
+                    └── .qa-error → ⚠️ (pink bg + red border)
+  └── .input-row#qaFooter (OUTSIDE card, separate element)
+        ├── input#qaInput (standalone shadow, focus glow ring)
+        └── button.send-btn (gradient circle, hover scale 1.07)
+```
+
+**Key differences from qa-card (完整版):**
+
+| Feature | qa-card (完整版) | qa-answer (精简版) |
+|---------|-----------------|-------------------|
+| Card header (logo + title) | ✅ Yes | ❌ No |
+| Top shimmer gradient bar | ❌ No | ✅ Yes (5-color, 4s loop) |
+| Quick prompt tags | ✅ Yes | ❌ No |
+| API health status dot | ✅ Yes | ❌ No |
+| AI answer avatar + badge | ❌ No (plain text) | ✅ Yes ("AI" avatar + green badge) |
+| Answer text styling | Plain | Gradient bg + left color bar |
+| File type color coding | ❌ No (uniform gray) | ✅ Yes (6 types → 6 colors) |
+| Input row location | Inside card footer | Outside card, independent |
+| Config source | `data.json` (external) | Hardcoded in `app.js` |
+| Background effect | `.bg-layer` (fixed, overlays body) | `body` radial-gradient (CSS background) |
+| Card max-width | 520px | 600px |
+
+**Matching rules (any one match is sufficient):**
+- User needs an answer-only display card (no branding header needed)
+- Card should be embeddable in an existing page (input is separate from card)
+- Needs richer visual answer styling (AI avatar, gradient text box, color-coded file types)
+- Doesn't need quick prompts or health monitoring
+- Configuration can be hardcoded (no external config dependency)
+
+**Existing variants:** 1 (炎图 AI 知识问答·精简版, no config file)
+
+**Supported card_type values:** `qa_answer`
+
+**File type color system (`FILE_META` in `app.js`):**
+| Extension | Icon | Background | Badge Color |
+|-----------|------|-----------|-------------|
+| `md` | 📘 | #eef2ff (blue) | #4f46e5 |
+| `docx`/`doc` | 📄 | #e0f2fe (sky) | #0369a1 |
+| `pptx`/`ppt` | 📊 | #fef3c7 (yellow) | #a16207 |
+| `pdf` | 📕 | #fee2e2 (red) | #b91c1c |
+| `xlsx`/`xls` | 📈 | #dcfce7 (green) | #15803d |
+| `txt` | 📝 | #f3f4f6 (gray) | #4b5563 |
+| other | 📎 | #f3f4f6 (gray) | #6b7280 |
+
+**Files:**
+| File | Purpose |
+|------|---------|
+| `index.html` | Static skeleton (card + external input row) |
+| `style.css` | All styles, 6 file-type color variants, shimmer animation |
+| `app.js` | Hardcoded config, ask(), renderAnswer(), parseFileName() |
+| `metadata.md` | Full documentation |
+
+**When to reuse:** Answer-only display card, embeddable widget, richer visual styling needed.
+
+**When to create new:** If both header/footer AND input-inside-card are needed together — use qa-card (完整版) instead.
+
+---
+
 ## Reuse Flow (Template Matched)
 
-When the card matches one of the 3 existing templates:
+When the card matches one of the 7 existing templates:
 
 ### Step 1: Choose the Folder
 
-Pick `text-card/`, `homework-card/`, `media-card/`, or `english-word-card/` based on visual features.
+Pick the folder based on visual features:
 
-### Step 2: Create the JSON File
+| Visual Signature | Folder |
+|-----------------|--------|
+| Icon + title + description + button, top accent strip + left bar | `text-card/` |
+| Colored gradient banner (icon + title + subject badge), description below | `homework-card/` |
+| Dark 150px preview area, play button, duration label, icon + title below | `media-card/` |
+| Notebook paper, tape + ribbon, big letter + word + image, click-to-speak | `english-word-card/` |
+| Video player, paginated panels with speech bubbles, prev/next nav | `comic-card/` |
+| Q&A with branded header, quick prompts, health status, config file | `Question and Answer Card/` |
+| Answer-only card, AI avatar, gradient text box, color-coded files, external input | `Question and Answer Card-Answer/` |
+
+### Step 2: Choose the Architecture
+
+- **Web Component family** (text/homework/media/english-word/comic): Follow the JSON + JS IIFE flow below
+- **Standalone family** (qa/qa-answer): These have their own `app.js` patterns — modify the existing `app.js` directly or use it as-is; they don't use the `ai-card.js` / `ai-card.css` shared engine
+
+### Step 3: Create the JSON File (Web Component family only)
 
 Follow the schema strictly. **Do not add fields outside the spec:**
 
@@ -296,7 +516,7 @@ Follow the schema strictly. **Do not add fields outside the spec:**
 - Use 「」for inner quotes inside JSON strings to avoid parser conflicts
 - File name in kebab-case
 
-### Step 3: Update the JS auto-fetch list
+### Step 4: Update the JS auto-fetch list (Web Component family only)
 
 In the template folder's `ai-card.js`, find the IIFE at the bottom and add the new JSON filename to the `FILES` array:
 
@@ -304,7 +524,7 @@ In the template folder's `ai-card.js`, find the IIFE at the bottom and add the n
 var FILES = ['existing.json', 'new-file.json'];
 ```
 
-### Step 4: Update ai-card-demo.html
+### Step 5: Update ai-card-demo.html
 
 In the root `ai-card-demo.html`, append to the `CARDS` array:
 
@@ -314,7 +534,7 @@ In the root `ai-card-demo.html`, append to the `CARDS` array:
 
 The `group` field controls the section header in the demo page — keep it consistent with existing cards in the same group.
 
-### Step 5: Add New Icon / Color (If Needed)
+### Step 6: Add New Icon / Color (If Needed)
 
 If the new card uses an icon or theme color not yet supported by the template:
 
@@ -323,7 +543,7 @@ If the new card uses an icon or theme color not yet supported by the template:
 - **New badge:** add card_type → label mapping to `BADGES` object (text-card only)
 - **New subject:** update `THEME_MAP` and `SUBJECT_LABEL` (homework-card only)
 
-### Step 6: Validate
+### Step 7: Validate
 
 Open the template folder's `index.html` and the root `ai-card-demo.html` in a browser. Confirm cards render correctly at multiple viewport widths.
 
@@ -331,7 +551,7 @@ Open the template folder's `index.html` and the root `ai-card-demo.html` in a br
 
 ## New Template Flow (No Existing Match)
 
-When the card's visual layout is **fundamentally different** from all 3 existing templates, create a new template folder.
+When the card's visual layout is **fundamentally different** from all 7 existing templates, create a new template folder.
 
 ### When to Create a New Template
 
@@ -571,6 +791,8 @@ All templates use semantic theme names that map to visual colors via `THEME_MAP`
 | `file` | #4f46e5 (indigo) | media | File download |
 | `abc` | #8e44ad (purple) | english-word | Alphabet learning |
 | `comic` | #f59e0b (amber) | comic | Comic strip / dialogue |
+| `qa` | #6366f1 (indigo) | qa-card | AI knowledge Q&A |
+| `qa-answer` | #5b5fe3 (indigo) | qa-answer | AI answer display |
 
 ---
 
@@ -578,13 +800,13 @@ All templates use semantic theme names that map to visual colors via `THEME_MAP`
 
 All template CSS and index.html must adapt to 5 device targets:
 
-| Device | Breakpoint | Card max-width | Page Layout |
-|--------|-----------|---------------|-------------|
-| Phone | default (< 480px) | 380px | Single column, centered |
-| Tablet | `≥ 480px` | 420px | Single column, centered |
-| Large screen | `≥ 768px` | 460px | 2-column grid |
-| Desktop | `≥ 1024px` | 500px | 2 or 3 columns |
-| TV | `≥ 1440px` | 560px | 3 or 4 columns (demo page) |
+| Device | Breakpoint | Card max-width (Web Component) | Card max-width (QA Cards) | Page Layout |
+|--------|-----------|-------------------------------|--------------------------|-------------|
+| Phone | default (< 480px) | 380px | 520–600px | Single column, centered |
+| Tablet | `≥ 480px` | 420px | 520–600px | Single column, centered |
+| Large screen | `≥ 768px` | 460px | 520–600px | 2-column grid |
+| Desktop | `≥ 1024px` | 500px | 520–600px | 2 or 3 columns |
+| TV | `≥ 1440px` | 560px | 520–600px | 3 or 4 columns (demo page) |
 
 ### CSS Adaptation Guidelines
 
@@ -605,12 +827,14 @@ All template CSS and index.html must adapt to 5 device targets:
 ## Notes
 
 1. **Group by visual layout:** Don't be misled by the card_type field name. Five card_types share the text-card template because their DOM structure is identical.
-2. **No extra JSON fields:** Strictly follow the documented schema. Do not add custom fields like `subject`, `teacher`, `submit_count`.
-3. **Quote handling:** Use 「」for Chinese quotes inside JSON strings to avoid parser conflicts with ASCII double quotes.
-4. **Naming convention:** JSON file names in kebab-case, named by purpose (e.g. `oral-practice.json`).
-5. **JS is lean:** Each folder's `ai-card.js` only contains the PALETTE colors and render functions needed by that template. No dead code.
-6. **CSS is lean:** Each folder's `ai-card.css` only contains the style classes used by that template.
-7. **Custom element guard:** Use `customElements.get('ai-card')` check before `define` to support loading multiple JS files on the demo page.
-8. **Sync updates:** After adding cards or templates, always update the demo page and this skill file.
-9. **metadata.md required:** Every template folder must have a complete metadata.md (TOC, schema, field table, DOM tree, adaptive rules, variant table, theme table, responsive table, rendering notes).
-10. **5-device responsive:** All CSS and page layouts must cover phone, tablet, large screen, desktop, and TV breakpoints.
+2. **Two architecture families:** The project has two families — Web Components (text/homework/media/english-word/comic) and Standalone (qa/qa-answer). Web Components use `<ai-card>` + Shadow DOM + shared engine. Standalone cards are traditional HTML/CSS/JS apps with no Shadow DOM.
+3. **No extra JSON fields (Web Component cards):** Strictly follow the documented schema. Do not add custom fields like `subject`, `teacher`, `submit_count`.
+4. **Q&A cards don't use ai-card.js/css:** They have their own `app.js` and `style.css`. Modifying them follows traditional web app patterns, not the Web Component JSON-driven pattern.
+5. **Quote handling:** Use 「」for Chinese quotes inside JSON strings to avoid parser conflicts with ASCII double quotes.
+6. **Naming convention:** JSON file names in kebab-case, named by purpose (e.g. `oral-practice.json`). Folder names preserve spaces for the Q&A cards (legacy naming).
+7. **JS is lean:** Each Web Component folder's `ai-card.js` only contains the PALETTE colors and render functions needed by that template. No dead code.
+8. **CSS is lean:** Each folder's CSS only contains the style classes used by that template.
+9. **Custom element guard:** Use `customElements.get('ai-card')` check before `define` to support loading multiple JS files on the demo page.
+10. **Sync updates:** After adding cards or templates, always update the demo page and this skill file.
+11. **metadata.md required:** Every template folder must have a complete metadata.md (TOC, schema, field table, DOM tree, adaptive rules, variant table, theme table, responsive table, rendering notes).
+12. **5-device responsive:** All CSS and page layouts must cover phone, tablet, large screen, desktop, and TV breakpoints.
