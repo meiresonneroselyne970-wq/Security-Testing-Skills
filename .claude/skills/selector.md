@@ -1,5 +1,5 @@
 ---
-name: skills
+name: selector
 description: Card template selector. Use when the user asks which card to use, how to invoke a card, or needs to pick a template (homework/media/answer/comic/word/text). Covers all 6 card types across Web Component and Standalone architectures.
 ---
 
