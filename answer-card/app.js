@@ -1,15 +1,13 @@
 /* ========================================
    炎图 AI 知识问答 — 问答卡片逻辑（精简版）
-   只保留问答结果展示 + 临时输入窗口
+   仅负责问答结果渲染，由外部调用
    ======================================== */
 
 // ==================== DOM 引用 ====================
 const $ = (sel) => document.querySelector(sel);
 
 const dom = {
-  body:    $('#qaBody'),
-  input:   $('#qaInput'),
-  sendBtn: $('#sendBtn'),
+  body: $('#qaBody'),
 };
 
 // ==================== 配置（硬编码，无需 data.json） ====================
@@ -32,59 +30,13 @@ const FILE_META = {
 };
 const FILE_OTHER = { icon: '📎', cls: 'other' };
 
-// ==================== 状态 ====================
-let isSending = false;
+// ==================== 公开 API ====================
 
-// ==================== 初始化 ====================
-function init() {
-  bindEvents();
-}
-
-// ==================== 事件绑定 ====================
-function bindEvents() {
-  dom.sendBtn.addEventListener('click', ask);
-  dom.input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') ask();
-  });
-}
-
-// ==================== 发送问题 ====================
-async function ask() {
-  const question = dom.input.value.trim();
-  if (!question || isSending) return;
-
-  isSending = true;
-  dom.input.disabled = true;
-  dom.sendBtn.disabled = true;
-  dom.input.value = '';
-
-  showLoading();
-
-  try {
-    const res = await fetch(QA_URL, {
-      method: 'POST',
-      body: JSON.stringify({ question, top_k: TOP_K }),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} ${res.statusText}`);
-    }
-
-    const data = await res.json();
-    renderAnswer(data, question);
-
-  } catch (e) {
-    showError(e.message);
-  }
-
-  isSending = false;
-  dom.input.disabled = false;
-  dom.sendBtn.disabled = false;
-  dom.input.focus();
-}
-
-// ==================== 渲染回答结果 ====================
+/**
+ * 渲染回答结果到卡片中
+ * @param {Object} data - API 响应数据 { description, answer, sources, error }
+ * @param {string} [question] - 可选的问题文本（空结果时展示用）
+ */
 function renderAnswer(data, question) {
   let html = '<div class="qa-answer">';
 
@@ -140,10 +92,11 @@ function renderAnswer(data, question) {
      (!data.error));
 
   if (isEmpty) {
+    const q = question || '该问题';
     html += `
       <div class="qa-state">
         <span class="state-icon">🤔</span>
-        <p class="state-text">未找到与 "<strong>${escHtml(question)}</strong>" 相关的内容</p>
+        <p class="state-text">未找到与 "<strong>${escHtml(q)}</strong>" 相关的内容</p>
         <p class="state-hint">试试换个问题？</p>
       </div>`;
   }
@@ -153,7 +106,9 @@ function renderAnswer(data, question) {
   dom.body.scrollTop = 0;
 }
 
-// ==================== 状态切换 ====================
+/**
+ * 显示加载状态
+ */
 function showLoading() {
   dom.body.innerHTML = `
     <div class="typing-dots">
@@ -161,6 +116,10 @@ function showLoading() {
     </div>`;
 }
 
+/**
+ * 显示错误状态
+ * @param {string} message - 错误信息
+ */
 function showError(message) {
   dom.body.innerHTML = `
     <div class="qa-error">
@@ -194,6 +153,3 @@ function escHtml(s) {
 function escAttr(s) {
   return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-
-// ==================== 启动 ====================
-document.addEventListener('DOMContentLoaded', init);
