@@ -1,11 +1,11 @@
 ---
 name: skills
-description: Card template selector. Use when the user asks which card to use, how to invoke a card, or needs to pick a template (homework/media/QA/comic/word/text). Covers all 7 card types across Web Component and Standalone architectures.
+description: Card template selector. Use when the user asks which card to use, how to invoke a card, or needs to pick a template (homework/media/answer/comic/word/text). Covers all 6 card types across Web Component and Standalone architectures.
 ---
 
 # Skills — 卡片模板调用指南
 
-本项目包含 **7 种卡片模板**，分为两套架构体系。本文档用于查找和调用每一种卡片。
+本项目包含 **6 种卡片模板**，分为两套架构体系。本文档用于查找和调用每一种卡片。
 
 ---
 
@@ -20,8 +20,7 @@ description: Card template selector. Use when the user asks which card to use, h
    - [english-word-card — 英语单词卡片](#4-english-word-card--英语单词卡片)
    - [comic-card — 连环画卡片](#5-comic-card--连环画卡片)
 4. [Standalone 卡片](#standalone-卡片)
-   - [Question and Answer Card — 问答卡片·完整版](#6-question-and-answer-card--问答卡片完整版)
-   - [Question and Answer Card-Answer — 问答卡片·精简版](#7-question-and-answer-card-answer--问答卡片精简版)
+   - [Answer Card — 问答卡片·精简版](#6-answer-card--问答卡片精简版)
 5. [通用 JSON Schema](#通用-json-schema)
 6. [主题配色速查](#主题配色速查)
 7. [响应式断点速查](#响应式断点速查)
@@ -37,8 +36,7 @@ description: Card template selector. Use when the user asks which card to use, h
 | 视频/音频/图片/文件预览 | 150px 暗色预览区 + 播放按钮 + 类型/时长标签 + 标题 | [media-card](#3-media-card--媒体预览卡片) |
 | 英语字母/单词启蒙学习 | 笔记本横线纸 + 便利贴（胶带+缎带）+ 大字母 + 单词 + 图片 + 点击发音 | [english-word-card](#4-english-word-card--英语单词卡片) |
 | 连环画/漫画分页阅读 | 视频播放器 + 单帧漫画（图片+气泡）+ 上一页/下一页 + 页码指示器 | [comic-card](#5-comic-card--连环画卡片) |
-| AI 知识问答（完整交互） | 品牌头部 + 快捷提问 + 输入框 + 发送按钮 + API 状态指示灯 + 来源展示 | [Question and Answer Card](#6-question-and-answer-card--问答卡片完整版) |
-| AI 回答展示（仅结果） | 顶部流光渐变条 + AI 头像 + "基于知识库"标签 + 渐变正文 + 彩色文件列表 | [Question and Answer Card-Answer](#7-question-and-answer-card-answer--问答卡片精简版) |
+| AI 回答展示 | 顶部流光渐变条 + AI 头像 + "基于知识库"标签 + 渐变正文 + 彩色文件列表 | [Answer Card](#6-answer-card--问答卡片精简版) |
 
 ---
 
@@ -47,7 +45,7 @@ description: Card template selector. Use when the user asks which card to use, h
 | 架构 | 文件夹 | 渲染方式 | 入口文件 | 配置方式 |
 |------|--------|---------|---------|---------|
 | **Web Component** | text-card, homework-card, media-card, english-word-card, comic-card | `<ai-card data='{...}'>` → Shadow DOM | `index.html` + `ai-card.js` + `ai-card.css` | JSON 文件 + `FILES[]` 数组 |
-| **Standalone** | Question and Answer Card, Question and Answer Card-Answer | 传统 HTML/CSS/JS，直接操作 DOM | `index.html` + `style.css` + `app.js` | `data.json`(完整版) 或 硬编码(精简版) |
+| **Standalone** | answer-card | 传统 HTML/CSS/JS，直接操作 DOM | `index.html` + `style.css` + `app.js` | 硬编码配置 |
 
 ### Web Component 通用调用方式
 
@@ -70,9 +68,8 @@ description: Card template selector. Use when the user asks which card to use, h
 ### Standalone 通用调用方式
 
 ```html
-<!-- 每个 Standalone 卡片是独立页面，直接打开 index.html -->
-<!-- 或 iframe 嵌入 -->
-<iframe src="Question and Answer Card/index.html"></iframe>
+<!-- 直接打开 index.html，或 iframe 嵌入 -->
+<iframe src="answer-card/index.html" style="width:100%;max-width:600px;border:none;"></iframe>
 ```
 
 ---
@@ -230,94 +227,20 @@ var FILES = ['h5-ai-assistant.json', 'h5-essay.json', 'your-new.json'];
 
 ## Standalone 卡片
 
-### 6. Question and Answer Card — 问答卡片·完整版
+### 6. Answer Card — 问答卡片·精简版
 
-**文件夹：** `Question and Answer Card/`
-
-**视觉特征：** 品牌头部（logo + 标题 + 副标题）+ 动态主体区（5 态切换）+ 快捷提问标签 + 输入框 + 发送按钮 + API 状态指示灯
-
-**5 种状态：** 空闲(💡) → 加载中(跳动圆点) → 回答(正文+分类+文件) → 空结果(🤔) → 错误(⚠️)
-
-**调用方式：**
-
-```html
-<!-- 方式一：直接打开 -->
-<!-- 浏览器打开 Question and Answer Card/index.html -->
-
-<!-- 方式二：iframe 嵌入 -->
-<iframe src="Question and Answer Card/index.html" style="width:100%;max-width:520px;height:600px;border:none;"></iframe>
-
-<!-- 方式三：部署到服务器，作为独立问答页面 -->
-```
-
-**配置方式：** 修改 `data.json`
-
-```json
-{
-  "api": {
-    "base": "http://127.0.0.1:8899",
-    "qa_endpoint": "/qa",
-    "health_endpoint": "/health"
-  },
-  "ui": {
-    "title": "炎图 AI 知识问答",
-    "subtitle": "基于知识库的智能检索与回答",
-    "placeholder": "请输入你的问题…",
-    "logo": "🤖",
-    "quick_prompts": [
-      { "label": "🍱 公司餐补", "question": "公司餐补是多少？" }
-    ],
-    "category_icons": { "architecture": "🏗️", "company": "🏢" },
-    "file_icons": { "md": "📘", "docx": "📄", "pptx": "📊" }
-  },
-  "request": { "top_k": 5, "timeout_ms": 30000 }
-}
-```
-
-**API 依赖：**
-- `GET /health` → `{ "status": "ok" }`（健康检测，非必需）
-- `POST /qa` ← `{ "question": "...", "top_k": 5 }` → `{ "description": "...", "sources": ["[cat] file.ext"] }`
-
-**关键文件：**
-
-| 文件 | 作用 |
-|------|------|
-| `index.html` | 静态骨架（所有 DOM 预声明） |
-| `style.css` | 全部样式 + 4 断点 + 动画 |
-| `app.js` | 配置加载、健康检测、问答请求、DOM 渲染 |
-| `data.json` | UI 配置 + API 端点 + 图标映射 |
-
----
-
-### 7. Question and Answer Card-Answer — 问答卡片·精简版
-
-**文件夹：** `Question and Answer Card-Answer/`
+**文件夹：** `answer-card/`
 
 **视觉特征：** 顶部 3px 五色流光渐变条（4s 循环动画）+ AI 头像（"AI" 渐变方块）+ 绿色 "● 基于知识库" badge + 渐变背景正文（左侧 3px 紫蓝渐变竖线）+ 6 种文件类型彩色图标 + 外部输入栏
 
-**与完整版的核心区别：**
-
-| | 完整版 | 精简版 |
-|---|--------|--------|
-| 卡片 max-width | 520px | 600px |
-| 品牌头部 | ✅ | ❌ |
-| 顶部流光条 | ❌ | ✅ |
-| 快捷提问标签 | ✅ | ❌ |
-| API 状态灯 | ✅ | ❌ |
-| AI 头像 + 知识库 badge | ❌ | ✅ |
-| 正文渐变背景 | ❌ | ✅ |
-| 文件类型彩色图标 | ❌ (统一灰色) | ✅ (6 色) |
-| 输入框位置 | 卡片内部 | 卡片外部 |
-| 配置来源 | data.json | 硬编码在 app.js |
-
 **调用方式：**
 
 ```html
 <!-- 方式一：直接打开 -->
-<!-- 浏览器打开 Question and Answer Card-Answer/index.html -->
+<!-- 浏览器打开 answer-card/index.html -->
 
 <!-- 方式二：iframe 嵌入 -->
-<iframe src="Question and Answer Card-Answer/index.html" style="width:100%;max-width:600px;border:none;"></iframe>
+<iframe src="answer-card/index.html" style="width:100%;max-width:600px;border:none;"></iframe>
 ```
 
 **配置方式：** 修改 `app.js` 中的硬编码常量
@@ -328,6 +251,18 @@ const QA_URL     = API_BASE + '/qa';
 const TOP_K      = 5;
 const TIMEOUT_MS = 30000;
 ```
+
+**API 依赖：**
+- `POST /qa` ← `{ "question": "...", "top_k": 5 }` → `{ "description": "...", "sources": ["[cat] file.ext"] }`
+
+**关键文件：**
+
+| 文件 | 作用 |
+|------|------|
+| `index.html` | 静态骨架（所有 DOM 预声明） |
+| `style.css` | 全部样式 + 4 断点 + 动画 |
+| `app.js` | 配置、问答请求、DOM 渲染 |
+| `metadata.md` | 卡片功能与配置信息 |
 
 **文件类型色标（6 种）：**
 
@@ -395,20 +330,19 @@ const TIMEOUT_MS = 30000;
 | `video` / `audio` / `image` / `file` | 靛蓝 | #4f46e5 | media |
 | `abc` | 紫 | #8e44ad | english-word |
 | `comic` | 琥珀 | #f59e0b | comic |
-| `qa` | 靛蓝 | #6366f1 | qa-card |
-| `qa-answer` | 靛蓝 | #5b5fe3 | qa-answer |
+| `answer` | 靛蓝 | #5b5fe3 | answer |
 
 ---
 
 ## 响应式断点速查
 
-| 端 | 断点 | Web Component 卡片 max-width | QA 卡片 max-width | 页面布局 |
-|----|------|------------------------------|-------------------|---------|
-| 手机 | < 480px | 380px | 520–600px | 单列居中 |
-| 平板 | ≥ 480px | 420px | 520–600px | 单列居中 |
-| 大屏 | ≥ 768px | 460px | 520–600px | 双列网格 |
-| 电脑 | ≥ 1024px | 500px | 520–600px | 双/三列 |
-| 电视 | ≥ 1440px | 560px | 520–600px | 三/四列 |
+| 端 | 断点 | Web Component 卡片 max-width | Answer 卡片 max-width | 页面布局 |
+|----|------|------------------------------|----------------------|---------|
+| 手机 | < 480px | 380px | 600px | 单列居中 |
+| 平板 | ≥ 480px | 420px | 600px | 单列居中 |
+| 大屏 | ≥ 768px | 460px | 600px | 双列网格 |
+| 电脑 | ≥ 1024px | 500px | 600px | 双/三列 |
+| 电视 | ≥ 1440px | 560px | 600px | 三/四列 |
 
 ---
 
@@ -418,8 +352,8 @@ const TIMEOUT_MS = 30000;
 
 1. 根据[快速查找表](#快速查找我需要哪种卡片)确定模板文件夹
 2. **Web Component 模板：** 创建 JSON 数据文件 → 更新 `ai-card.js` 的 `FILES[]` → 更新 `ai-card-demo.html` 的 `CARDS[]`
-3. **Standalone 模板：** 修改 `data.json`（完整版）或 `app.js` 常量（精简版）→ 直接使用
+3. **Standalone 模板：** 修改 `app.js` 中的硬编码常量 → 直接使用
 
 ### 创建全新模板
 
-当所有 7 种模板都不匹配时，参见 `.claude/skills/card.md` 中的 "New Template Flow" 章节。
+当所有 6 种模板都不匹配时，参见 `.claude/skills/card.md` 中的 "New Template Flow" 章节。
