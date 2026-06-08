@@ -196,7 +196,9 @@ comic-card 额外需要：
 - `description` → 中文释义（如 "苹果"）
 - `title` → 缎带徽章文字
 - 点击发音依赖 Web Speech API（美式英语，语速 0.85，音调 1.1）
-- 需要在 `<head>` 中加载本地字体: `<link rel="stylesheet" href="fonts/fonts.css">`（每个卡片文件夹内含 `fonts/` 子目录，woff2 格式，无 CDN 依赖）
+- 字体策略：英文走 Patrick Hand (font-weight: 400)，中文翻译 (`.sentence-zh`) 走宋体栈
+- `.sentence-zh` 设 `min-height: 1.5em` 预留空间，翻译淡入淡出不跳布局
+- 需要在 `<head>` 中加载本地字体: `<link rel="stylesheet" href="fonts/fonts.css">`
 
 **字体依赖（本地 woff2，必须在页面 `<head>` 中）：**
 ```html
@@ -231,7 +233,8 @@ comic-card 额外需要：
 - 跟读按钮 → TTS 范读 → 自动录音 → 词重叠相似度 ≥ 60% = 正确（最多重试 3 次）
 - 录音回放：反馈区显示 "听我的发音" 按钮
 - 依赖 Web Speech API (speechSynthesis + SpeechRecognition + MediaRecorder)
-- 需要在 `<head>` 中加载本地字体: `<link rel="stylesheet" href="fonts/fonts.css">`（每个卡片文件夹内含 `fonts/` 子目录，woff2 格式，无 CDN 依赖）
+- 字体策略：英文 Patrick Hand (font-weight: 400)，中文翻译 (`.sentence-zh`) 宋体栈，`min-height: 1.5em` 预留空间
+- 需要在 `<head>` 中加载本地字体: `<link rel="stylesheet" href="fonts/fonts.css">`
 
 **字体依赖（本地 woff2，必须在页面 `<head>` 中）：**
 ```html
@@ -255,7 +258,8 @@ comic-card 额外需要：
 - 跟读功能以输入框内容为目标句子
 - 录音回放：反馈区显示 "听我的发音" 按钮
 - 依赖 DeepSeek API（需 API Key）进行翻译；依赖 Web Speech API 进行语音交互
-- 需要在 `<head>` 中加载本地字体: `<link rel="stylesheet" href="fonts/fonts.css">`（每个卡片文件夹内含 `fonts/` 子目录，woff2 格式，无 CDN 依赖）
+- 字体策略：英文 Patrick Hand (font-weight: 400)，翻译 (`.sentence-zh`) 和 placeholder 宋体栈，`min-height: 1.5em` 预留空间，placeholder 无斜体
+- 需要在 `<head>` 中加载本地字体: `<link rel="stylesheet" href="fonts/fonts.css">`
 - **无缎带设计**（v1.1 移除 ribbon）
 
 **与 english-sentence-card 的区别:**

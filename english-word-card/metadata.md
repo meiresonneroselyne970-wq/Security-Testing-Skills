@@ -210,5 +210,5 @@ body
 4. **语音交互**：通过 `data-speak` 属性传递朗读文本，在 `connectedCallback` 中统一绑定 click 事件
 5. **CSS 精简**：`ai-card.css` 包含组件样式（`.abc-card`、`.tape-decor`、`.abc-ribbon` 等）和页面样式（`.page-container`、`.main-scroll-wrapper` 等），不含 `.strip`、`.bar`、`.media-area`
 6. **PALETTE + THEME_MAP**：JS 中只定义了 purple 一种颜色，`THEME_MAP` 将 abc 映射到 purple
-7. **本地字体**：使用 Patrick Hand 手写字体，woff2 格式存储在卡片目录的 `fonts/` 子目录中，通过 `<link rel="stylesheet" href="fonts/fonts.css">` 加载，无 CDN 依赖
+7. **本地字体**：使用 Patrick Hand 手写字体（单字重，所有文字元素 `font-weight: 400`，无 faux-bold），woff2 格式存储在卡片目录的 `fonts/` 子目录中，通过 `<link rel="stylesheet" href="fonts/fonts.css">` 加载，无 CDN 依赖
 8. **列表渲染**：`ai-card.js` 末尾 IIFE 自动 fetch `FILES` 数组中的 JSON，渲染到页面

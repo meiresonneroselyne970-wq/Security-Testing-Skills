@@ -208,7 +208,7 @@ card (abc-card, semi-transparent white, rounded, shadow)
 - `title` is the ribbon badge text.
 - Page-level notebook paper background (`.page-container`) only appears in standalone `index.html`, not in demo/preview cards.
 - Web Speech API for pronunciation on click — `data-speak` attributes on `.big-letter`, `.word-label`, and `.abc-img` elements.
-- Uses Patrick Hand font (local woff2, no CDN) for handwritten textbook feel.
+- Uses Patrick Hand font (local woff2, no CDN) for handwritten textbook feel; all elements use `font-weight: 400` (Patrick Hand is single-weight — no faux-bold).
 
 **Local font requirement:** Each card folder contains a `fonts/` subdirectory (woff2 + fonts.css). `index.html` `<head>` must include:
 ```html
@@ -402,7 +402,8 @@ sentence-card (sticky note, rounded, shadow)
 - Shadow reading: TTS plays reference → microphone auto-opens → word-overlap similarity ≥ 60% = correct, up to 3 retries
 - Records user's voice during shadow reading for playback comparison
 - Uses Web Speech API (speechSynthesis + SpeechRecognition + MediaRecorder)
-- Uses local Patrick Hand font (woff2, no CDN) for handwritten feel
+- Uses local Patrick Hand font (woff2, no CDN) for handwritten feel; Chinese translation (`.sentence-zh`) uses Songti (宋体) serif
+- `.sentence-zh` has `min-height: 1.5em` to reserve space — translation fades in/out without layout shift
 
 **Local font requirement:** Each card folder contains a `fonts/` subdirectory (woff2 + fonts.css). `index.html` `<head>` must include:
 ```html
@@ -459,7 +460,9 @@ sentence-card (sticky note, rounded, shadow, no ribbon)
 - Shadow reading uses current textarea content as target
 - Records user's voice during shadow reading for playback comparison
 - Uses Web Speech API (speechSynthesis + SpeechRecognition + MediaRecorder)
-- Uses local Patrick Hand font (woff2, no CDN) for handwritten feel
+- Uses local Patrick Hand font (woff2, no CDN) for handwritten feel; Chinese translation (`.sentence-zh`) and placeholder use Songti (宋体) serif
+- `.sentence-zh` has `min-height: 1.5em` to reserve space — translation appears without layout shift
+- `::placeholder` uses Songti stack, `opacity: 0.7`, no italic (Chinese italic looks unnatural)
 - **API dependency:** Requires DeepSeek API key (hardcoded in `ai-card.js`) for translation
 
 **Key differences from english-sentence-card:**
@@ -857,12 +860,18 @@ All cards target the Chinese market, where Android (including Huawei/HarmonyOS) 
 }
 ```
 
-### Font Family — Local Fonts
+### Font Family — Two-Tier Strategy
 
-Fonts are stored locally in each card folder's `fonts/` subdirectory (woff2 format, no CDN dependency). The primary font is **Patrick Hand** (handwritten style) with a full Chinese system font fallback chain for cases where the custom font fails to load or for non-English characters:
+Fonts are stored locally in each card folder's `fonts/` subdirectory (woff2 format, no CDN dependency). The project uses a **two-tier font strategy**:
+
+#### Tier 1: `:host` (UI elements — sans-serif fallback)
+
+Buttons, ribbon badges, and general UI use a sans-serif Chinese fallback:
 
 ```css
-font-family: "Patrick Hand", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", cursive, sans-serif;
+:host {
+  font-family: "Patrick Hand", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", cursive, sans-serif;
+}
 ```
 
 | Font | Platform |
@@ -872,6 +881,24 @@ font-family: "Patrick Hand", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHe
 | `PingFang SC` | iOS / macOS |
 | `Microsoft YaHei` | Windows |
 | `Noto Sans SC` | Android (fallback) |
+
+#### Tier 2: Chinese text elements (`.sentence-zh` / `::placeholder` — 宋体 serif)
+
+Chinese translations and placeholder text use **Songti (宋体)** for a classic serif look that pairs naturally with the handwritten English:
+
+```css
+font-family: "Patrick Hand", "STSong", "SimSun", "Noto Serif SC", "Songti SC", serif;
+```
+
+| Font | Platform |
+|------|----------|
+| `Patrick Hand` | Local woff2 (English characters) |
+| `STSong` (华文宋体) | macOS / iOS |
+| `SimSun` (宋体) | Windows |
+| `Noto Serif SC` (思源宋体) | Android / HarmonyOS |
+| `Songti SC` | macOS / iOS (system serif) |
+
+**Why two tiers?** English sentences use Patrick Hand (handwriting), Chinese translations use Songti (serif). This handwriting + serif pairing is a classic typographic combination. Keeping sans-serif on `:host` ensures buttons and UI labels remain clean and readable.
 
 ### Tap & Touch
 

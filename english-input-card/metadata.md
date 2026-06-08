@@ -205,5 +205,5 @@ body
 6. **录音回放**：跟读时自动录音，反馈区显示「听我的发音」按钮，点击可回放自己的录音与范读对比
 7. **CSS 精简**：`ai-card.css` 包含组件样式（`.sentence-card`、`.sentence-en` 等）和页面样式，不含冗余规则
 8. **PALETTE + THEME_MAP**：JS 中定义 purple、orange、blue 三种配色，`THEME_MAP` 将 `sentence` 映射到 orange、`abc` 映射到 purple
-9. **本地字体**：使用 Patrick Hand 手写字体，woff2 格式存储在卡片目录的 `fonts/` 子目录中，通过 `<link rel="stylesheet" href="fonts/fonts.css">` 加载，无 CDN 依赖
+9. **两层字体策略**：`:host` 用 Patrick Hand + 系统无衬线回退；`.sentence-en` 英文 Patrick Hand `font-weight: 400`（单字重，无 faux-bold）；`.sentence-zh` 和 `::placeholder` 中文用宋体栈，placeholder 无斜体 `opacity: 0.7`，`min-height: 1.5em` 预留空间，翻译淡入淡出不跳布局。本地 woff2 存储在 `fonts/` 子目录
 10. **无缎带设计**：v1.1 移除 `sentence-ribbon` 缎带徽章，卡片更简洁
