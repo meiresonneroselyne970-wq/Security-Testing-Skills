@@ -1,0 +1,289 @@
+/* ================================================================
+   english-sentence-card/ai-card.css
+   Template: Sticky note card with ribbon + English sentence
+   Interactive: click to speak English sentence, show Chinese translation
+   ================================================================ */
+
+/* ── Component: host ── */
+:host {
+  display: block;
+  max-width: 420px;
+  margin: 0 auto;
+  font-family: "Patrick Hand", "Comic Sans MS", cursive, sans-serif;
+}
+
+/* ── Sticky Note Card ── */
+.sentence-card {
+  background:
+    linear-gradient(#d0d0d0 1px, transparent 1px),
+    #fffef9;
+  background-size: 100% 20px;
+  border-radius: 10px;
+  border: 1px solid #e5e0d5;
+  padding: 10px 18px 16px 18px;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Ribbon badge ── */
+.sentence-card .sentence-ribbon {
+  position: absolute;
+  top: -10px;
+  left: -5px;
+  background: var(--c-brand, #2563eb);
+  color: white;
+  padding: 4px 15px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 18px;
+  transform: rotate(-2deg);
+  z-index: 10;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Card body ── */
+.sentence-card .sentence-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 18px;
+}
+
+/* ── Sentence text area ── */
+.sentence-card .sentence-text-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 4px 0;
+}
+
+/* ── English sentence ── */
+.sentence-card .sentence-en {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.6;
+  cursor: pointer;
+  user-select: none;
+  color: #2c3e50;
+  text-shadow: 1px 1px 0 rgba(255,255,255,.8), 2px 2px 0 rgba(0,0,0,.06);
+  transition: transform 0.15s;
+  word-break: break-word;
+}
+
+.sentence-card .sentence-en:active {
+  transform: scale(0.97);
+}
+
+/* ── Chinese translation (hidden until click) ── */
+.sentence-card .sentence-zh {
+  font-size: 17px;
+  color: var(--c-brand, #2563eb);
+  font-weight: 600;
+  line-height: 1.5;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+}
+
+.sentence-card .sentence-zh.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Button ── */
+.sentence-card .actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.sentence-card .btn {
+  display: inline-block;
+  padding: 8px 28px;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+}
+
+.sentence-card .btn.primary {
+  background: var(--c-brand, #2563eb);
+  color: #fff;
+}
+
+.sentence-card .btn.primary:active {
+  opacity: 0.8;
+}
+
+/* ── Shadow (跟读) button ── */
+.sentence-card .btn.shadow {
+  background: transparent;
+  color: var(--c-brand, #2563eb);
+  border: 2px solid var(--c-brand, #2563eb);
+  padding: 6px 26px;
+}
+
+.sentence-card .btn.shadow:active {
+  background: var(--c-soft, #dbeafe);
+  opacity: 1;
+}
+
+.sentence-card .btn.shadow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Shadow feedback ── */
+.sentence-card .shadow-feedback {
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  min-height: 28px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  margin-top: 6px;
+}
+
+.sentence-card .shadow-feedback.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.sentence-card .shadow-feedback.listening {
+  color: var(--c-brand, #2563eb);
+  animation: shadowPulse 1.2s ease-in-out infinite;
+}
+
+.sentence-card .shadow-feedback.correct {
+  color: #16a34a;
+}
+
+.sentence-card .shadow-feedback.incorrect {
+  color: #dc2626;
+}
+
+.sentence-card .shadow-feedback.timeout {
+  color: #d97706;
+}
+
+/* ── Playback button (inside feedback) ── */
+.sentence-card .btn-play {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1.5px solid currentColor;
+  background: transparent;
+  color: inherit;
+  vertical-align: middle;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.sentence-card .btn-play:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.sentence-card .btn-play:active {
+  transform: scale(0.95);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* ── Pulse animation ── */
+@keyframes shadowPulse {
+  0%, 100% { opacity: 1; transform: translateY(0) scale(1); }
+  50% { opacity: 0.5; transform: translateY(0) scale(1.08); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Responsive breakpoints
+   ══════════════════════════════════════════════════════════════ */
+
+/* Tablet 480px+ */
+@media (min-width: 480px) {
+  :host { max-width: 460px; }
+  .sentence-card { border-radius: 12px; padding: 12px 22px 20px 22px; }
+
+  .sentence-card .sentence-ribbon { font-size: 20px; padding: 5px 18px; top: -11px; }
+  .sentence-card .sentence-body { margin-top: 20px; }
+
+  .sentence-card .sentence-en { font-size: 30px; }
+  .sentence-card .sentence-zh { font-size: 18px; }
+  .sentence-card .btn { padding: 9px 32px; font-size: 16px; }
+  .sentence-card .btn.shadow { padding: 7px 28px; font-size: 16px; border-width: 2px; }
+  .sentence-card .shadow-feedback { font-size: 16px; }
+  .sentence-card .btn-play { font-size: 14px; padding: 4px 14px; }
+  .sentence-card .actions { gap: 12px; }
+}
+
+/* Large screen 768px+ */
+@media (min-width: 768px) {
+  :host { max-width: 500px; }
+  .sentence-card { border-radius: 14px; padding: 14px 26px 24px 26px; }
+
+  .sentence-card .sentence-ribbon { font-size: 22px; padding: 6px 22px; top: -12px; }
+  .sentence-card .sentence-body { margin-top: 22px; }
+
+  .sentence-card .sentence-en { font-size: 34px; }
+  .sentence-card .sentence-zh { font-size: 20px; }
+  .sentence-card .btn { padding: 10px 36px; font-size: 17px; }
+  .sentence-card .btn.shadow { padding: 8px 30px; font-size: 17px; }
+  .sentence-card .shadow-feedback { font-size: 17px; }
+  .sentence-card .btn-play { font-size: 14px; padding: 4px 14px; }
+  .sentence-card .actions { gap: 14px; }
+}
+
+/* Desktop 1024px+ */
+@media (min-width: 1024px) {
+  :host { max-width: 540px; }
+  .sentence-card { border-radius: 16px; padding: 16px 32px 28px 32px; }
+
+  .sentence-card .sentence-ribbon { font-size: 24px; padding: 7px 26px; top: -13px; left: -6px; }
+  .sentence-card .sentence-body { margin-top: 24px; }
+
+  .sentence-card .sentence-en { font-size: 38px; }
+  .sentence-card .sentence-zh { font-size: 22px; }
+  .sentence-card .btn { padding: 11px 40px; font-size: 18px; }
+  .sentence-card .btn.shadow { padding: 9px 34px; font-size: 18px; }
+  .sentence-card .shadow-feedback { font-size: 18px; }
+  .sentence-card .btn-play { font-size: 15px; padding: 5px 16px; }
+  .sentence-card .actions { gap: 16px; }
+}
+
+/* TV 1440px+ */
+@media (min-width: 1440px) {
+  :host { max-width: 600px; }
+  .sentence-card { border-radius: 18px; padding: 18px 36px 32px 36px; }
+
+  .sentence-card .sentence-ribbon { font-size: 28px; padding: 8px 30px; top: -15px; left: -8px; }
+  .sentence-card .sentence-body { margin-top: 28px; }
+
+  .sentence-card .sentence-en { font-size: 42px; }
+  .sentence-card .sentence-zh { font-size: 24px; }
+  .sentence-card .btn { padding: 13px 48px; font-size: 20px; }
+  .sentence-card .btn.shadow { padding: 10px 40px; font-size: 20px; }
+  .sentence-card .shadow-feedback { font-size: 19px; }
+  .sentence-card .btn-play { font-size: 16px; padding: 5px 16px; }
+  .sentence-card .actions { gap: 18px; }
+}
+
+/* ── Page-level: standalone index.html only (ignored inside Shadow DOM) ── */
+body {
+  padding-top: 20px;
+}
