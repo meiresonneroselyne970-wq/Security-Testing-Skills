@@ -92,7 +92,7 @@
 /* ── Big English word (word layout) ── */
 .abc-card .big-word {
   font-size: 52px;
-  font-weight: 900;
+  font-weight: 400;
   cursor: pointer;
   user-select: none;
   color: #2c3e50;
