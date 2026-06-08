@@ -9,7 +9,11 @@
   display: block;
   max-width: 380px;
   margin: 0 auto;
-  font-family: "Patrick Hand", "Comic Sans MS", cursive, sans-serif;
+  font-family: "Patrick Hand", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", cursive, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ── Sticky Note Card ── */
@@ -131,8 +135,10 @@
   transform: scale(0.9);
 }
 
-.abc-card .abc-img:hover {
-  transform: scale(1.05);
+@media (hover: hover) {
+  .abc-card .abc-img:hover {
+    transform: scale(1.05);
+  }
 }
 
 /* ── Button ── */
@@ -154,6 +160,8 @@
   cursor: pointer;
   border: none;
   transition: opacity 0.2s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .abc-card .btn.primary {
@@ -235,10 +243,14 @@
   color: inherit;
   vertical-align: middle;
   transition: background 0.2s, transform 0.15s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.abc-card .btn-play:hover {
-  background: rgba(0, 0, 0, 0.08);
+@media (hover: hover) {
+  .abc-card .btn-play:hover {
+    background: rgba(0, 0, 0, 0.08);
+  }
 }
 
 .abc-card .btn-play:active {
@@ -323,4 +335,11 @@
 /* ── Page-level: standalone index.html only (ignored inside Shadow DOM) ── */
 body {
   padding-top: 20px;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }

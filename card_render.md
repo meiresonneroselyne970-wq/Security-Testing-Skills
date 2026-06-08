@@ -88,7 +88,7 @@ description: Render a card given templateId + data. Outputs ai_card HTML or webv
 
 ---
 
-## 支持的 templateId（6 个）
+## 支持的 templateId（8 个）
 
 | templateId | 架构 | 渲染元素 | card_type 有效值 |
 |------------|------|---------|-----------------|
@@ -98,6 +98,8 @@ description: Render a card given templateId + data. Outputs ai_card HTML or webv
 | `english-word-card` | Web Component | `<ai-card>` | english_word |
 | `comic-card` | Web Component | `<ai-card>` | comic_strip |
 | `answer-card` | Standalone | `<iframe>` | qa_answer |
+| `english-sentence-card` | Web Component | `<ai-card>` | english_sentence |
+| `english-input-card` | Web Component | `<ai-card>` | english_sentence |
 
 ---
 
@@ -214,6 +216,61 @@ comic-card 额外需要：
 **支持的 theme:** `comic`(琥珀 #f59e0b)
 **特殊:** 需要 `video_url` 和 `frames[]`。frames 中 texts[0]→蓝左气泡, texts[1]→粉右气泡, texts[2+]→绿居中加粗。
 
+### english-sentence-card
+
+```
+渲染元素: <ai-card data='...'>
+引入文件: english-sentence-card/ai-card.css + english-sentence-card/ai-card.js
+```
+
+**支持的 icon:** `sentence`
+**支持的 theme:** `sentence`(蓝 #2563eb), `abc`(紫 #8e44ad)
+**特殊字段映射:**
+- `title` → 缎带徽章文字（如 "每日一句"）
+- `subtitle` → 英语句子（卡片主体，左对齐，可换行）
+- `description` → 中文翻译（默认隐藏，点击后淡入，3 秒后淡出）
+- 点击句子/按钮 → TTS 发音 + 显示中文翻译
+- 跟读按钮 → TTS 范读 → 自动录音 → 词重叠相似度 ≥ 60% = 正确（最多重试 3 次）
+- 录音回放：反馈区显示 "听我的发音" 按钮
+- 依赖 Web Speech API (speechSynthesis + SpeechRecognition + MediaRecorder)
+- 需要在 `<head>` 中加载 Google Fonts: Patrick Hand
+
+**Google Fonts 依赖（必须在页面 `<head>` 中）：**
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+```
+
+### english-input-card
+
+```
+渲染元素: <ai-card data='...'>
+引入文件: english-input-card/ai-card.css + english-input-card/ai-card.js
+```
+
+**支持的 icon:** `sentence`
+**支持的 theme:** `sentence`(橙 #ea580c), `abc`(紫 #8e44ad), `blue`(蓝 #2563eb)
+**特殊:**
+- 可编辑 `<textarea>` 替代静态文本（rows=1，自动撑高）
+- 实时翻译：输入时 600ms 防抖调用 DeepSeek API (deepseek-v4-pro)，显示 "翻译中…"，失败自动隐藏
+- 所有字段（title/subtitle/description）在 v1.1 中已废弃，卡片依赖用户实时输入
+- 发音按钮朗读当前输入框内容（非静态数据）
+- 跟读功能以输入框内容为目标句子
+- 录音回放：反馈区显示 "听我的发音" 按钮
+- 依赖 DeepSeek API（需 API Key）进行翻译；依赖 Web Speech API 进行语音交互
+- 需要在 `<head>` 中加载 Google Fonts: Patrick Hand
+- **无缎带设计**（v1.1 移除 ribbon）
+
+**与 english-sentence-card 的区别:**
+| 特性 | english-sentence-card | english-input-card |
+|------|----------------------|-------------------|
+| 内容来源 | JSON 预填数据 | 用户自由输入 |
+| 翻译方式 | 静态（JSON description 字段） | 实时（DeepSeek API） |
+| 缎带徽章 | 有 | 无 |
+| 主题色 | 蓝 #2563eb | 橙 #ea580c |
+| 适用场景 | 展示预设句子 | 探索任意句子 |
+
 ### answer-card
 
 ```
@@ -240,6 +297,8 @@ comic-card 额外需要：
 | `video` / `audio` / `image` / `file` | 靛蓝 | #4f46e5 | media |
 | `abc` | 紫 | #8e44ad | english-word |
 | `comic` | 琥珀 | #f59e0b | comic |
+| `sentence` | 蓝 | #2563eb | english-sentence |
+| `sentence` | 橙 | #ea580c | english-input (注意: 同名不同色) |
 | `answer` | 靛蓝 | #5b5fe3 | answer |
 
 ---
@@ -257,6 +316,26 @@ comic-card 额外需要：
 | 电视 | ≥ 1440px | 560px | 三/四列 |
 
 > answer-card 固定 max-width: 600px，不随断点变化。
+
+---
+
+## Android & 华为适配
+
+面向中国市场，需额外处理以下移动端问题（各模板 CSS 已内置）：
+
+| 适配项 | CSS 属性 | 说明 |
+|--------|---------|------|
+| 消除点击高亮 | `-webkit-tap-highlight-color: transparent` | 安卓 WebView 默认蓝/灰色闪烁 |
+| 消除点击延迟 | `touch-action: manipulation` | 消除 300ms 延迟 + 防双击缩放 |
+| 粘滞悬停修复 | `@media (hover: hover) { :hover }` | 安卓首次点击后 `:hover` 不会自动取消 |
+| 华为字体回退 | `"HarmonyOS Sans SC", "PingFang SC", …` | Google Fonts 在国内被墙 |
+| 字体平滑 | `-webkit-font-smoothing: antialiased` | EMUI/HarmonyOS 渲染优化 |
+| 防字体缩放 | `-webkit-text-size-adjust: 100%` | 横竖屏切换时字体不变 |
+| 防下拉刷新干扰 | `overscroll-behavior: none` | 华为浏览器下拉刷新手势 |
+| 输入框重置 | `-webkit-appearance: none` | 安卓默认 textarea/input 样式 |
+| 语音识别 | 特性检测 `SpeechRecognition` 可用性 | 华为 EMUI WebView 可能不支持；`file://` 协议下不可用 |
+
+> 完整说明见 [card.md](.claude/skills/card.md) 的 "Android & Huawei Adaptation" 章节。
 
 ---
 
@@ -282,3 +361,4 @@ renderCards('root', [
 5. **Web Component 去重:** 多个模板的 JS 文件都定义 `<ai-card>`，但通过 `customElements.get('ai-card')` 检查避免重复注册。
 6. **answer-card 不共享引擎:** 它不使用 `ai-card.js` / `ai-card.css`，是独立的 `app.js` + `style.css`。
 7. **顺序依赖:** 必须先加载 CSS 再加载 JS，否则 Web Component 首次渲染时样式缺失。
+8. **Android & 华为适配:** 所有 Web Component 模板的 CSS 已内置移动端适配（tap highlight、touch-action、hover fix、中文字体回退、overscroll 保护）。新建模板时必须包含这些适配。详见"Android & 华为适配"章节。

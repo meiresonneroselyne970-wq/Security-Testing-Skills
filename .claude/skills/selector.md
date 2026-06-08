@@ -1,6 +1,6 @@
 ---
 name: selector
-description: Card template selector hub. Use to find the right skill — resource_lookup (find resources) or card_render (render cards). Quick reference for all 6 card types.
+description: Card template selector hub. Use to find the right skill — resource_lookup (find resources) or card_render (render cards). Quick reference for all 8 card types.
 ---
 
 # selector — 卡片技能索引
@@ -52,6 +52,8 @@ description: Card template selector hub. Use to find the right skill — resourc
 | 英语字母/单词启蒙 | 笔记本横线纸 + 便利贴 + 大字母 + 单词 + 图片 + 发音 | `english-word-card` | english_word |
 | 连环画/漫画分页 | 视频播放器 + 单帧漫画气泡 + 上一页/下一页 | `comic-card` | comic_strip |
 | AI 问答展示 | 流光渐变条 + AI 头像 + "基于知识库" badge + 彩色文件列表 | `answer-card` | qa_answer |
+| 英语句子展示（每日一句） | 笔记本横线纸 + 缎带徽章 + 英文句子 + 点击翻译 + TTS 发音 + 跟读 | `english-sentence-card` | english_sentence |
+| 英语句子输入（自由输入） | 笔记本横线纸 + 可编辑输入框 + 实时 API 翻译 + TTS 发音 + 跟读 | `english-input-card` | english_sentence |
 
 ---
 
@@ -85,7 +87,7 @@ description: Card template selector hub. Use to find the right skill — resourc
 
 | 架构 | 模板 | 渲染元素 |
 |------|------|---------|
-| **Web Component** | text, homework, media, english-word, comic | `<ai-card data='{...}'>` → Shadow DOM |
+| **Web Component** | text, homework, media, english-word, comic, english-sentence, english-input | `<ai-card data='{...}'>` → Shadow DOM |
 | **Standalone** | answer | `<iframe src="answer-card/index.html">` |
 
 > 详细渲染说明、JSON Schema、主题配色、响应式断点见 [card_render.md](card_render.md)。
@@ -95,6 +97,6 @@ description: Card template selector hub. Use to find the right skill — resourc
 ## 注意事项
 
 1. **查找与渲染分离:** `resource_lookup` 只返回候选，不渲染；`card_render` 只渲染，不查资源。
-2. **templateId 必须准确:** 6 个有效值 — `text-card`, `homework-card`, `media-card`, `english-word-card`, `comic-card`, `answer-card`。
+2. **templateId 必须准确:** 8 个有效值 — `text-card`, `homework-card`, `media-card`, `english-word-card`, `comic-card`, `answer-card`, `english-sentence-card`, `english-input-card`。
 3. **新增卡片数据:** 复用现有模板 → 参见 [card.md](card.md)；创建全新模板 → 同上。
 4. **answer-card 特殊:** Standalone 架构，不支持 `<ai-card>`，只能用 iframe。无 JSON 数据变体。

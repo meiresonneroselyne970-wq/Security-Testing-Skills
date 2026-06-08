@@ -19,7 +19,8 @@ version: "1.0"
 5. [数据变体](#数据变体)
 6. [主题配色](#主题配色)
 7. [响应式适配](#响应式适配)
-8. [渲染说明](#渲染说明)
+8. [Android & 华为适配](#android--华为适配)
+9. [渲染说明](#渲染说明)
 
 ---
 
@@ -180,6 +181,23 @@ body
 - **缎带**：字体从 18px → 28px，padding 同步增大
 - **图片**：从 80px → 130px（+62.5%）
 - **页面布局**：始终单列居中，适合儿童学习场景
+
+---
+
+## Android & 华为适配
+
+面向中国市场，CSS 已内置以下移动端适配：
+
+| 适配项 | 属性 | 说明 |
+|--------|------|------|
+| 消除点击高亮 | `-webkit-tap-highlight-color: transparent` | 安卓 WebView 默认蓝/灰闪烁 |
+| 消除点击延迟 | `touch-action: manipulation` | .btn / .btn-play 上消除 300ms 延迟 |
+| 粘滞悬停修复 | `@media (hover: hover)` | .abc-img:hover / .btn-play:hover 只在真悬停设备生效 |
+| 华为字体回退 | `"HarmonyOS Sans SC"` → `"PingFang SC"` → `"Microsoft YaHei"` → `"Noto Sans SC"` | Google Fonts 在国内被墙时的回退链 |
+| 字体平滑 | `-webkit-font-smoothing: antialiased` | EMUI/HarmonyOS 渲染优化 |
+| 防字体缩放 | `-webkit-text-size-adjust: 100%` | :host / body / html 均设置 |
+| 防下拉刷新干扰 | `overscroll-behavior: none` | body 层级，华为浏览器下拉刷新不影响卡片操作 |
+| 语音识别 | 特性检测 `SpeechRecognition` 可用性 | 华为 EMUI WebView 可能不支持；`file://` 协议下不可用 |
 
 ---
 

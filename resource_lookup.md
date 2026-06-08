@@ -1,6 +1,6 @@
 ---
 name: resource_lookup
-description: Look up existing card resources — homework, textbooks, activities, media, word cards, comics. Searches across all 6 template folders, outputs structured candidates. Does NOT render cards.
+description: Look up existing card resources — homework, textbooks, activities, media, word cards, comics, English sentences. Searches across all 8 template folders, outputs structured candidates. Does NOT render cards.
 ---
 
 # resource_lookup — 资源查找
@@ -119,6 +119,34 @@ description: Look up existing card resources — homework, textbooks, activities
 
 ---
 
+### 7. 英语句子展示 — english-sentence-card/
+
+**templateId:** `english-sentence-card`
+**架构:** Web Component (`<ai-card>`)
+**card_type:** `english_sentence`
+
+| 文件 | theme | 徽章 | 句子 | 翻译 |
+|------|-------|------|------|------|
+| `data.json` | sentence | 每日一句 | The best preparation for tomorrow is doing your best today. | 为明天做的最好准备，就是今天做到最好。 |
+
+**搜索关键词:** 英语、句子、每日一句、发音、跟读、口语、朗读、每日英语
+
+---
+
+### 8. 英语句子输入 — english-input-card/
+
+**templateId:** `english-input-card`
+**架构:** Web Component (`<ai-card>`)
+**card_type:** `english_sentence`
+
+| 入口 | 类型 | 说明 |
+|------|------|------|
+| `english-input-card/index.html` | 独立页面 | 可编辑输入框 + DeepSeek API 实时翻译 + TTS 发音 + 跟读打分 |
+
+**搜索关键词:** 英语、输入、翻译、句子、自由输入、实时翻译、口语练习
+
+---
+
 ## 查找流程
 
 ```
@@ -202,6 +230,8 @@ description: Look up existing card resources — homework, textbooks, activities
 | 单词、字母、英语启蒙、发音、ABC | 启蒙 → english-word-card/ | `english-word-card` |
 | 连环画、漫画、对话、故事、分页 | 漫画 → comic-card/ | `comic-card` |
 | AI问答、知识库、提问、搜索答案 | 问答 → answer-card/ | `answer-card` |
+| 英语句子、每日一句、发音、跟读、口语 | 句子展示 → english-sentence-card/ | `english-sentence-card` |
+| 英语输入、翻译、自由输入、实时翻译 | 句子输入 → english-input-card/ | `english-input-card` |
 | 入口、助手、推荐、报告、提醒、欢迎 | 场景 → text-card/ | `text-card` |
 
 ---
@@ -212,5 +242,5 @@ description: Look up existing card resources — homework, textbooks, activities
 2. **资源 = 已有 JSON 数据文件:** 每个 JSON 文件是一个资源变体，包含完整的卡片数据。
 3. **多个匹配时全部列出:** 按相关度排序，让用户选择，不要自作主张只返回一个。
 4. **无匹配时明确告知:** 如果找不到已有资源，如实说明，建议新建数据文件（参见 `card` 技能）。
-5. **templateId 必须准确:** 6 个有效值 — `text-card`, `homework-card`, `media-card`, `english-word-card`, `comic-card`, `answer-card`。
+5. **templateId 必须准确:** 8 个有效值 — `text-card`, `homework-card`, `media-card`, `english-word-card`, `comic-card`, `answer-card`, `english-sentence-card`, `english-input-card`。
 6. **答案卡特殊:** answer-card 是 Standalone 架构，没有 JSON 数据文件变体，只有一个入口页面。查找时返回入口信息即可。

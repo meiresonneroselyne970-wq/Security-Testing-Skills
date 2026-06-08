@@ -2,12 +2,14 @@
 <!--
   AI 卡片模板总览
   ──────────────
-  5 种视觉模板，5 个文件夹，13 张卡片变体
+  7 种视觉模板，8 个文件夹，15 张卡片变体
     text-card        → 文本类（7 张）
     homework-card    → 作业类（3 张）
     media-card       → 媒体类（1 张）
     english-word-card → 英语单词（1 张）
     comic-card       → 连环画（1 张）
+    english-sentence-card → 英语句子展示（1 张）
+    english-input-card   → 英语句子输入（1 张）
 -->
 <html lang="zh-CN">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -33,13 +35,13 @@ h1{font-size:18px;font-weight:700;color:#111827;margin-top:4px}
 </style></head>
 <body>
 <h1>AI 卡片模板预览</h1>
-<p class="sub">5 种视觉模板 · 每个文件夹独立的 CSS + JS + JSON · 双击任意 index.html 即可预览</p>
+<p class="sub">7 种视觉模板 · 8 个文件夹独立的 CSS + JS + JSON · 双击任意 index.html 即可预览</p>
 <div id="root" style="display:flex;flex-direction:column;align-items:center;gap:16px;width:100%"></div>
 
 <script>
 /* ============================================================
  * Unified AI Card Web Component
- * Combines 3 visual templates — selected by card_type field
+ * Combines 7 visual templates — selected by card_type field
  * ============================================================ */
 (function(){
 
@@ -51,7 +53,8 @@ var PALETTE = {
   cyan:    { brand:'#0891b2', light:'#ecfeff', soft:'#cffafe',   gradStart:'#0891b2', gradEnd:'#22d3ee' },
   amber:   { brand:'#d97706', light:'#fffbeb', soft:'#fef3c7',   gradStart:'#d97706', gradEnd:'#fbbf24' },
   emerald: { brand:'#059669', light:'#ecfdf5', soft:'#d1fae5',   gradStart:'#059669', gradEnd:'#34d399' },
-  indigo:  { brand:'#4f46e5', light:'#eef2ff', soft:'#e0e7ff',   gradStart:'#4f46e5', gradEnd:'#818cf8' }
+  indigo:  { brand:'#4f46e5', light:'#eef2ff', soft:'#e0e7ff',   gradStart:'#4f46e5', gradEnd:'#818cf8' },
+  orange:  { brand:'#ea580c', light:'#fff7ed', soft:'#fed7aa',   gradStart:'#ea580c', gradEnd:'#fb923c' }
 };
 
 var THEME_MAP = {
@@ -59,7 +62,8 @@ var THEME_MAP = {
   chinese:'red', math:'blue', english:'green',
   video:'indigo', audio:'indigo', image:'indigo', file:'indigo',
   abc:'purple',
-  comic:'amber'
+  comic:'amber',
+  sentence:'blue'
 };
 
 function themeColor(t) { var c = THEME_MAP[t||'general'] || 'blue'; return PALETTE[c]||PALETTE.blue; }
@@ -69,7 +73,8 @@ var ICONS = {
   chinese:'📖', math:'📐', english:'🌐', homework:'📖',
   video:'🎬', image:'🖼', file:'📄',
   abc:'🔤',
-  comic:'💬'
+  comic:'💬',
+  sentence:'📝'
 };
 function iconEmoji(d) { var i=(d.layout&&d.layout.icon)||'link'; return ICONS[i]||'🔗'; }
 
@@ -79,11 +84,15 @@ function subjectLabel(s)    { return {chinese:'语文',math:'数学',english:'�
 
 var TYPE_LABEL = { video:'视频', audio:'音频', image:'图片', file:'文件' };
 
-function getTemplate(cardType) {
+function getTemplate(cardType, folder) {
   if (cardType === 'homework_reminder') return { html: homeworkHTML, css: 'homework-card/ai-card.css' };
   if (cardType === 'media_preview')     return { html: mediaHTML,    css: 'media-card/ai-card.css' };
   if (cardType === 'english_word')      return { html: englishWordHTML, css: 'english-word-card/ai-card.css' };
   if (cardType === 'comic_strip')       return { html: comicHTML,       css: 'comic-card/ai-card.css' };
+  if (cardType === 'english_sentence') {
+    if (folder === 'english-input-card') return { html: englishInputHTML, css: 'english-input-card/ai-card.css', theme: 'orange' };
+    return { html: englishSentenceHTML, css: 'english-sentence-card/ai-card.css' };
+  }
   return { html: defaultHTML, css: 'text-card/ai-card.css' };
 }
 
@@ -186,6 +195,44 @@ function englishWordHTML(d) {
   '</div>';
 }
 
+function englishSentenceHTML(d) {
+  var sentence = d.subtitle||'';
+  var zh = d.description||'';
+  var ribbon = d.title||'每日一句';
+  var btn = d.button_text||'句子发音';
+  return '<div class="sentence-card">'+
+    '<div class="sentence-ribbon">'+esc(ribbon)+'</div>'+
+    '<div class="sentence-body">'+
+      '<div class="sentence-text-area">'+
+        '<div class="sentence-en">'+esc(sentence)+'</div>'+
+        (zh?'<div class="sentence-zh">'+esc(zh)+'</div>':'')+
+      '</div>'+
+      '<div class="actions">'+
+        '<button class="btn primary">'+esc(btn)+'</button>'+
+        '<button class="btn shadow">跟读</button>'+
+      '</div>'+
+      '<div class="shadow-feedback"></div>'+
+    '</div>'+
+  '</div>';
+}
+
+function englishInputHTML(d) {
+  var btn = d.button_text||'句子发音';
+  return '<div class="sentence-card">'+
+    '<div class="sentence-body">'+
+      '<div class="sentence-text-area">'+
+        '<textarea class="sentence-en sentence-input" placeholder="输入英语句子…" rows="1"></textarea>'+
+        '<div class="sentence-zh"></div>'+
+      '</div>'+
+      '<div class="actions">'+
+        '<button class="btn primary">'+esc(btn)+'</button>'+
+        '<button class="btn shadow">跟读</button>'+
+      '</div>'+
+      '<div class="shadow-feedback"></div>'+
+    '</div>'+
+  '</div>';
+}
+
 function esc(s) { if(s==null)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 class AICard extends HTMLElement {
@@ -197,7 +244,9 @@ class AICard extends HTMLElement {
     var raw = this.getAttribute('data');
     if (!raw) { this.shadowRoot.innerHTML=''; return; }
     var d; try { d=JSON.parse(raw); } catch(e) { this.shadowRoot.innerHTML=''; return; }
-    var p = themeColor(d.theme), t = getTemplate(d.card_type);
+    var folder = this.getAttribute('folder')||'';
+    var t = getTemplate(d.card_type, folder);
+    var p = t.theme ? (PALETTE[t.theme] || themeColor(d.theme)) : themeColor(d.theme);
     this.shadowRoot.innerHTML='';
 
     var link = document.createElement('link');
@@ -231,7 +280,9 @@ var CARDS = [
   {folder:'homework-card', group:'作业卡片', file:'english.json', data:{"schema_version":"1.0","card_type":"homework_reminder","title":"英语 · Unit 5 My Day","subtitle":"李老师 · 三年级二班","description":"背诵 Unit 5 单词表（get up, breakfast, go to school 等 20 个词组），完成 Activity Book 第28-29页练习。录制一段「My Day」口语视频，不少于1分钟。","button_text":"查看作业","target_url":"https://homework.example.com/english","theme":"english","layout":{"variant":"homework_reminder","icon":"english"}}},
   {folder:'media-card', group:'媒体卡片', file:'class-video.json', data:{"schema_version":"1.0","card_type":"media_preview","title":"课堂录像 · 分数的加减法","subtitle":"42:18","description":"张老师 · 2026/05/24 上传 · MP4 · 1080p · 1.2 GB · 86 次观看。第三章重难点讲解，包含 5 道例题精讲与课堂互动问答环节。","button_text":"播放视频","target_url":"https://media.example.com/video/math-fraction","theme":"video","layout":{"variant":"media_preview","icon":"video"}}},
   {folder:'english-word-card', group:'英语单词', file:'data.json', data:{"schema_version":"1.0","card_type":"english_word","title":"ABC · 字母启蒙","subtitle":"apple","description":"苹果","button_text":"单词发音","target_url":"https://works.blazegraph.site/works/e02656c2-d563-4ca2-8406-33031d109b48/2-1-6-4-1779693877148/images/img16.png","theme":"abc","layout":{"variant":"english_word","icon":"abc"}}},
-  {folder:'comic-card', group:'连环画', file:'data.json', data:{"schema_version":"1.0","card_type":"comic_strip","title":"PEP 人教版 · Unit 1 Describing People","subtitle":"Story Time — We Are Twins!","description":"Watch the video first, then flip through the comic story. Practice describing body features with Meimei and Feifei!","button_text":"查看完整内容","video_url":"../assets/video/activity1.mp4","theme":"comic","frames":[{"image":"../assets/image/panel1.jpg","texts":["Hi, I'm Meimei.","I'm Feifei.","We are twins."]},{"image":"../assets/image/panel2.jpg","texts":["I have big eyes.","Me too."]},{"image":"../assets/image/panel3.jpg","texts":["I have a small nose.","Me too."]},{"image":"../assets/image/panel4.jpg","texts":["I have a small mouth.","Me too."]},{"image":"../assets/image/panel5.jpg","texts":["We look the same.","I know!"]},{"image":"../assets/image/panel6.jpg","texts":["Now I have long hair.","I have short hair.","We are different now."]}],"layout":{"variant":"comic_strip","icon":"comic"}}}
+  {folder:'comic-card', group:'连环画', file:'data.json', data:{"schema_version":"1.0","card_type":"comic_strip","title":"PEP 人教版 · Unit 1 Describing People","subtitle":"Story Time — We Are Twins!","description":"Watch the video first, then flip through the comic story. Practice describing body features with Meimei and Feifei!","button_text":"查看完整内容","video_url":"../assets/video/activity1.mp4","theme":"comic","frames":[{"image":"../assets/image/panel1.jpg","texts":["Hi, I'm Meimei.","I'm Feifei.","We are twins."]},{"image":"../assets/image/panel2.jpg","texts":["I have big eyes.","Me too."]},{"image":"../assets/image/panel3.jpg","texts":["I have a small nose.","Me too."]},{"image":"../assets/image/panel4.jpg","texts":["I have a small mouth.","Me too."]},{"image":"../assets/image/panel5.jpg","texts":["We look the same.","I know!"]},{"image":"../assets/image/panel6.jpg","texts":["Now I have long hair.","I have short hair.","We are different now."]}],"layout":{"variant":"comic_strip","icon":"comic"}}},
+  {folder:'english-sentence-card', group:'英语句子', file:'data.json', data:{"schema_version":"1.0","card_type":"english_sentence","title":"每日一句","subtitle":"The best preparation for tomorrow is doing your best today.","description":"为明天做的最好准备，就是今天做到最好。","button_text":"句子发音","theme":"sentence","layout":{"variant":"english_sentence","icon":"sentence"}}},
+  {folder:'english-input-card', group:'英语句子', file:'data.json', data:{"schema_version":"1.0","card_type":"english_sentence","title":"每日一句","subtitle":"","description":"","button_text":"句子发音","theme":"sentence","layout":{"variant":"english_sentence","icon":"sentence"}}}
 ];
 
 var groups = {};
@@ -249,7 +300,7 @@ Object.keys(groups).forEach(function(g) {
     var l = document.createElement('span'); l.className='label';
     l.textContent = c.folder+'/'+c.file+' · '+c.data.theme+' · icon='+c.data.layout.icon;
     w.appendChild(l);
-    var el = document.createElement('ai-card'); el.setAttribute('data', JSON.stringify(c.data)); w.appendChild(el);
+    var el = document.createElement('ai-card'); el.setAttribute('data', JSON.stringify(c.data)); el.setAttribute('folder', c.folder); w.appendChild(el);
     grid.appendChild(w);
   });
   r.appendChild(grid);

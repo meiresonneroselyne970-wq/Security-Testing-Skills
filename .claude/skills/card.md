@@ -1,6 +1,6 @@
 ---
 name: card
-description: Generate AI cards. 6 card templates (text / homework / media / english-word / comic / answer), each in its own folder with CSS + JS + JSON + metadata.
+description: Generate AI cards. 8 card templates (text / homework / media / english-word / comic / answer / english-sentence / english-input), each in its own folder with CSS + JS + JSON + metadata.
 ---
 
 # /card — AI Card Generator
@@ -43,7 +43,7 @@ This project has **two architectural families** of card templates:
 
 | Family | Pattern | Rendering | Shared Engine | Examples |
 |--------|---------|-----------|---------------|----------|
-| **Web Component** | `<ai-card>` custom element + Shadow DOM | `ai-card.js` reads `data` attribute → renders to Shadow DOM | `ai-card.css` scoped inside Shadow DOM | text, homework, media, english-word, comic |
+| **Web Component** | `<ai-card>` custom element + Shadow DOM | `ai-card.js` reads `data` attribute → renders to Shadow DOM | `ai-card.css` scoped inside Shadow DOM | text, homework, media, english-word, comic, english-sentence, english-input |
 | **Standalone** | Plain HTML + CSS + vanilla JS | `app.js` directly manipulates DOM | CSS classes on global document | answer (精简版) |
 
 **Why two families?** The Answer card is a full interactive application (user input → API call → dynamic rendering), not a static data-driven display card. It pre-dates the Web Component pattern and follows a more traditional SPA architecture.
@@ -52,7 +52,7 @@ When the user asks for a card, first determine which **family** it belongs to, t
 
 ---
 
-## 6 Existing Templates
+## 8 Existing Templates
 
 ### 1. text-card — Text Content Cards
 
@@ -357,6 +357,126 @@ body
 
 ---
 
+### 7. english-sentence-card — English Sentence Display Cards
+
+**Visual signature:** Notebook paper background (横线纸) + sticky note card with ribbon badge (缎带) at top-left + English sentence (left-aligned, multi-line) + Chinese translation (hidden by default, fade in on click) + click-to-speak (Web Speech API) + shadow reading (跟读) with word-overlap similarity scoring.
+
+**DOM skeleton:**
+```
+sentence-card (sticky note, rounded, shadow)
+  ├── sentence-ribbon (blue, tilted -2deg, top-left)
+  └── sentence-body
+        ├── sentence-text-area
+        │     ├── sentence-en (English sentence, data-speak, clickable)
+        │     └── sentence-zh (Chinese translation, hidden, fade in/out)
+        ├── actions
+        │     ├── btn primary (speak button)
+        │     └── btn shadow (跟读 button, only if SpeechRecognition supported)
+        └── shadow-feedback (hidden, shows result after shadow reading)
+```
+
+**Matching rules (any one match is sufficient):**
+- Needs notebook/sticky-note visual feel with ribbon badge
+- English sentence display with Chinese translation on demand
+- Click-to-speak pronunciation with TTS
+- Shadow reading practice (跟读) with similarity scoring
+- Display-only card (content comes from JSON data, not user input)
+
+**Existing variants:** daily-sentence (1 JSON file: `data.json`)
+
+**Supported card_type values:** `english_sentence`
+
+**Supported icon values:** `sentence` (to add a new one, append to the ICONS object)
+
+**Supported theme values:** `sentence` — mapped to blue (#2563eb) via THEME_MAP (to add a new theme, append to THEME_MAP and PALETTE)
+
+**Special field semantics:**
+| Field | Used As | Description |
+|-------|---------|-------------|
+| `title` | Ribbon badge text | e.g. "每日一句" |
+| `subtitle` | English sentence | e.g. "The best preparation for tomorrow is doing your best today." |
+| `description` | Chinese translation | Hidden by default, fades in on click, auto-hides after 3s |
+
+**Special behavior:**
+- `subtitle` is the English sentence (rendered as main content), NOT a subtitle text
+- `description` is the Chinese translation, hidden by default
+- Click on sentence or button → TTS reads the sentence + shows Chinese translation (3s auto-hide)
+- Shadow reading: TTS plays reference → microphone auto-opens → word-overlap similarity ≥ 60% = correct, up to 3 retries
+- Records user's voice during shadow reading for playback comparison
+- Uses Web Speech API (speechSynthesis + SpeechRecognition + MediaRecorder)
+- Uses Google Fonts "Patrick Hand" for handwritten feel
+
+**Google Fonts requirement:** `index.html` `<head>` must include:
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+```
+
+---
+
+### 8. english-input-card — English Sentence Input Cards
+
+**Visual signature:** Notebook paper background (横线纸) + sticky note card (no ribbon — cleaner design) + editable `<textarea>` for English sentence input + real-time Chinese translation (DeepSeek API, 600ms debounce) + click-to-speak + shadow reading with similarity scoring.
+
+**DOM skeleton:**
+```
+sentence-card (sticky note, rounded, shadow, no ribbon)
+  └── sentence-body
+        ├── sentence-text-area
+        │     ├── sentence-en sentence-input (<textarea>, auto-resize, placeholder)
+        │     └── sentence-zh (empty by default, shows real-time translation)
+        ├── actions
+        │     ├── btn primary (speak button, orange)
+        │     └── btn shadow (跟读 button, only if SpeechRecognition supported)
+        └── shadow-feedback (hidden, shows result after shadow reading)
+```
+
+**Matching rules (any one match is sufficient):**
+- User can type their own English sentence (editable input, not pre-filled)
+- Real-time translation on input (API-based, not static)
+- Click-to-speak reads the current input content
+- Shadow reading practice with similarity scoring
+- Clean design without ribbon (v1.1 removed ribbon for simplicity)
+
+**Existing variants:** daily-sentence-input (1 JSON file: `data.json`)
+
+**Supported card_type values:** `english_sentence`
+
+**Supported icon values:** `sentence` (to add a new one, append to the ICONS object)
+
+**Supported theme values:** `sentence` — mapped to orange (#ea580c) via THEME_MAP; also supports `abc` (purple) and `blue` (legacy)
+
+**Special field semantics:**
+| Field | Used As | Description |
+|-------|---------|-------------|
+| `title` | Deprecated (v1.0) | v1.1 removed ribbon; field ignored |
+| `subtitle` | Deprecated (v1.0) | v1.1 uses empty textarea; field ignored |
+| `description` | Deprecated (v1.0) | v1.1 uses real-time API translation; field ignored |
+| `button_text` | Button label | Default "句子发音" |
+
+**Special behavior:**
+- `<textarea>` with auto-resize (rows=1, expands as user types)
+- 600ms debounced real-time translation via DeepSeek API (deepseek-v4-pro model)
+- Translation shows "翻译中…" while loading, auto-hides on failure
+- Speak button reads current textarea content (not static data)
+- Shadow reading uses current textarea content as target
+- Records user's voice during shadow reading for playback comparison
+- Uses Web Speech API (speechSynthesis + SpeechRecognition + MediaRecorder)
+- Uses Google Fonts "Patrick Hand" for handwritten feel
+- **API dependency:** Requires DeepSeek API key (hardcoded in `ai-card.js`) for translation
+
+**Key differences from english-sentence-card:**
+| Feature | english-sentence-card | english-input-card |
+|---------|----------------------|-------------------|
+| Content source | JSON data (pre-filled) | User input (editable) |
+| Translation | Static (from JSON) | Real-time (DeepSeek API) |
+| Ribbon badge | Yes | No (removed in v1.1) |
+| Theme color | Blue (#2563eb) | Orange (#ea580c) |
+| Use case | Display known sentences | Explore any sentence |
+
+---
+
 ## Reuse Flow (Template Matched)
 
 When the card matches one of the 6 existing templates:
@@ -373,6 +493,8 @@ Pick the folder based on visual features:
 | Notebook paper, tape + ribbon, big letter + word + image, click-to-speak | `english-word-card/` |
 | Video player, paginated panels with speech bubbles, prev/next nav | `comic-card/` |
 | Answer-only card, AI avatar, gradient text box, color-coded files, external input | `answer-card/` |
+| Notebook paper + ribbon + English sentence + Chinese translation on click + TTS + 跟读 | `english-sentence-card/` |
+| Notebook paper + editable textarea + real-time API translation + TTS + 跟读 | `english-input-card/` |
 
 ### Step 2: Choose the Architecture
 
@@ -681,6 +803,8 @@ All templates use semantic theme names that map to visual colors via `THEME_MAP`
 | `file` | #4f46e5 (indigo) | media | File download |
 | `abc` | #8e44ad (purple) | english-word | Alphabet learning |
 | `comic` | #f59e0b (amber) | comic | Comic strip / dialogue |
+| `sentence` | #2563eb (blue) | english-sentence | English sentence display |
+| `sentence` | #ea580c (orange) | english-input | English sentence input (注意: 同名 theme 但不同模板用不同颜色) |
 | `answer` | #5b5fe3 (indigo) | answer | AI answer display |
 
 ---
@@ -711,11 +835,118 @@ All template CSS and index.html must adapt to 5 device targets:
 - [ ] `index.html` `#root` switches to grid layout at 768px+
 - [ ] Demo page `.grid` containers adapt to the corresponding breakpoints
 
+### New Template Responsive Checklist — Mobile
+
+- [ ] `:host` includes `-webkit-tap-highlight-color: transparent`
+- [ ] All `.btn` and `.btn-play` have `touch-action: manipulation`
+- [ ] `:hover` styles are wrapped in `@media (hover: hover)` to prevent sticky hover on Android
+- [ ] `font-family` includes Chinese system font fallback (`HarmonyOS Sans SC`, `PingFang SC`, `Microsoft YaHei`, `Noto Sans SC`)
+- [ ] `<input>` / `<textarea>` elements have `-webkit-appearance: none`
+- [ ] `body` has `overscroll-behavior: none` to prevent pull-to-refresh interference
+
+---
+
+## Android & Huawei Adaptation
+
+All cards target the Chinese market, where Android (including Huawei/HarmonyOS) is the dominant mobile platform. Every template **must** include the following CSS adaptations.
+
+### :host Base Styles
+
+```css
+:host {
+  -webkit-tap-highlight-color: transparent;   /* remove blue/gray tap flash on Android */
+  -webkit-text-size-adjust: 100%;             /* prevent Android browser auto font scaling */
+  -webkit-font-smoothing: antialiased;         /* smoother font rendering on EMUI/HarmonyOS */
+  -moz-osx-font-smoothing: grayscale;
+}
+```
+
+### Font Family — Huawei Fallback
+
+Google Fonts (e.g. Patrick Hand) are **blocked in China** and will not load on Huawei devices. Always include a full Chinese system font fallback chain:
+
+```css
+font-family: "Patrick Hand", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", cursive, sans-serif;
+```
+
+| Font | Platform |
+|------|----------|
+| `Patrick Hand` | Google Fonts (primary, may fail in China) |
+| `HarmonyOS Sans SC` | Huawei HarmonyOS 2.0+ |
+| `PingFang SC` | iOS / macOS |
+| `Microsoft YaHei` | Windows |
+| `Noto Sans SC` | Android (fallback) |
+
+### Tap & Touch
+
+```css
+/* All interactive buttons */
+.btn, .btn-play {
+  touch-action: manipulation;                 /* eliminate 300ms tap delay, prevent double-tap zoom */
+  -webkit-tap-highlight-color: transparent;   /* remove tap highlight */
+}
+
+/* Text inputs on Android — reset default styling */
+textarea, input {
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+```
+
+### Sticky Hover Fix
+
+Android browsers apply `:hover` as a "sticky" state after the first tap — it persists until the user taps elsewhere. **All `:hover` rules must be wrapped:**
+
+```css
+/* ❌ WRONG — sticky hover on Android */
+.btn-play:hover { background: rgba(0,0,0,.08); }
+
+/* ✅ CORRECT — only on devices with real hover */
+@media (hover: hover) {
+  .btn-play:hover { background: rgba(0,0,0,.08); }
+}
+```
+
+### Body-Level Protections
+
+```css
+body {
+  -webkit-text-size-adjust: 100%;    /* prevent font scaling on orientation change */
+  overscroll-behavior: none;          /* prevent pull-to-refresh on Huawei Browser */
+  -webkit-overflow-scrolling: touch;  /* smooth momentum scrolling on iOS/Android */
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+```
+
+### Viewport Meta (index.html)
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+```
+
+- `maximum-scale=1.0` + `user-scalable=no` — prevents accidental zoom on double-tap (important for interactive learning cards)
+- Combined with `touch-action: manipulation` on buttons, this eliminates the 300ms tap delay
+
+### Huawei Browser Specifics
+
+| Issue | Fix |
+|-------|-----|
+| Google Fonts blocked | System font fallback chain (see above) |
+| Pull-to-refresh conflicts with card interaction | `overscroll-behavior: none` on `body` |
+| Blue tap highlight on all interactive elements | `-webkit-tap-highlight-color: transparent` |
+| Font rendering appears jagged | `-webkit-font-smoothing: antialiased` |
+| Speech Recognition requires HTTPS | Deploy to `https://` origin; `file://` protocol does NOT work |
+| EMUI WebView may not support `SpeechRecognition` | Feature-detect with `!!(window.SpeechRecognition \|\| window.webkitSpeechRecognition)` and hide 跟读 button if unsupported |
+
 ---
 
 ## Notes
 
-1. **Group by visual layout:** Don't be misled by the card_type field name. Five card_types share the text-card template because their DOM structure is identical.
+1. **Group by visual layout:** Don't be misled by the card_type field name. Multiple card_types can share the same template if their DOM structure is identical (e.g., 5 card_types share text-card).
 2. **Two architecture families:** The project has two families — Web Components (text/homework/media/english-word/comic) and Standalone (answer-card). Web Components use `<ai-card>` + Shadow DOM + shared engine. The Standalone card is a traditional HTML/CSS/JS app with no Shadow DOM.
 3. **No extra JSON fields (Web Component cards):** Strictly follow the documented schema. Do not add custom fields like `subject`, `teacher`, `submit_count`.
 4. **Answer card doesn't use ai-card.js/css:** It has its own `app.js` and `style.css`. Modifying it follows traditional web app patterns, not the Web Component JSON-driven pattern.
@@ -727,3 +958,4 @@ All template CSS and index.html must adapt to 5 device targets:
 10. **Sync updates:** After adding cards or templates, always update the demo page and this skill file.
 11. **metadata.md required:** Every template folder must have a complete metadata.md (TOC, schema, field table, DOM tree, adaptive rules, variant table, theme table, responsive table, rendering notes).
 12. **5-device responsive:** All CSS and page layouts must cover phone, tablet, large screen, desktop, and TV breakpoints.
+13. **Android & Huawei adaptation:** Every template must include tap highlight removal, touch-action, sticky hover fix, Chinese system font fallback, and body-level overscroll/text-size-adjust protections (see Android & Huawei Adaptation section above).
