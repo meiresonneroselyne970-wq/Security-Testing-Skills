@@ -31,6 +31,7 @@ english-sentence-card/
 ├── index.html         # 页面入口（零逻辑，只声明 #root + 加载 JS/CSS）
 ├── ai-card.css        # 组件样式 + 页面样式 + 响应式断点（Shadow DOM 内外共用）
 ├── ai-card.js         # 渲染引擎（Web Component + 语音交互 + 跟读打分）
+├── fonts/             # 本地字体（Patrick Hand woff2 + fonts.css，无 CDN 依赖）
 ├── metadata.md        # 本文件
 └── data.json          # 每日一句 · 卡片数据
 ```
@@ -187,7 +188,7 @@ body
 | 消除点击高亮 | `-webkit-tap-highlight-color: transparent` | 安卓 WebView 默认蓝/灰闪烁 |
 | 消除点击延迟 | `touch-action: manipulation` | .btn / .btn-play 上消除 300ms 延迟 |
 | 粘滞悬停修复 | `@media (hover: hover)` | .btn-play:hover 只在真悬停设备生效 |
-| 华为字体回退 | `"HarmonyOS Sans SC"` → `"PingFang SC"` → `"Microsoft YaHei"` → `"Noto Sans SC"` | Google Fonts 在国内被墙时的回退链 |
+| 华为字体回退 | `"HarmonyOS Sans SC"` → `"PingFang SC"` → `"Microsoft YaHei"` → `"Noto Sans SC"` | Patrick Hand 采用本地 woff2 加载，回退链为保险措施 |
 | 字体平滑 | `-webkit-font-smoothing: antialiased` | EMUI/HarmonyOS 渲染优化 |
 | 防字体缩放 | `-webkit-text-size-adjust: 100%` | :host / body / html 均设置 |
 | 防下拉刷新干扰 | `overscroll-behavior: none` | body 层级，华为浏览器下拉刷新不影响卡片操作 |
@@ -205,5 +206,5 @@ body
 6. **录音回放**：跟读时自动录音，反馈区显示「听我的发音」按钮，点击可回放自己的录音与范读对比
 7. **CSS 精简**：`ai-card.css` 包含组件样式（`.sentence-card`、`.sentence-ribbon` 等）和页面样式，不含冗余规则
 8. **PALETTE + THEME_MAP**：JS 中定义 purple 和 blue 两种配色，`THEME_MAP` 将 `sentence` 映射到 blue、`abc` 映射到 purple
-9. **Google Fonts**：使用 Patrick Hand 手写字体，在 `index.html` `<head>` 中加载
+9. **本地字体**：使用 Patrick Hand 手写字体，woff2 格式存储在卡片目录的 `fonts/` 子目录中，通过 `<link rel="stylesheet" href="fonts/fonts.css">` 加载，无 CDN 依赖
 10. **列表渲染**：`ai-card.js` 末尾 IIFE 自动 fetch `FILES` 数组中的 JSON，渲染到页面

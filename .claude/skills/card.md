@@ -208,13 +208,11 @@ card (abc-card, semi-transparent white, rounded, shadow)
 - `title` is the ribbon badge text.
 - Page-level notebook paper background (`.page-container`) only appears in standalone `index.html`, not in demo/preview cards.
 - Web Speech API for pronunciation on click — `data-speak` attributes on `.big-letter`, `.word-label`, and `.abc-img` elements.
-- Uses Google Fonts "Patrick Hand" for handwritten textbook feel.
+- Uses Patrick Hand font (local woff2, no CDN) for handwritten textbook feel.
 
-**Google Fonts requirement:** `index.html` `<head>` must include:
+**Local font requirement:** Each card folder contains a `fonts/` subdirectory (woff2 + fonts.css). `index.html` `<head>` must include:
 ```html
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fonts/fonts.css">
 ```
 
 ---
@@ -404,13 +402,11 @@ sentence-card (sticky note, rounded, shadow)
 - Shadow reading: TTS plays reference → microphone auto-opens → word-overlap similarity ≥ 60% = correct, up to 3 retries
 - Records user's voice during shadow reading for playback comparison
 - Uses Web Speech API (speechSynthesis + SpeechRecognition + MediaRecorder)
-- Uses Google Fonts "Patrick Hand" for handwritten feel
+- Uses local Patrick Hand font (woff2, no CDN) for handwritten feel
 
-**Google Fonts requirement:** `index.html` `<head>` must include:
+**Local font requirement:** Each card folder contains a `fonts/` subdirectory (woff2 + fonts.css). `index.html` `<head>` must include:
 ```html
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fonts/fonts.css">
 ```
 
 ---
@@ -463,7 +459,7 @@ sentence-card (sticky note, rounded, shadow, no ribbon)
 - Shadow reading uses current textarea content as target
 - Records user's voice during shadow reading for playback comparison
 - Uses Web Speech API (speechSynthesis + SpeechRecognition + MediaRecorder)
-- Uses Google Fonts "Patrick Hand" for handwritten feel
+- Uses local Patrick Hand font (woff2, no CDN) for handwritten feel
 - **API dependency:** Requires DeepSeek API key (hardcoded in `ai-card.js`) for translation
 
 **Key differences from english-sentence-card:**
@@ -861,9 +857,9 @@ All cards target the Chinese market, where Android (including Huawei/HarmonyOS) 
 }
 ```
 
-### Font Family — Huawei Fallback
+### Font Family — Local Fonts
 
-Google Fonts (e.g. Patrick Hand) are **blocked in China** and will not load on Huawei devices. Always include a full Chinese system font fallback chain:
+Fonts are stored locally in each card folder's `fonts/` subdirectory (woff2 format, no CDN dependency). The primary font is **Patrick Hand** (handwritten style) with a full Chinese system font fallback chain for cases where the custom font fails to load or for non-English characters:
 
 ```css
 font-family: "Patrick Hand", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", cursive, sans-serif;
@@ -871,7 +867,7 @@ font-family: "Patrick Hand", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHe
 
 | Font | Platform |
 |------|----------|
-| `Patrick Hand` | Google Fonts (primary, may fail in China) |
+| `Patrick Hand` | Local woff2 (per-folder `fonts/` subdirectory) |
 | `HarmonyOS Sans SC` | Huawei HarmonyOS 2.0+ |
 | `PingFang SC` | iOS / macOS |
 | `Microsoft YaHei` | Windows |
@@ -935,7 +931,7 @@ html {
 
 | Issue | Fix |
 |-------|-----|
-| Google Fonts blocked | System font fallback chain (see above) |
+| Custom font not loading (e.g. on file://) | System font fallback chain (see above); use local woff2 in `fonts/` |
 | Pull-to-refresh conflicts with card interaction | `overscroll-behavior: none` on `body` |
 | Blue tap highlight on all interactive elements | `-webkit-tap-highlight-color: transparent` |
 | Font rendering appears jagged | `-webkit-font-smoothing: antialiased` |

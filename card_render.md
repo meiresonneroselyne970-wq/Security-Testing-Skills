@@ -196,13 +196,11 @@ comic-card 额外需要：
 - `description` → 中文释义（如 "苹果"）
 - `title` → 缎带徽章文字
 - 点击发音依赖 Web Speech API（美式英语，语速 0.85，音调 1.1）
-- 需要在 `<head>` 中加载 Google Fonts: Patrick Hand
+- 需要在 `<head>` 中加载本地字体: `<link rel="stylesheet" href="fonts/fonts.css">`（每个卡片文件夹内含 `fonts/` 子目录，woff2 格式，无 CDN 依赖）
 
-**Google Fonts 依赖（必须在页面 `<head>` 中）：**
+**字体依赖（本地 woff2，必须在页面 `<head>` 中）：**
 ```html
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fonts/fonts.css">
 ```
 
 ### comic-card
@@ -233,13 +231,11 @@ comic-card 额外需要：
 - 跟读按钮 → TTS 范读 → 自动录音 → 词重叠相似度 ≥ 60% = 正确（最多重试 3 次）
 - 录音回放：反馈区显示 "听我的发音" 按钮
 - 依赖 Web Speech API (speechSynthesis + SpeechRecognition + MediaRecorder)
-- 需要在 `<head>` 中加载 Google Fonts: Patrick Hand
+- 需要在 `<head>` 中加载本地字体: `<link rel="stylesheet" href="fonts/fonts.css">`（每个卡片文件夹内含 `fonts/` 子目录，woff2 格式，无 CDN 依赖）
 
-**Google Fonts 依赖（必须在页面 `<head>` 中）：**
+**字体依赖（本地 woff2，必须在页面 `<head>` 中）：**
 ```html
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fonts/fonts.css">
 ```
 
 ### english-input-card
@@ -259,7 +255,7 @@ comic-card 额外需要：
 - 跟读功能以输入框内容为目标句子
 - 录音回放：反馈区显示 "听我的发音" 按钮
 - 依赖 DeepSeek API（需 API Key）进行翻译；依赖 Web Speech API 进行语音交互
-- 需要在 `<head>` 中加载 Google Fonts: Patrick Hand
+- 需要在 `<head>` 中加载本地字体: `<link rel="stylesheet" href="fonts/fonts.css">`（每个卡片文件夹内含 `fonts/` 子目录，woff2 格式，无 CDN 依赖）
 - **无缎带设计**（v1.1 移除 ribbon）
 
 **与 english-sentence-card 的区别:**
@@ -328,7 +324,7 @@ comic-card 额外需要：
 | 消除点击高亮 | `-webkit-tap-highlight-color: transparent` | 安卓 WebView 默认蓝/灰色闪烁 |
 | 消除点击延迟 | `touch-action: manipulation` | 消除 300ms 延迟 + 防双击缩放 |
 | 粘滞悬停修复 | `@media (hover: hover) { :hover }` | 安卓首次点击后 `:hover` 不会自动取消 |
-| 华为字体回退 | `"HarmonyOS Sans SC", "PingFang SC", …` | Google Fonts 在国内被墙 |
+| 字体回退链 | `"HarmonyOS Sans SC", "PingFang SC", …` | Patrick Hand 本地 woff2，回退链为保险措施 |
 | 字体平滑 | `-webkit-font-smoothing: antialiased` | EMUI/HarmonyOS 渲染优化 |
 | 防字体缩放 | `-webkit-text-size-adjust: 100%` | 横竖屏切换时字体不变 |
 | 防下拉刷新干扰 | `overscroll-behavior: none` | 华为浏览器下拉刷新手势 |
