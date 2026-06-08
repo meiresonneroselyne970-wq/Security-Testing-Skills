@@ -9,7 +9,7 @@
   display: block;
   max-width: 380px;
   margin: 0 auto;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "HarmonyOS Sans", "Noto Sans SC", "Roboto", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -22,8 +22,12 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
   background: #fafafa;
   border-bottom: 1px solid #f3f4f6;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .unit-tabs::-webkit-scrollbar {
@@ -46,11 +50,19 @@
   white-space: nowrap;
   min-width: 56px;
   position: relative;
+  appearance: none;
+  -webkit-appearance: none;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.unit-tab:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+@media (hover: hover) {
+  .unit-tab:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
 }
 
 .unit-tab:active {
@@ -100,6 +112,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  overscroll-behavior: contain;
 }
 
 /* ── Video area ── */
@@ -154,6 +167,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  touch-action: pan-y; /* allow vertical scroll, intercept horizontal swipe */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* ── Frame container (anchors bubbles to image) ── */
@@ -182,6 +198,7 @@
 /* ── Frame image ── */
 .comic-card .frame-img {
   width: 100%;
+  -webkit-aspect-ratio: 3 / 2;
   aspect-ratio: 3 / 2;
   object-fit: cover;
   border-radius: 10px;
@@ -213,12 +230,16 @@
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   user-select: none;
+  -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
-.comic-card .bubble.point-read:hover {
-  transform: scale(1.03);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+@media (hover: hover) {
+  .comic-card .bubble.point-read:hover {
+    transform: scale(1.03);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
 }
 
 .comic-card .bubble.point-read:active {
@@ -236,9 +257,14 @@
   line-height: 1;
 }
 
-.comic-card .bubble:hover .bubble-speaker,
 .comic-card .bubble.reading .bubble-speaker {
   opacity: 0.7;
+}
+
+@media (hover: hover) {
+  .comic-card .bubble:hover .bubble-speaker {
+    opacity: 0.7;
+  }
 }
 
 /* Reading highlight animation */
@@ -321,10 +347,18 @@
   cursor: pointer;
   padding: 0;
   transition: all 0.25s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.comic-card .page-dot:hover {
-  background: #9ca3af;
+@media (hover: hover) {
+  .comic-card .page-dot:hover {
+    background: #9ca3af;
+  }
 }
 
 .comic-card .page-dot.active {
@@ -386,6 +420,12 @@
   background: #fff;
   color: #374151;
   transition: opacity 0.2s, background 0.2s, transform 0.15s;
+  appearance: none;
+  -webkit-appearance: none;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .comic-card .nav .nav-btn:active:not(:disabled) {
@@ -441,6 +481,7 @@
 
 /* Desktop 1024px+ */
 @media (min-width: 1024px) {
+  body { background-attachment: fixed; }
   :host { max-width: 600px; }
   .comic-card { border-radius: 22px; }
   .comic-card .card-body { padding: 20px; gap: 18px; }
@@ -473,9 +514,12 @@
 
 /* ── Page-level ── */
 body {
-  padding-top: 20px;
+  padding-top: calc(20px + env(safe-area-inset-top, 0px));
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   margin: 0;
   min-height: 100vh;
   background: linear-gradient(135deg, #f0f4ff 0%, #fdf2f8 50%, #f0fdf4 100%);
-  background-attachment: fixed;
+  background-attachment: scroll;
 }

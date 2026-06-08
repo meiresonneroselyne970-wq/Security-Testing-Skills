@@ -72,14 +72,22 @@ function cardHTML(units) {
 }
 
 // ── Tap-to-Read (点读) using Web Speech API ──
-var speechSynth = window.speechSynthesis;
+var _speechSupported = typeof window !== 'undefined' && !!window.speechSynthesis;
+var speechSynth = _speechSupported ? window.speechSynthesis : null;
 var _speakingBubble = null;        // currently highlighted bubble element
 var _englishVoice = null;          // cached English voice
 
 function getEnglishVoice() {
   if (_englishVoice) return _englishVoice;
-  var voices = speechSynth.getVoices();
-  // Prefer an English voice (en-US > en-GB > any en-*)
+  if (!speechSynth) return null;
+  var voices;
+  try {
+    voices = speechSynth.getVoices();
+  } catch (e) {
+    return null;
+  }
+  if (!voices || voices.length === 0) return null;
+  // Prefer an English voice (en-US > en-GB > any en-* > first available)
   for (var i = 0; i < voices.length; i++) {
     if (voices[i].lang === 'en-US') { _englishVoice = voices[i]; break; }
   }
@@ -88,28 +96,52 @@ function getEnglishVoice() {
       if (voices[j].lang.indexOf('en') === 0) { _englishVoice = voices[j]; break; }
     }
   }
-  return _englishVoice;
+  // Fallback: use the first available voice (better than nothing)
+  if (!_englishVoice && voices.length > 0) {
+    _englishVoice = voices[0];
+  }
+  return _englishVoice || null;
 }
 
 // Preload voices (they load asynchronously in most browsers)
-if (speechSynth) {
-  speechSynth.getVoices();
-  speechSynth.addEventListener('voiceschanged', function () {
-    _englishVoice = null; // reset cache so we pick up fresh voices
-  });
+if (_speechSupported && speechSynth) {
+  try {
+    speechSynth.getVoices();
+    speechSynth.addEventListener('voiceschanged', function () {
+      _englishVoice = null; // reset cache so we pick up fresh voices
+    });
+  } catch (e) {
+    // Some Android/Huawei browsers throw on getVoices()
+    _speechSupported = false;
+    speechSynth = null;
+  }
 }
 
 function speakText(text, bubbleEl) {
-  if (!speechSynth) return;
-  // Cancel any current speech
-  speechSynth.cancel();
+  if (!_speechSupported || !speechSynth) return;
+  try {
+    // Cancel any current speech
+    speechSynth.cancel();
+  } catch (e) { /* ignore cancel errors on Android */ }
+
   // Remove highlight from previous bubble
   if (_speakingBubble) {
     _speakingBubble.classList.remove('reading');
+    _speakingBubble = null;
   }
 
-  var utterance = new SpeechSynthesisUtterance(text);
-  utterance.voice = getEnglishVoice();
+  var utterance;
+  try {
+    utterance = new SpeechSynthesisUtterance(text);
+  } catch (e) {
+    // SpeechSynthesisUtterance constructor may throw on some Huawei browsers
+    return;
+  }
+
+  var voice = getEnglishVoice();
+  if (voice) {
+    utterance.voice = voice;
+  }
   utterance.rate = 0.82;     // slightly slower for learners
   utterance.pitch = 1.05;    // slightly higher, more child-friendly
   utterance.volume = 1;
@@ -134,42 +166,54 @@ function speakText(text, bubbleEl) {
     }
   });
 
-  speechSynth.speak(utterance);
+  try {
+    speechSynth.speak(utterance);
+  } catch (e) {
+    // speak() may fail on some Android browsers
+    if (_speakingBubble) {
+      _speakingBubble.classList.remove('reading');
+      _speakingBubble = null;
+    }
+  }
 }
 
 function renderFrame(viewport, frame, index, total) {
   var texts = frame.texts || [];
+  var pointReadClass = _speechSupported ? ' point-read' : '';
+  var pointReadTitle = _speechSupported ? ' title="点击朗读 / Tap to read"' : '';
   var html = '<div class="page-indicator">' + (index + 1) + ' / ' + total + '</div>' +
     '<div class="frame-container"><img class="frame-img" src="' + esc(frame.image) + '" alt="panel ' + (index + 1) + '">' +
     '<div class="bubbles">';
   for (var j = 0; j < texts.length; j++) {
     var cls = BUBBLE_CLASSES[j] || 'center';
     if (j === 1 && texts.length === 2) cls += ' bottom';
-    // Add point-read hint icon (🔊) and data attribute
-    html += '<div class="bubble ' + cls + ' point-read" data-read="' + j + '" title="点击朗读 / Tap to read">' +
+    // Point-read hint icon (🔊) only when speech is supported
+    html += '<div class="bubble ' + cls + pointReadClass + '" data-read="' + j + '"' + pointReadTitle + '>' +
       '<span class="bubble-text">' + esc(texts[j]) + '</span>' +
-      '<span class="bubble-speaker">🔊</span>' +
+      (_speechSupported ? '<span class="bubble-speaker">🔊</span>' : '') +
     '</div>';
   }
   html += '</div></div>';
   viewport.innerHTML = html;
 
-  // Attach click handlers for point-read
-  var bubbles = viewport.querySelectorAll('.bubble.point-read');
-  for (var b = 0; b < bubbles.length; b++) {
-    (function (bubbleEl, text) {
-      bubbleEl.addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (bubbleEl.classList.contains('reading')) {
-          // Clicking the active bubble stops speech
-          speechSynth && speechSynth.cancel();
-          bubbleEl.classList.remove('reading');
-          _speakingBubble = null;
-          return;
-        }
-        speakText(text, bubbleEl);
-      });
-    })(bubbles[b], texts[b]);
+  // Attach click handlers for point-read (only when speech is supported)
+  if (_speechSupported) {
+    var bubbles = viewport.querySelectorAll('.bubble.point-read');
+    for (var b = 0; b < bubbles.length; b++) {
+      (function (bubbleEl, text) {
+        bubbleEl.addEventListener('click', function (e) {
+          e.stopPropagation();
+          if (bubbleEl.classList.contains('reading')) {
+            // Clicking the active bubble stops speech
+            try { speechSynth && speechSynth.cancel(); } catch (ex) {}
+            bubbleEl.classList.remove('reading');
+            _speakingBubble = null;
+            return;
+          }
+          speakText(text, bubbleEl);
+        });
+      })(bubbles[b], texts[b]);
+    }
   }
 }
 
@@ -318,8 +362,8 @@ var AICard = (function () {
     viewport.addEventListener('touchend', function (e) {
       var dx = e.changedTouches[0].clientX - self._touchStartX;
       var dy = e.changedTouches[0].clientY - self._touchStartY;
-      // Only swipe if horizontal movement > vertical and > 50px
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      // Only swipe if horizontal movement > vertical and > 30px
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
         self._navigate(dx < 0 ? 1 : -1);
       }
     }, { passive: true });
@@ -340,7 +384,7 @@ var AICard = (function () {
     if (index < 0 || index >= this._units.length) return;
 
     // Stop any ongoing speech when switching units
-    if (speechSynth) speechSynth.cancel();
+    if (speechSynth) { try { speechSynth.cancel(); } catch (e) {} }
     if (_speakingBubble) {
       _speakingBubble.classList.remove('reading');
       _speakingBubble = null;
@@ -368,7 +412,10 @@ var AICard = (function () {
 
     // Update video
     if (d.video_url) {
-      this._videoArea.innerHTML = '<video controls src="' + esc(d.video_url) + '" preload="metadata"></video>';
+      this._videoArea.innerHTML = '<video controls src="' + esc(d.video_url) + '" preload="metadata"' +
+        ' playsinline webkit-playsinline' +
+        ' x5-video-player-type="h5" x5-video-player-fullscreen="true" x5-video-orientation="portraint"' +
+        '></video>';
       this._videoArea.style.display = '';
     } else {
       this._videoArea.innerHTML = '';
@@ -440,7 +487,11 @@ var AICard = (function () {
     }
   };
 
-  customElements.define('ai-card', Klass);
+  if (typeof customElements !== 'undefined' && customElements.define) {
+    customElements.define('ai-card', Klass);
+  } else {
+    console.warn('[comic-card] Custom Elements v1 not supported. Please use a modern browser.');
+  }
   return Klass;
 })();
 
