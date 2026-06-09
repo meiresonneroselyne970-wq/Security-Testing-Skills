@@ -83,6 +83,28 @@ function listenAndCheck(shadowRoot, targetSentence, maxRetries) {
   var btn = shadowRoot.querySelector('.btn.shadow');
   var playBtn = null;
 
+  function buildRatingHTML(result) {
+    var stars = '';
+    var s = Math.round((result.overall || 0) / 20);
+    for (var i = 1; i <= 5; i++) { stars += i <= s ? '⭐' : '☆'; }
+    var dimsHtml = (result.dimensions || []).map(function (d) {
+      return '<div class="rating-dim">' +
+        '<div class="dim-head"><span class="dim-label">' + esc(d.label) + '</span><span class="dim-score">' + (d.score || 0) + '</span></div>' +
+        '<div class="dim-bar"><div class="dim-bar-fill" style="width:' + (d.score || 0) + '%"></div></div>' +
+        (d.comment ? '<span class="dim-comment">' + esc(d.comment) + '</span>' : '') +
+      '</div>';
+    }).join('');
+    return '<div class="ai-rating">' +
+      '<div class="rating-overall">' +
+        '<span class="overall-score">' + (result.overall || 0) + '</span>' +
+        '<div class="overall-meta"><span class="overall-label">综合评分</span><span class="overall-stars">' + stars + '</span></div>' +
+      '</div>' +
+      '<div class="rating-dims">' + dimsHtml + '</div>' +
+      '<p class="feedback-text">' + esc(result.feedback || '') + '</p>' +
+      (result.suggestions ? '<div class="rating-suggestions"><span class="suggestion-label">💡 练习建议</span><p class="suggestion-text">' + esc(result.suggestions) + '</p></div>' : '') +
+    '</div>';
+  }
+
   function showFeedback(text, stateClass, duration) {
     if (fb) {
       fb.textContent = text;
@@ -213,11 +235,11 @@ function listenAndCheck(shadowRoot, targetSentence, maxRetries) {
   // Start the initial "no speech" timeout (10s for sentences, longer than words)
   noSpeechTimer = setTimeout(function () {
     log('10秒内未检测到任何语音');
+    host._activeRecognition = null;
     try { rec.abort(); } catch (e) {}
     stopRecording();
     showFeedback('⏰ 未检测到声音，请大声读出句子', 'timeout', 2500);
     if (btn) btn.disabled = false;
-    host._activeRecognition = null;
   }, 10000);
 
   function forceStop() {
@@ -239,11 +261,11 @@ function listenAndCheck(shadowRoot, targetSentence, maxRetries) {
       setTimeout(function () {
         if (!resultReceived && host._activeRecognition === rec) {
           log('强制结束后仍无结果，中止');
+          host._activeRecognition = null;
           try { rec.abort(); } catch (e) {}
           stopRecording();
           showFeedback('⏰ 请简洁清晰地朗读句子（8秒内）', 'timeout', 2500);
           if (btn) btn.disabled = false;
-          host._activeRecognition = null;
         }
       }, 2000);
     }, 8000);
@@ -255,17 +277,18 @@ function listenAndCheck(shadowRoot, targetSentence, maxRetries) {
     clearTimeout(speechTimer);
     setTimeout(function () {
       if (!resultReceived && host._activeRecognition === rec) {
-        log('语音结束后2秒无结果，中止');
+        log('语音结束后5秒无结果，中止');
+        host._activeRecognition = null;
         try { rec.abort(); } catch (e) {}
         stopRecording();
         showFeedback('🎙️ 未检测到句子，请再试一次', 'timeout', 2000);
         if (btn) btn.disabled = false;
-        host._activeRecognition = null;
       }
-    }, 2000);
+    }, 5000);
   };
 
   rec.onresult = function (event) {
+    if (host._activeRecognition !== rec) return;
     resultReceived = true;
 
     var transcript = '';
@@ -298,6 +321,7 @@ function listenAndCheck(shadowRoot, targetSentence, maxRetries) {
     clearTimeout(speechTimer);
     clearTimeout(noSpeechTimer);
     speechEnded = true;
+    host._activeRecognition = null; // 阻止 onend 抢先显示"未识别到"
 
     stopRecording(function () {
       if (!cleaned) {
@@ -307,23 +331,65 @@ function listenAndCheck(shadowRoot, targetSentence, maxRetries) {
         return;
       }
 
+      showFeedback('🤖 AI评分中…', 'listening', 0);
+      fetch('http://localhost:8800/api/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          card_type: 'english_input',
+          target_text: targetSentence,
+          recognized_text: cleaned
+        })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (result) {
+          showAIRating(result);
+        })
+        .catch(function () {
+          showLocalResult();
+        })
+        .then(function () {
+          host._activeRecognition = null;
+          if (btn) btn.disabled = false;
+        });
+    });
+
+    function showAIRating(result) {
+      if (!result || result.is_fallback) { showLocalResult(); return; }
+      var html = buildRatingHTML(result);
+      var fb = shadowRoot.querySelector('.shadow-feedback');
+      if (fb) {
+        fb.innerHTML = html;
+        fb.className = 'shadow-feedback show ai-rating-wrapper';
+      }
+      host._shadowAttempt = 0;
+      if (host._lastRecording && fb) {
+        var playBtn = document.createElement('button');
+        playBtn.className = 'btn-play';
+        playBtn.textContent = '🔊 听我的发音';
+        playBtn.addEventListener('click', function (e) {
+          e.stopPropagation(); e.preventDefault();
+          var audio = new Audio(host._lastRecording);
+          audio.play().catch(function () {});
+        });
+        fb.appendChild(playBtn);
+      }
+    }
+
+    function showLocalResult() {
       if (correct) {
         showFeedback('✅ 跟读正确！（相似度: ' + Math.round(sim * 100) + '%）', 'correct', 3000);
         host._shadowAttempt = 0;
-        if (btn) btn.disabled = false;
       } else {
         host._shadowAttempt = (host._shadowAttempt || 0) + 1;
         if (host._shadowAttempt < maxRetries) {
           showFeedback('❌ 再试一次吧！ (' + (host._shadowAttempt + 1) + '/' + maxRetries + ') 相似度: ' + Math.round(sim * 100) + '%', 'incorrect', 2500);
-          if (btn) btn.disabled = false;
         } else {
           showFeedback('💪 加油！原句是：' + targetSentence, 'incorrect', 4000);
           host._shadowAttempt = 0;
-          if (btn) btn.disabled = false;
         }
       }
-      host._activeRecognition = null;
-    });
+    }
   };
 
   rec.onerror = function (event) {
@@ -597,7 +663,7 @@ var AICard = (function () {
             ttsFired = true;
             setTimeout(function () {
               listenAndCheck(self.shadowRoot, targetSentence, 3);
-            }, 300);
+            }, 1000);
           }
 
           // Speak the sentence, then start listening after TTS finishes
@@ -608,7 +674,7 @@ var AICard = (function () {
           // Fallback: if TTS onend doesn't fire (or speechSynthesis unavailable)
           setTimeout(function () {
             startListening();
-          }, 4000);
+          }, 6000);
         });
       });
     }, 0);

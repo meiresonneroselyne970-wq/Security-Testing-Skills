@@ -100,7 +100,27 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
     }
   }
 
-  var pendingFeedback = null; // feedback to show after recording blob is ready
+  function buildRatingHTML(result) {
+    var stars = '';
+    var s = Math.round((result.overall || 0) / 20);
+    for (var i = 1; i <= 5; i++) { stars += i <= s ? '⭐' : '☆'; }
+    var dimsHtml = (result.dimensions || []).map(function (d) {
+      return '<div class="rating-dim">' +
+        '<div class="dim-head"><span class="dim-label">' + esc(d.label) + '</span><span class="dim-score">' + (d.score || 0) + '</span></div>' +
+        '<div class="dim-bar"><div class="dim-bar-fill" style="width:' + (d.score || 0) + '%"></div></div>' +
+        (d.comment ? '<span class="dim-comment">' + esc(d.comment) + '</span>' : '') +
+      '</div>';
+    }).join('');
+    return '<div class="ai-rating">' +
+      '<div class="rating-overall">' +
+        '<span class="overall-score">' + (result.overall || 0) + '</span>' +
+        '<div class="overall-meta"><span class="overall-label">综合评分</span><span class="overall-stars">' + stars + '</span></div>' +
+      '</div>' +
+      '<div class="rating-dims">' + dimsHtml + '</div>' +
+      '<p class="feedback-text">' + esc(result.feedback || '') + '</p>' +
+      (result.suggestions ? '<div class="rating-suggestions"><span class="suggestion-label">💡 练习建议</span><p class="suggestion-text">' + esc(result.suggestions) + '</p></div>' : '') +
+    '</div>';
+  }
 
   function stopRecording(onBlobReady) {
     if (host._mediaRecorder && host._mediaRecorder.state !== 'inactive') {
@@ -204,11 +224,11 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
   // Start the initial "no speech" timeout (8s total waiting time)
   noSpeechTimer = setTimeout(function () {
     log('8秒内未检测到任何语音');
+    host._activeRecognition = null;
     try { rec.abort(); } catch (e) {}
     stopRecording();
     showFeedback('⏰ 未检测到声音，请大声读出单词', 'timeout', 2500);
     if (btn) btn.disabled = false;
-    host._activeRecognition = null;
   }, 8000);
 
   function forceStop() {
@@ -233,11 +253,11 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
       setTimeout(function () {
         if (!resultReceived && host._activeRecognition === rec) {
           log('强制结束后仍无结果，中止');
+          host._activeRecognition = null;
           try { rec.abort(); } catch (e) {}
           stopRecording();
           showFeedback('⏰ 请简短清晰地读一个单词（4秒内）', 'timeout', 2500);
           if (btn) btn.disabled = false;
-          host._activeRecognition = null;
         }
       }, 2000);
     }, 4000);
@@ -247,20 +267,22 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
     log('onspeechend: 语音结束');
     speechEnded = true;
     clearTimeout(speechTimer);
-    // Speech ended naturally — give server 2s to return final result
+    // Speech ended naturally — give server 5s to return final result
     setTimeout(function () {
       if (!resultReceived && host._activeRecognition === rec) {
-        log('语音结束后2秒无结果，中止');
+        log('语音结束后5秒无结果，中止');
+        host._activeRecognition = null;
         try { rec.abort(); } catch (e) {}
         stopRecording();
         showFeedback('🎙️ 未检测到单词，请再试一次', 'timeout', 2000);
         if (btn) btn.disabled = false;
-        host._activeRecognition = null;
       }
-    }, 2000);
+    }, 5000);
   };
 
   rec.onresult = function (event) {
+    // 识别已被中止（no-speech 超时 / onspeechend 超时），忽略迟到的结果
+    if (host._activeRecognition !== rec) return;
     resultReceived = true; // we got SOMETHING
 
     var transcript = '';
@@ -291,9 +313,9 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
     clearTimeout(speechTimer);
     clearTimeout(noSpeechTimer);
     speechEnded = true;
+    host._activeRecognition = null; // 阻止 onend 抢先显示"未识别到"
 
     stopRecording(function () {
-      // Called after the recording blob is fully ready (mr.onstop fired)
       if (!cleaned) {
         showFeedback('🎙️ 未识别到单词，请再试一次', 'timeout', 2000);
         if (btn) btn.disabled = false;
@@ -301,23 +323,66 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
         return;
       }
 
+      // ── 调 english-scoring Python 服务评分 ──
+      showFeedback('🤖 AI评分中…', 'listening', 0);
+      fetch('http://localhost:8800/api/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          card_type: 'english_word',
+          target_text: targetWord,
+          recognized_text: cleaned
+        })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (result) {
+          showAIRating(result);
+        })
+        .catch(function () {
+          showLocalResult();
+        })
+        .then(function () {
+          host._activeRecognition = null;
+          if (btn) btn.disabled = false;
+        });
+    });
+
+    function showAIRating(result) {
+      if (!result || result.is_fallback) { showLocalResult(); return; }
+      var html = buildRatingHTML(result);
+      var fb = shadowRoot.querySelector('.shadow-feedback');
+      if (fb) {
+        fb.innerHTML = html;
+        fb.className = 'shadow-feedback show ai-rating-wrapper';
+      }
+      host._shadowAttempt = 0;
+      if (host._lastRecording && fb) {
+        var playBtn = document.createElement('button');
+        playBtn.className = 'btn-play';
+        playBtn.textContent = '🔊 听我的发音';
+        playBtn.addEventListener('click', function (e) {
+          e.stopPropagation(); e.preventDefault();
+          var audio = new Audio(host._lastRecording);
+          audio.play().catch(function () {});
+        });
+        fb.appendChild(playBtn);
+      }
+    }
+
+    function showLocalResult() {
       if (correct) {
         showFeedback('✅ 跟读正确！', 'correct', 3000);
         host._shadowAttempt = 0;
-        if (btn) btn.disabled = false;
       } else {
         host._shadowAttempt = (host._shadowAttempt || 0) + 1;
         if (host._shadowAttempt < maxRetries) {
           showFeedback('❌ 再试一次吧！ (' + (host._shadowAttempt + 1) + '/' + maxRetries + ') 你读的是: ' + cleaned, 'incorrect', 2500);
-          if (btn) btn.disabled = false;
         } else {
           showFeedback('加油！这个单词是：' + targetWord, 'incorrect', 4000);
           host._shadowAttempt = 0;
-          if (btn) btn.disabled = false;
         }
       }
-      host._activeRecognition = null;
-    });
+    }
   };
 
   rec.onerror = function (event) {
@@ -526,7 +591,7 @@ var AICard = (function () {
             ttsFired = true;
             setTimeout(function () {
               listenAndCheck(self.shadowRoot, targetWord, 3);
-            }, 300);
+            }, 1000);
           }
 
           // Speak the word, then start listening after TTS finishes
@@ -537,7 +602,7 @@ var AICard = (function () {
           // Fallback: if TTS onend doesn't fire (or speechSynthesis unavailable)
           setTimeout(function () {
             startListening();
-          }, 2500);
+          }, 5000);
         });
       });
     }, 0);

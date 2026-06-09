@@ -37,8 +37,9 @@ description: Card template selector hub. Use to find the right skill — resourc
 
 | 技能 | 文件 | 用途 |
 |------|------|------|
-| **card** | [card.md](card.md) | 新建卡片数据文件或创建全新模板（6 种模板的完整参考） |
+| **card** | [card.md](card.md) | 新建卡片数据文件或创建全新模板（8 种模板的完整参考） |
 | **comic** | [comic.md](comic.md) | 连环画卡片专用生成器 |
+| **english-scoring** | [english-scoring.md](english-scoring.md) | 英语口语 AI 评分 — 跟读后调用 DeepSeek 多维度评分 |
 
 ---
 

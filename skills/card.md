@@ -208,6 +208,7 @@ card (abc-card, semi-transparent white, rounded, shadow)
 - `title` is the ribbon badge text.
 - Page-level notebook paper background (`.page-container`) only appears in standalone `index.html`, not in demo/preview cards.
 - Web Speech API for pronunciation on click — `data-speak` attributes on `.big-letter`, `.word-label`, and `.abc-img` elements.
+- Shadow reading (跟读): TTS plays reference → microphone auto-opens → speech recognition → `fetch` to `english-scoring` Python service for AI multi-dimension scoring → fallback to word-match check if API unavailable
 - Uses Patrick Hand font (local woff2, no CDN) for handwritten textbook feel; all elements use `font-weight: 400` (Patrick Hand is single-weight — no faux-bold).
 
 **Local font requirement:** Each card folder contains a `fonts/` subdirectory (woff2 + fonts.css). `index.html` `<head>` must include:
@@ -271,7 +272,7 @@ comic-card
 | `video_url` | Yes | Video source for `<video controls>` |
 | `frames` | Yes | Array of `{ image, texts[] }` objects (4-6 frames) |
 
-For full comic-card documentation, see `.claude/skills/comic.md`.
+For full comic-card documentation, see [comic.md](comic.md).
 
 ---
 
@@ -357,7 +358,7 @@ body
 
 ### 7. english-sentence-card — English Sentence Display Cards
 
-**Visual signature:** Notebook paper background (横线纸) + sticky note card with ribbon badge (缎带) at top-left + English sentence (left-aligned, multi-line) + Chinese translation (hidden by default, fade in on click) + click-to-speak (Web Speech API) + shadow reading (跟读) with word-overlap similarity scoring.
+**Visual signature:** Notebook paper background (横线纸) + sticky note card with ribbon badge (缎带) at top-left + English sentence (left-aligned, multi-line) + Chinese translation (hidden by default, fade in on click) + click-to-speak (Web Speech API) + shadow reading (跟读) with AI multi-dimension scoring via `english-scoring` Python service (DeepSeek API), fallback to local word-overlap similarity.
 
 **DOM skeleton:**
 ```
@@ -399,7 +400,7 @@ sentence-card (sticky note, rounded, shadow)
 - `subtitle` is the English sentence (rendered as main content), NOT a subtitle text
 - `description` is the Chinese translation, hidden by default
 - Click on sentence or button → TTS reads the sentence + shows Chinese translation (3s auto-hide)
-- Shadow reading: TTS plays reference → microphone auto-opens → word-overlap similarity ≥ 60% = correct, up to 3 retries
+- Shadow reading: TTS plays reference → microphone auto-opens → speech recognition → `fetch` to `english-scoring` Python service (localhost:8800) for AI multi-dimension scoring (发音准确度/完整性/流利度/语调自然度) → fallback to local word-overlap similarity (≥60%) if API unavailable, up to 3 retries
 - Records user's voice during shadow reading for playback comparison
 - Uses Web Speech API (speechSynthesis + SpeechRecognition + MediaRecorder)
 - Uses local Patrick Hand font (woff2, no CDN) for handwritten feel; Chinese translation (`.sentence-zh`) uses Songti (宋体) serif
@@ -414,7 +415,7 @@ sentence-card (sticky note, rounded, shadow)
 
 ### 8. english-input-card — English Sentence Input Cards
 
-**Visual signature:** Notebook paper background (横线纸) + sticky note card (no ribbon — cleaner design) + editable `<textarea>` for English sentence input + real-time Chinese translation (DeepSeek API, 600ms debounce) + click-to-speak + shadow reading with similarity scoring.
+**Visual signature:** Notebook paper background (横线纸) + sticky note card (no ribbon — cleaner design) + editable `<textarea>` for English sentence input + real-time Chinese translation (DeepSeek API, 600ms debounce) + click-to-speak + shadow reading with AI multi-dimension scoring via `english-scoring` Python service (DeepSeek API).
 
 **DOM skeleton:**
 ```
@@ -433,7 +434,7 @@ sentence-card (sticky note, rounded, shadow, no ribbon)
 - User can type their own English sentence (editable input, not pre-filled)
 - Real-time translation on input (API-based, not static)
 - Click-to-speak reads the current input content
-- Shadow reading practice with similarity scoring
+- Shadow reading practice with AI multi-dimension scoring (via `english-scoring`), fallback to local similarity
 - Clean design without ribbon (v1.1 removed ribbon for simplicity)
 
 **Existing variants:** daily-sentence-input (1 JSON file: `data.json`)
@@ -457,13 +458,13 @@ sentence-card (sticky note, rounded, shadow, no ribbon)
 - 600ms debounced real-time translation via DeepSeek API (deepseek-v4-pro model)
 - Translation shows "翻译中…" while loading, auto-hides on failure
 - Speak button reads current textarea content (not static data)
-- Shadow reading uses current textarea content as target
+- Shadow reading uses current textarea content as target → `fetch` to `english-scoring` Python service for AI multi-dimension scoring (发音准确度/完整性/流利度/语调自然度/语法与表达) → fallback to local word-overlap similarity if API unavailable
 - Records user's voice during shadow reading for playback comparison
 - Uses Web Speech API (speechSynthesis + SpeechRecognition + MediaRecorder)
 - Uses local Patrick Hand font (woff2, no CDN) for handwritten feel; Chinese translation (`.sentence-zh`) and placeholder use Songti (宋体) serif
 - `.sentence-zh` has `min-height: 1.5em` to reserve space — translation appears without layout shift
 - `::placeholder` uses Songti stack, `opacity: 0.7`, no italic (Chinese italic looks unnatural)
-- **API dependency:** Requires DeepSeek API key (hardcoded in `ai-card.js`) for translation
+- **API dependencies:** DeepSeek API key (hardcoded) for translation + `english-scoring` Python service (localhost:8800) for scoring
 
 **Key differences from english-sentence-card:**
 | Feature | english-sentence-card | english-input-card |
@@ -472,6 +473,7 @@ sentence-card (sticky note, rounded, shadow, no ribbon)
 | Translation | Static (from JSON) | Real-time (DeepSeek API) |
 | Ribbon badge | Yes | No (removed in v1.1) |
 | Theme color | Blue (#2563eb) | Orange (#ea580c) |
+| Shadow reading | AI scoring (4 dims) via english-scoring | AI scoring (5 dims) via english-scoring |
 | Use case | Display known sentences | Explore any sentence |
 
 ---

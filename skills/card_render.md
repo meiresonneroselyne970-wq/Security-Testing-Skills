@@ -335,7 +335,7 @@ comic-card 额外需要：
 | 输入框重置 | `-webkit-appearance: none` | 安卓默认 textarea/input 样式 |
 | 语音识别 | 特性检测 `SpeechRecognition` 可用性 | 华为 EMUI WebView 可能不支持；`file://` 协议下不可用 |
 
-> 完整说明见 [card.md](.claude/skills/card.md) 的 "Android & Huawei Adaptation" 章节。
+> 完整说明见 [card.md](card.md) 的 "Android & Huawei Adaptation" 章节。
 
 ---
 
