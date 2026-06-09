@@ -194,32 +194,37 @@
 
 /* ── Playback button (inside feedback) ── */
 .sentence-card .btn-play {
-  display: inline-block;
-  margin-left: 8px;
-  padding: 3px 12px;
-  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  padding: 5px 14px;
+  border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  border: 1.5px solid currentColor;
-  background: transparent;
-  color: inherit;
+  border: none;
+  background: rgba(234, 88, 12, 0.10);
+  color: #ea580c;
   vertical-align: middle;
-  transition: background 0.2s, transform 0.15s;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
 @media (hover: hover) {
   .sentence-card .btn-play:hover {
-    background: rgba(0, 0, 0, 0.08);
+    background: rgba(234, 88, 12, 0.18);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.10);
+    transform: translateY(-1px);
   }
 }
 
 .sentence-card .btn-play:active {
-  transform: scale(0.95);
-  background: rgba(0, 0, 0, 0.12);
+  transform: scale(0.96);
+  background: rgba(234, 88, 12, 0.24);
 }
 
 /* ── AI Rating display ── */
@@ -249,6 +254,8 @@
 .sentence-card .rating-suggestions { margin-top: 8px; background: var(--c-light, #fff7ed); border-radius: 8px; padding: 8px 10px; }
 .sentence-card .suggestion-label { font-size: 12px; font-weight: 700; color: var(--c-brand, #ea580c); display: block; margin-bottom: 2px; }
 .sentence-card .suggestion-text { font-size: 13px; color: #555; line-height: 1.5; margin: 0; }
+.sentence-card .rating-actions { display: flex; justify-content: center; margin-top: 10px; padding-top: 8px; border-top: 1px solid #e8e4d8; }
+.sentence-card .rating-actions .btn-play { margin-left: 0; vertical-align: baseline; }
 
 /* ── Pulse animation ── */
 @keyframes shadowPulse {
@@ -272,7 +279,7 @@
   .sentence-card .btn { padding: 9px 32px; font-size: 16px; }
   .sentence-card .btn.shadow { padding: 7px 28px; font-size: 16px; border-width: 2px; }
   .sentence-card .shadow-feedback { font-size: 16px; }
-  .sentence-card .btn-play { font-size: 14px; padding: 4px 14px; }
+  .sentence-card .btn-play { font-size: 14px; padding: 5px 16px; }
   .sentence-card .actions { gap: 12px; }
 }
 
@@ -288,7 +295,7 @@
   .sentence-card .btn { padding: 10px 36px; font-size: 17px; }
   .sentence-card .btn.shadow { padding: 8px 30px; font-size: 17px; }
   .sentence-card .shadow-feedback { font-size: 17px; }
-  .sentence-card .btn-play { font-size: 14px; padding: 4px 14px; }
+  .sentence-card .btn-play { font-size: 14px; padding: 6px 18px; }
   .sentence-card .actions { gap: 14px; }
 }
 
@@ -304,7 +311,7 @@
   .sentence-card .btn { padding: 11px 40px; font-size: 18px; }
   .sentence-card .btn.shadow { padding: 9px 34px; font-size: 18px; }
   .sentence-card .shadow-feedback { font-size: 18px; }
-  .sentence-card .btn-play { font-size: 15px; padding: 5px 16px; }
+  .sentence-card .btn-play { font-size: 15px; padding: 6px 20px; }
   .sentence-card .actions { gap: 16px; }
 }
 
@@ -320,7 +327,7 @@
   .sentence-card .btn { padding: 13px 48px; font-size: 20px; }
   .sentence-card .btn.shadow { padding: 10px 40px; font-size: 20px; }
   .sentence-card .shadow-feedback { font-size: 19px; }
-  .sentence-card .btn-play { font-size: 16px; padding: 5px 16px; }
+  .sentence-card .btn-play { font-size: 16px; padding: 7px 22px; }
   .sentence-card .actions { gap: 18px; }
 }
 

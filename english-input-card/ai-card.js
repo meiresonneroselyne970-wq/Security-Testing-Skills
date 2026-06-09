@@ -1,7 +1,7 @@
 /**
- * english-sentence-card/ai-card.js
- * Template: Sticky note with tape + ribbon + English sentence + image
- * Interactive: click to speak English sentence + show Chinese translation
+ * english-input-card/ai-card.js
+ * Template: Sticky note card with editable textarea + real-time translation
+ * Interactive: type English → API translate → TTS speak → shadow reading → AI scoring
  */
 
 var PALETTE = {
@@ -102,6 +102,7 @@ function listenAndCheck(shadowRoot, targetSentence, maxRetries) {
       '<div class="rating-dims">' + dimsHtml + '</div>' +
       '<p class="feedback-text">' + esc(result.feedback || '') + '</p>' +
       (result.suggestions ? '<div class="rating-suggestions"><span class="suggestion-label">💡 练习建议</span><p class="suggestion-text">' + esc(result.suggestions) + '</p></div>' : '') +
+      '<div class="rating-actions"></div>' +
     '</div>';
   }
 
@@ -364,15 +365,18 @@ function listenAndCheck(shadowRoot, targetSentence, maxRetries) {
       }
       host._shadowAttempt = 0;
       if (host._lastRecording && fb) {
-        var playBtn = document.createElement('button');
-        playBtn.className = 'btn-play';
-        playBtn.textContent = '🔊 听我的发音';
-        playBtn.addEventListener('click', function (e) {
-          e.stopPropagation(); e.preventDefault();
-          var audio = new Audio(host._lastRecording);
-          audio.play().catch(function () {});
-        });
-        fb.appendChild(playBtn);
+        var actions = fb.querySelector('.rating-actions');
+        if (actions) {
+          var playBtn = document.createElement('button');
+          playBtn.className = 'btn-play';
+          playBtn.textContent = '🔊 听我的发音';
+          playBtn.addEventListener('click', function (e) {
+            e.stopPropagation(); e.preventDefault();
+            var audio = new Audio(host._lastRecording);
+            audio.play().catch(function () {});
+          });
+          actions.appendChild(playBtn);
+        }
       }
     }
 
