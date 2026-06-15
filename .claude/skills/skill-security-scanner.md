@@ -415,17 +415,21 @@ whitelist:
 ### 扫描命令示例
 
 ```bash
-# 扫描所有 skill 文件
-mimocode skill-security-scanner --scope skills/
+# 扫描所有 skill 文件（Linux / macOS / CI）
+bash scripts/ci-scan.sh --scope skills
 
 # 扫描单个文件
-mimocode skill-security-scanner --file skills/card.md
+bash scripts/ci-scan.sh --scope skills/card.md
 
-# 深度扫描
-mimocode skill-security-scanner --depth deep --scope .claude/skills/
+# 扫描 .claude/skills 目录
+bash scripts/ci-scan.sh --scope .claude/skills
 
 # 生成 JSON 报告
-mimocode skill-security-scanner --format json --output report.json
+bash scripts/ci-scan.sh --scope skills --format json --output report.json
+
+# Windows PowerShell
+.\scripts\skill-security-scan.ps1 -Scope skills/
+.\scripts\skill-security-scan.ps1 -Scope skills/ -Output report.json
 ```
 
 ---
@@ -473,10 +477,10 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run Skill Security Scanner
         run: |
-          mimocode skill-security-scanner --scope skills/ --format json --output report.json
+          bash scripts/ci-scan.sh --scope skills --format json --output report.json --fail-on-high
       - name: Check Result
         run: |
-          if jq -e '.审核状态 == "拒绝"' report.json; then
+          if jq -e '.ReviewStatus == "Reject"' report.json; then
             echo "❌ Skill security scan failed"
             exit 1
           fi
@@ -494,7 +498,7 @@ jobs:
 # .git/hooks/pre-commit
 
 echo "Running skill security scan..."
-mimocode skill-security-scanner --scope staged --fail-on high
+bash scripts/ci-scan.sh --scope skills --scope .claude/skills --fail-on-high
 
 if [ $? -ne 0 ]; then
     echo "❌ Skill security scan failed. Please fix issues before committing."

@@ -1,57 +1,17 @@
-﻿{
-    "ReviewStatus":  "Reject",
-    "ReportId":  "SSS-20260615-7702",
-    "ThreatScore":  40,
-    "ScanFileCount":  8,
-    "Summary":  {
-                    "Low":  0,
-                    "Critical":  4,
-                    "Medium":  0,
-                    "High":  0
-                },
-    "RiskLevel":  "Critical",
-    "Threats":  [
-                    {
-                        "Line":  11,
-                        "Match":  "exec(",
-                        "File":  "C:\\Users\\Pc\\Desktop\\卡片模板\\card-template\\skills\\test-dangerous.md",
-                        "Category":  "Malicious Command",
-                        "Description":  "System command execution function detected",
-                        "RuleId":  "T1.1",
-                        "Severity":  "Critical",
-                        "Recommendation":  "Remove system command execution functions, use safe alternatives"
-                    },
-                    {
-                        "Line":  12,
-                        "Match":  "os.system",
-                        "File":  "C:\\Users\\Pc\\Desktop\\卡片模板\\card-template\\skills\\test-dangerous.md",
-                        "Category":  "Malicious Command",
-                        "Description":  "System command execution function detected",
-                        "RuleId":  "T1.1",
-                        "Severity":  "Critical",
-                        "Recommendation":  "Remove system command execution functions, use safe alternatives"
-                    },
-                    {
-                        "Line":  12,
-                        "Match":  "rm -rf",
-                        "File":  "C:\\Users\\Pc\\Desktop\\卡片模板\\card-template\\skills\\test-dangerous.md",
-                        "Category":  "Malicious Command",
-                        "Description":  "File system destruction command detected",
-                        "RuleId":  "T1.2",
-                        "Severity":  "Critical",
-                        "Recommendation":  "Remove file system destruction commands, use safe file operations"
-                    },
-                    {
-                        "Line":  13,
-                        "Match":  "subprocess",
-                        "File":  "C:\\Users\\Pc\\Desktop\\卡片模板\\card-template\\skills\\test-dangerous.md",
-                        "Category":  "Malicious Command",
-                        "Description":  "System command execution function detected",
-                        "RuleId":  "T1.1",
-                        "Severity":  "Critical",
-                        "Recommendation":  "Remove system command execution functions, use safe alternatives"
-                    }
-                ],
-    "ScanScope":  "skills/",
-    "ScanTime":  "2026-06-15 14:16:00"
+{
+  "ReportId": "SSS-20260615-9982",
+  "ScanTime": "2026-06-15 16:37:59",
+  "ScanScope": ".claude/skills",
+  "ScanFileCount": 3,
+  "ReviewStatus": "Pass",
+  "ThreatScore": 0,
+  "RiskLevel": "Safe",
+  "Threats": [
+  ],
+  "Summary": {
+    "Critical": 0,
+    "High": 0,
+    "Medium": 0,
+    "Low": 0
+  }
 }

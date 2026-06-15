@@ -627,7 +627,7 @@ pattern="(localhost:\d{2,5}|127\.0\.0\.1:\d{2,5}|10\.\d+\.\d+\.\d+|192\.168\.\d+
 # .git/hooks/pre-commit
 
 echo "Running security audit..."
-mimocode security-audit --scope staged --fail-on high
+bash scripts/ci-scan.sh --scope skills --scope .claude/skills --fail-on-high
 
 if [ $? -ne 0 ]; then
     echo "❌ Security audit failed. Please fix issues before committing."
@@ -651,7 +651,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run Security Audit
         run: |
-          mimocode security-audit --format json --output audit-report.json
+          bash scripts/ci-scan.sh --scope skills --scope .claude/skills --format json --output audit-report.json
       - name: Upload Report
         uses: actions/upload-artifact@v3
         with:
@@ -674,7 +674,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run Full Security Audit
-        run: mimocode security-audit --scope full --format html --output report.html
+        run: bash scripts/ci-scan.sh --scope skills --scope .claude/skills --format json --output report.json
       - name: Send Report
         uses: ./.github/actions/send-report
         with:
