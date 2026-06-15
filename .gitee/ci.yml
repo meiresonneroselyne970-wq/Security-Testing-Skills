@@ -2,13 +2,11 @@ name: Skill Security Scan
 
 on:
   push:
-    paths:
-      - 'skills/**'
-      - '.claude/skills/**'
+    branches:
+      - byl-v1.0.0
   pull_request:
-    paths:
-      - 'skills/**'
-      - '.claude/skills/**'
+    branches:
+      - byl-v1.0.0
 
 jobs:
   security-scan:
@@ -21,7 +19,7 @@ jobs:
 
       - name: Run Security Scanner
         run: |
-          echo "🔍 Starting Skill Security Scan..."
+          echo "Starting Skill Security Scan..."
           
           THREAT_SCORE=0
           THREATS=""
@@ -92,35 +90,27 @@ jobs:
             echo "Risk Level: Critical"
             echo "Review Status: Reject"
             echo ""
-            echo "❌ Threats Found:"
+            echo "Threats Found:"
             echo -e "$THREATS"
             exit 1
           elif [ $THREAT_SCORE -ge 10 ]; then
             echo "Risk Level: High"
             echo "Review Status: Manual Review Required"
             echo ""
-            echo "⚠️ Threats Found:"
+            echo "Threats Found:"
             echo -e "$THREATS"
             exit 1
           elif [ $THREAT_SCORE -ge 5 ]; then
             echo "Risk Level: Medium"
             echo "Review Status: Warning"
             echo ""
-            echo "⚠️ Threats Found:"
+            echo "Threats Found:"
             echo -e "$THREATS"
           else
             echo "Risk Level: Safe"
             echo "Review Status: Pass"
             echo ""
-            echo "✅ No critical threats found"
+            echo "No critical threats found"
           fi
           
           echo "================================================"
-      
-      - name: Upload Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: skill-security-report
-          path: skill-security-report.json
-          retention-days: 30
