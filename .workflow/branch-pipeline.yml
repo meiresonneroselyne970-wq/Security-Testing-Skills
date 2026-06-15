@@ -1,6 +1,6 @@
 version: '1.0'
 name: branch-pipeline
-displayName: BranchPipeline
+displayName: 🔒 分支安全扫描
 triggers:
   trigger: auto
   push:
@@ -9,15 +9,23 @@ triggers:
         - .*
       exclude:
         - master
+        - main
 stages:
   - name: security-scan
-    displayName: 安全扫描
+    displayName: 🔍 Skill 安全扫描
     strategy: naturally
     trigger: auto
     steps:
       - step: build@shell
-        name: skill_security_scan
-        displayName: Skill 安全扫描
+        name: branch_security_scan
+        displayName: 运行 Skill 安全扫描器
         commands:
+          - echo "============================================="
+          - echo "  Branch Security Scan"
+          - echo "  Branch: ${GITEE_BRANCH}"
+          - echo "  Commit: ${GITEE_COMMIT}"
+          - echo "============================================="
           - chmod +x scripts/ci-scan.sh
-          - bash scripts/ci-scan.sh
+          - bash scripts/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --fail-on-high
+          - echo ""
+          - echo "扫描完成。"

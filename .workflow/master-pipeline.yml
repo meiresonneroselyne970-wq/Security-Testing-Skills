@@ -1,21 +1,29 @@
 version: '1.0'
 name: master-pipeline
-displayName: MasterPipeline
+displayName: 🔒 Master 安全扫描
 triggers:
   trigger: auto
   push:
     branches:
       include:
         - master
+        - main
 stages:
   - name: security-scan
-    displayName: 安全扫描
+    displayName: 🔍 Skill 安全扫描
     strategy: naturally
     trigger: auto
     steps:
       - step: build@shell
         name: skill_security_scan
-        displayName: Skill 安全扫描
+        displayName: 运行 Skill 安全扫描器
         commands:
+          - echo "============================================="
+          - echo "  Gitee Go — Skill Security Scanner v2.0"
+          - echo "  Branch: ${GITEE_BRANCH}"
+          - echo "  Commit: ${GITEE_COMMIT}"
+          - echo "============================================="
           - chmod +x scripts/ci-scan.sh
-          - bash scripts/ci-scan.sh
+          - bash scripts/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --fail-on-high
+          - echo ""
+          - echo "扫描完成。查看 skill-security-report.json 获取详细报告。"

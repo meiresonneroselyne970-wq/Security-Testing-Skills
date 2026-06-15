@@ -1,21 +1,31 @@
 version: '1.0'
 name: pr-pipeline
-displayName: PRPipeline
+displayName: 🔒 PR 安全扫描（阻止危险合并）
 triggers:
   trigger: auto
   pr:
     branches:
       include:
         - master
+        - main
 stages:
   - name: security-scan
-    displayName: 安全扫描
+    displayName: 🔍 PR 安全扫描
     strategy: naturally
     trigger: auto
     steps:
       - step: build@shell
-        name: skill_security_scan
-        displayName: Skill 安全扫描
+        name: pr_security_scan
+        displayName: 运行 PR 安全扫描（严格模式）
         commands:
+          - echo "============================================="
+          - echo "  Gitee Go — PR Security Scanner"
+          - echo "  PR:     #${GITEE_PULL_ID}"
+          - echo "  Source: ${GITEE_SOURCE_BRANCH}"
+          - echo "  Target: ${GITEE_BRANCH}"
+          - echo "============================================="
           - chmod +x scripts/ci-scan.sh
-          - bash scripts/ci-scan.sh
+          # 严格模式：检测到中危及以上威胁 → 阻止合并
+          - bash scripts/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --strict
+          - echo ""
+          - echo "扫描完成。中危及以上威胁将会阻止此 PR 合并。"
