@@ -74,7 +74,8 @@ window.renderCards = function(containerId, cards) {
   if (!root) return;
   root.innerHTML = cards.map(function(c) {
     var d = c.data;
-    return '<div class="wrap"><span class="label">'+(d.layout&&d.layout.variant||d.card_type)+' · '+d.theme+' · icon='+(d.layout&&d.layout.icon)+'</span><ai-card data=\''+JSON.stringify(d)+'\'></ai-card></div>';
+    var label = esc((d.layout&&d.layout.variant||d.card_type) + ' · ' + d.theme);
+    return '<div class="wrap"><span class="label">'+label+'</span><ai-card data=\''+JSON.stringify(d)+'\'></ai-card></div>';
   }).join('');
 };
 
@@ -83,5 +84,6 @@ window.renderCards = function(containerId, cards) {
   if (!root) return;
   var FILES = ['chinese.json','math.json','english.json'];
   Promise.all(FILES.map(function(f) { return fetch(f).then(function(r) { return r.json(); }); }))
-    .then(function(data) { renderCards('root', data.map(function(d) { return { data:d }; })); });
+    .then(function(data) { renderCards('root', data.map(function(d) { return { data:d }; })); })
+    .catch(function(err) { console.error('卡片数据加载失败:', err); });
 })();

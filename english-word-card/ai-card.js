@@ -326,7 +326,7 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
 
       // ── 调 english-scoring Python 服务评分 ──
       showFeedback('🤖 AI评分中…', 'listening', 0);
-      fetch('http://localhost:8800/api/score', {
+      fetch(self._scoreUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -519,6 +519,12 @@ var AICard = (function () {
     this._connected = true;
     this._render();
   };
+  Klass.prototype.disconnectedCallback = function () {
+    this._connected = false;
+    if (this._recognition) { try { this._recognition.stop(); } catch(e) {} this._recognition = null; }
+    if (this._mediaRecorder) { try { if (this._mediaRecorder.state !== 'inactive') this._mediaRecorder.stop(); } catch(e) {} this._mediaRecorder = null; }
+    if (this._mediaStream) { try { this._mediaStream.getTracks().forEach(function(t) { t.stop(); }); } catch(e) {} this._mediaStream = null; }
+  };
 
   Klass.prototype._render = function () {
     // Abort any active speech recognition on re-render
@@ -545,6 +551,8 @@ var AICard = (function () {
     var d;
     try { d = JSON.parse(raw); } catch (e) { this.shadowRoot.innerHTML = ''; return; }
 
+    this._scoreUrl = d.scoreUrl || (location.origin + '/api/score');
+
     var p = themeColor(d.theme);
     this.shadowRoot.innerHTML = '';
 
@@ -563,6 +571,7 @@ var AICard = (function () {
 
     var self = this;
     setTimeout(function () {
+      if (!self._connected || !self.shadowRoot) return;
       var zhEl = self.shadowRoot.querySelector('.word-zh');
       var timer = null;
       function showZh() {

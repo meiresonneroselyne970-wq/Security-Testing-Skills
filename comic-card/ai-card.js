@@ -45,7 +45,7 @@ function cardHTML(units) {
       var uc = unitColor(u);
       html += '<button class="unit-tab" data-unit="' + u + '" style="--tab-color:' + uc.brand + ';--tab-light:' + uc.light + '">' +
         '<span class="unit-tab-label">Unit ' + (u + 1) + '</span>' +
-        '<span class="unit-tab-title">' + esc(units[u].title.split('· ')[1] || units[u].title) + '</span>' +
+        '<span class="unit-tab-title">' + esc((units[u].title || '').split('· ')[1] || units[u].title || 'Unit ' + (u + 1)) + '</span>' +
       '</button>';
     }
     html += '</div>';
@@ -291,6 +291,8 @@ var AICard = (function () {
     this._unitIndex = 0;
     this._current = 0;
 
+    // 清理旧的事件监听器，防止内存泄漏
+    this._cleanup();
     var p = themeColor('comic');
     this.shadowRoot.innerHTML = '';
 
@@ -324,26 +326,28 @@ var AICard = (function () {
     this._loadUnit(0);
 
     // Unit tab clicks
-    this._unitTabs.forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        var idx = parseInt(this.getAttribute('data-unit'));
-        if (idx !== self._unitIndex) {
-          self._loadUnit(idx);
-        }
+    if (this._unitTabs.length) {
+      this._unitTabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          var idx = parseInt(this.getAttribute('data-unit'));
+          if (idx !== self._unitIndex) {
+            self._loadUnit(idx);
+          }
+        });
       });
-    });
+    }
 
     // Navigation buttons
-    this._prevBtn.addEventListener('click', function () {
+    if (this._prevBtn) this._prevBtn.addEventListener('click', function () {
       self._navigate(-1);
     });
 
-    this._nextBtn.addEventListener('click', function () {
+    if (this._nextBtn) this._nextBtn.addEventListener('click', function () {
       self._navigate(1);
     });
 
     // Dot clicks
-    this._dotsContainer.addEventListener('click', function (e) {
+    if (this._dotsContainer) this._dotsContainer.addEventListener('click', function (e) {
       var dot = e.target.closest('.page-dot');
       if (!dot) return;
       var idx = parseInt(dot.getAttribute('data-dot'));
