@@ -1,20 +1,21 @@
 version: '1.0'
 name: master-pipeline
 displayName: MasterPipeline
-stages:
-  - stage:
-    name: security-scan
-    displayName: 安全扫描
-    steps:
-      - step: build@nodejs
-        name: skill_security_scan
-        displayName: Skill 安全扫描
-        nodeVersion: 14
-        commands:
-          - chmod +x scripts/ci-scan.sh
-          - bash scripts/ci-scan.sh
 triggers:
+  trigger: auto
   push:
     branches:
       include:
         - master
+stages:
+  - name: security-scan
+    displayName: 安全扫描
+    strategy: naturally
+    trigger: auto
+    steps:
+      - step: build@shell
+        name: skill_security_scan
+        displayName: Skill 安全扫描
+        commands:
+          - chmod +x scripts/ci-scan.sh
+          - bash scripts/ci-scan.sh
