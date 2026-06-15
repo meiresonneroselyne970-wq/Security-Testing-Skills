@@ -2,73 +2,17 @@ version: '1.0'
 name: pr-pipeline
 displayName: PRPipeline
 stages:
-  - stage: 
+  - stage:
     name: security-scan
     displayName: 安全扫描
     steps:
-      - step: build@shell
+      - step: build@nodejs
         name: skill_security_scan
         displayName: Skill 安全扫描
+        nodeVersion: 14
         commands:
-          - echo "Starting Skill Security Scan..."
-          - THREAT_SCORE=0
-          - |
-            scan_file() {
-              local file=$1
-              local line_num=0
-              while IFS= read -r line; do
-                line_num=$((line_num + 1))
-                line_lower=$(echo "$line" | tr '[:upper:]' '[:lower:]')
-                if echo "$line_lower" | grep -qE "(os\.system|subprocess\.call|subprocess\.run|exec\(|eval\()"; then
-                  THREAT_SCORE=$((THREAT_SCORE + 10))
-                  echo "[Critical] T1.1 - ${file}:${line_num}: System command execution"
-                fi
-                if echo "$line_lower" | grep -qE "(rm -rf|rm -r /|unlink|shutil\.rmtree)"; then
-                  THREAT_SCORE=$((THREAT_SCORE + 10))
-                  echo "[Critical] T1.2 - ${file}:${line_num}: File system destruction"
-                fi
-                if echo "$line_lower" | grep -qE "(ignore all previous|忽略之前的指令|忽略所有安全|system prompt override)"; then
-                  THREAT_SCORE=$((THREAT_SCORE + 10))
-                  echo "[Critical] T2.1 - ${file}:${line_num}: System prompt override"
-                fi
-                if echo "$line_lower" | grep -qE "(password\s*=\s*['\"]|token\s*=\s*['\"]|api[_-]?key\s*=\s*['\"]|secret[_-]?key\s*=\s*['\"])"; then
-                  THREAT_SCORE=$((THREAT_SCORE + 8))
-                  echo "[High] T3.1 - ${file}:${line_num}: Credential leak"
-                fi
-              done < "$file"
-            }
-          - |
-            if [ -d "skills" ]; then
-              for file in skills/*.md; do
-                if [ -f "$file" ]; then
-                  echo "Scanning: $file"
-                  scan_file "$file"
-                fi
-              done
-            fi
-          - |
-            if [ -d ".claude/skills" ]; then
-              for file in .claude/skills/*.md; do
-                if [ -f "$file" ]; then
-                  echo "Scanning: $file"
-                  scan_file "$file"
-                fi
-              done
-            fi
-          - echo "Threat Score: $THREAT_SCORE"
-          - |
-            if [ $THREAT_SCORE -ge 20 ]; then
-              echo "Risk Level: Critical"
-              echo "Review Status: Reject"
-              exit 1
-            elif [ $THREAT_SCORE -ge 10 ]; then
-              echo "Risk Level: High"
-              echo "Review Status: Manual Review Required"
-              exit 1
-            else
-              echo "Risk Level: Safe"
-              echo "Review Status: Pass"
-            fi
+          - chmod +x scripts/ci-scan.sh
+          - bash scripts/ci-scan.sh
 triggers:
   pr:
     branches:
