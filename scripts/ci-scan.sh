@@ -10,6 +10,11 @@ set -o pipefail
 # Force UTF-8 locale
 export LC_ALL=C.UTF-8 2>/dev/null || export LC_ALL=en_US.UTF-8 2>/dev/null || true
 
+# Auto-detect CI: disable color if not a real terminal
+if [[ ! -t 1 ]] || [[ -n "$CI" ]] || [[ -n "$GITEE_PIPELINE_BUILD_NUMBER" ]]; then
+  NO_COLOR=true
+fi
+
 # ---------- Configurable Defaults ----------
 SCOPE_DIRS=()
 OUTPUT_FORMAT="text"
@@ -57,11 +62,19 @@ EOF
   exit 2
 }
 
+# ---------- Color helpers (auto-disabled in CI) ----------
+if [[ -n "$NO_COLOR" ]]; then
+  C_RESET=""; C_CYAN=""; C_GREEN=""; C_YELLOW=""; C_RED=""; C_MAGENTA=""; C_BOLD_RED=""
+else
+  C_RESET="\033[0m"; C_CYAN="\033[36m"; C_GREEN="\033[32m"
+  C_YELLOW="\033[33m"; C_RED="\033[31m"; C_MAGENTA="\033[35m"; C_BOLD_RED="\033[1;31m"
+fi
+
 # ---------- Logging ----------
-log_info()  { $QUIET_MODE || echo -e "\033[36m[INFO]\033[0m $*"; }
-log_pass()  { $QUIET_MODE || echo -e "\033[32m[PASS]\033[0m $*"; }
-log_warn()  { echo -e "\033[33m[WARN]\033[0m $*"; }
-log_error() { echo -e "\033[31m[ERROR]\033[0m $*" >&2; }
+log_info()  { $QUIET_MODE || echo -e "${C_CYAN}[INFO]${C_RESET} $*"; }
+log_pass()  { $QUIET_MODE || echo -e "${C_GREEN}[PASS]${C_RESET} $*"; }
+log_warn()  { echo -e "${C_YELLOW}[WARN]${C_RESET} $*"; }
+log_error() { echo -e "${C_RED}[ERROR]${C_RESET} $*" >&2; }
 
 # ---------- Parse Arguments ----------
 parse_args() {
@@ -154,10 +167,10 @@ record_threat() {
 
   local sev_disp
   case "$severity" in
-    Critical) sev_disp="\033[1;31m[CRITICAL]\033[0m" ;;
-    High)     sev_disp="\033[35m[HIGH]\033[0m" ;;
-    Medium)   sev_disp="\033[33m[MEDIUM]\033[0m" ;;
-    Low)      sev_disp="\033[32m[LOW]\033[0m" ;;
+    Critical) sev_disp="${C_BOLD_RED}[CRITICAL]${C_RESET}" ;;
+    High)     sev_disp="${C_MAGENTA}[HIGH]${C_RESET}" ;;
+    Medium)   sev_disp="${C_YELLOW}[MEDIUM]${C_RESET}" ;;
+    Low)      sev_disp="${C_GREEN}[LOW]${C_RESET}" ;;
   esac
 
   if ! $QUIET_MODE; then
