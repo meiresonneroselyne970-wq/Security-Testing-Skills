@@ -1,0 +1,126 @@
+name: Skill Security Scan
+
+on:
+  push:
+    paths:
+      - 'skills/**'
+      - '.claude/skills/**'
+  pull_request:
+    paths:
+      - 'skills/**'
+      - '.claude/skills/**'
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Skill Security Scan
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Security Scanner
+        run: |
+          echo "🔍 Starting Skill Security Scan..."
+          
+          THREAT_SCORE=0
+          THREATS=""
+          
+          # 扫描函数
+          scan_file() {
+            local file=$1
+            local line_num=0
+            
+            while IFS= read -r line; do
+              line_num=$((line_num + 1))
+              line_lower=$(echo "$line" | tr '[:upper:]' '[:lower:]')
+              
+              # T1.1: System command execution
+              if echo "$line_lower" | grep -qE "(os\.system|subprocess\.call|subprocess\.run|exec\(|eval\()"; then
+                THREAT_SCORE=$((THREAT_SCORE + 10))
+                THREATS="${THREATS}\n[Critical] T1.1 - ${file}:${line_num}: System command execution"
+              fi
+              
+              # T1.2: File system destruction
+              if echo "$line_lower" | grep -qE "(rm -rf|rm -r /|unlink|shutil\.rmtree)"; then
+                THREAT_SCORE=$((THREAT_SCORE + 10))
+                THREATS="${THREATS}\n[Critical] T1.2 - ${file}:${line_num}: File system destruction"
+              fi
+              
+              # T2.1: System prompt override
+              if echo "$line_lower" | grep -qE "(ignore all previous|忽略之前的指令|忽略所有安全|system prompt override)"; then
+                THREAT_SCORE=$((THREAT_SCORE + 10))
+                THREATS="${THREATS}\n[Critical] T2.1 - ${file}:${line_num}: System prompt override"
+              fi
+              
+              # T3.1: Credential leak
+              if echo "$line_lower" | grep -qE "(password\s*=\s*['\"]|token\s*=\s*['\"]|api[_-]?key\s*=\s*['\"]|secret[_-]?key\s*=\s*['\"])"; then
+                THREAT_SCORE=$((THREAT_SCORE + 8))
+                THREATS="${THREATS}\n[High] T3.1 - ${file}:${line_num}: Credential leak"
+              fi
+              
+            done < "$file"
+          }
+          
+          # 扫描 skills 目录
+          if [ -d "skills" ]; then
+            for file in skills/*.md; do
+              if [ -f "$file" ]; then
+                echo "Scanning: $file"
+                scan_file "$file"
+              fi
+            done
+          fi
+          
+          # 扫描 .claude/skills 目录
+          if [ -d ".claude/skills" ]; then
+            for file in .claude/skills/*.md; do
+              if [ -f "$file" ]; then
+                echo "Scanning: $file"
+                scan_file "$file"
+              fi
+            done
+          fi
+          
+          # 输出结果
+          echo ""
+          echo "========== Skill Security Scan Report =========="
+          echo "Scan Time: $(date '+%Y-%m-%d %H:%M:%S')"
+          echo "Threat Score: $THREAT_SCORE"
+          
+          if [ $THREAT_SCORE -ge 20 ]; then
+            echo "Risk Level: Critical"
+            echo "Review Status: Reject"
+            echo ""
+            echo "❌ Threats Found:"
+            echo -e "$THREATS"
+            exit 1
+          elif [ $THREAT_SCORE -ge 10 ]; then
+            echo "Risk Level: High"
+            echo "Review Status: Manual Review Required"
+            echo ""
+            echo "⚠️ Threats Found:"
+            echo -e "$THREATS"
+            exit 1
+          elif [ $THREAT_SCORE -ge 5 ]; then
+            echo "Risk Level: Medium"
+            echo "Review Status: Warning"
+            echo ""
+            echo "⚠️ Threats Found:"
+            echo -e "$THREATS"
+          else
+            echo "Risk Level: Safe"
+            echo "Review Status: Pass"
+            echo ""
+            echo "✅ No critical threats found"
+          fi
+          
+          echo "================================================"
+      
+      - name: Upload Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-security-report
+          path: skill-security-report.json
+          retention-days: 30
