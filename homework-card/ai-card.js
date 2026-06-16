@@ -82,8 +82,10 @@ window.renderCards = function(containerId, cards) {
 (function() {
   var root = document.getElementById('root');
   if (!root) return;
-  var FILES = ['chinese.json','math.json','english.json'];
-  Promise.all(FILES.map(function(f) { return fetch(f).then(function(r) { return r.json(); }); }))
-    .then(function(data) { renderCards('root', data.map(function(d) { return { data:d }; })); })
-    .catch(function(err) { console.error('卡片数据加载失败:', err); });
+  var DATA_FILES = [
+    {"schema_version":"1.0","card_type":"homework_reminder","title":"语文 · 阅读理解训练","subtitle":"张老师 · 三年级二班","description":"阅读课文《荷花》第2-4自然段，完成课后练习题第1-5题。重点体会作者对荷花的观察顺序和描写方法，用自己的话概括每段大意。","button_text":"查看作业","target_url":"https://homework.example.com/chinese","theme":"chinese","layout":{"variant":"homework_reminder","icon":"chinese"}},
+    {"schema_version":"1.0","card_type":"homework_reminder","title":"数学 · 第三章分数练习","subtitle":"王老师 · 三年级二班","description":"完成课本第42-44页练习题 1-15，重点练习分数加减法的通分与约分。要求写出完整计算过程，不可只写答案。","button_text":"查看作业","target_url":"https://homework.example.com/math","theme":"math","layout":{"variant":"homework_reminder","icon":"math"}},
+    {"schema_version":"1.0","card_type":"homework_reminder","title":"英语 · Unit 5 My Day","subtitle":"李老师 · 三年级二班","description":"背诵 Unit 5 单词表（get up, breakfast, go to school 等 20 个词组），完成 Activity Book 第28-29页练习。录制一段「My Day」口语视频，不少于1分钟。","button_text":"查看作业","target_url":"https://homework.example.com/english","theme":"english","layout":{"variant":"homework_reminder","icon":"english"}}
+  ];
+  renderCards('root', DATA_FILES.map(function(d) { return { data:d }; }));
 })();

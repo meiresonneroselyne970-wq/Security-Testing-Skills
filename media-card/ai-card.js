@@ -84,8 +84,6 @@ window.renderCards = function(containerId, cards) {
 (function() {
   var root = document.getElementById('root');
   if (!root) return;
-  var FILES = ['class-video.json'];
-  Promise.all(FILES.map(function(f) { return fetch(f).then(function(r) { return r.json(); }); }))
-    .then(function(data) { renderCards('root', data.map(function(d) { return { data:d }; })); })
-    .catch(function(err) { console.error('卡片数据加载失败:', err); });
+  var DATA_FILES = [{"schema_version":"1.0","card_type":"media_preview","title":"课堂录像 · 分数的加减法","subtitle":"42:18","description":"张老师 · 2026/05/24 上传 · MP4 · 1080p · 1.2 GB · 86 次观看。第三章重难点讲解，包含 5 道例题精讲与课堂互动问答环节。","button_text":"播放视频","video_url":"https://media.bjnews.com.cn/video/out/2025/09/03/5627281659826089570.m3u8","target_url":"https://media.bjnews.com.cn/video/out/2025/09/03/5627281659826089570.m3u8","theme":"video","layout":{"variant":"media_preview","icon":"video"}}];
+  renderCards('root', DATA_FILES.map(function(d) { return { data:d }; }));
 })();
