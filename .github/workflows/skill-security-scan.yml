@@ -15,47 +15,32 @@ jobs:
   security-scan:
     name: Skill Security Scan
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Run Skill Security Scanner
         id: scan
         run: |
-          # 检查是否有 skill 文件
-          if [ -d "skills" ] || [ -d ".claude/skills" ]; then
-            echo "发现 skill 文件，开始扫描..."
-            
-            # 扫描 skills 目录
-            if [ -d "skills" ]; then
-              for file in skills/*.md; do
-                if [ -f "$file" ]; then
-                  echo "扫描: $file"
-                  # 这里可以调用实际的扫描脚本
-                fi
-              done
-            fi
-            
-            # 扫描 .claude/skills 目录
-            if [ -d ".claude/skills" ]; then
-              for file in .claude/skills/*.md; do
-                if [ -f "$file" ]; then
-                  echo "扫描: $file"
-                  # 这里可以调用实际的扫描脚本
-                fi
-              done
-            fi
-          else
-            echo "未发现 skill 文件，跳过扫描"
-          fi
-      
+          chmod +x scripts/ci-scan.sh
+          bash scripts/ci-scan.sh \
+            --scope skills \
+            --scope .claude/skills \
+            --format json \
+            --output skill-security-report.json \
+            --fail-on-high
+
       - name: Generate Report
         if: always()
         run: |
-          echo "生成扫描报告..."
-          # 这里可以生成报告文件
-      
+          if [ -f skill-security-report.json ]; then
+            echo "=== 扫描报告 ==="
+            cat skill-security-report.json | python3 -m json.tool 2>/dev/null || cat skill-security-report.json
+          else
+            echo "未生成报告文件"
+          fi
+
       - name: Upload Report
         if: always()
         uses: actions/upload-artifact@v4
@@ -63,9 +48,8 @@ jobs:
           name: skill-security-report
           path: |
             skill-security-report.json
-            skill-security-report.md
           retention-days: 30
-      
+
       - name: Check Result
         if: steps.scan.outcome == 'failure'
         run: |

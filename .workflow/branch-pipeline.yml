@@ -21,5 +21,5 @@ stages:
         commands:
           - echo "开始扫描 Skill 文件..."
           - chmod +x scripts/ci-scan.sh
-          - bash scripts/ci-scan.sh --scope skills --format json --output skill-security-report.json --fail-on-high
+          - bash scripts/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --fail-on-high
           - echo "扫描完成"
