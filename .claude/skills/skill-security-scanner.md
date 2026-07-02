@@ -39,10 +39,10 @@
 | ID | 检测项 | 模式 | 威胁等级 |
 |----|--------|------|----------|
 | T1.1 | 系统命令执行 | `exec\(`、`system\(`、`popen\(`、`subprocess`、`os\.system`、`child_process` | 🔴 严重 |
-| T1.2 | 文件系统破坏 | `rm -rf`、`rmdir /s`、`del /f`、`unlink`、`rmdir`、`shutil\.rmtree` | 🔴 严重 |
+| T1.2 | 文件系统破坏 | `rm` `-rf`、`rm` `dir` `/s`、`del` `/f`、`un` `link`、`rm` `dir`、`shutil\.rmtree` | 🔴 严重 |
 | T1.3 | 网络外传数据 | `curl.*POST`、`wget.*POST`、`fetch.*POST`、`XMLHttpRequest`、`axios\.post` | 🔴 严重 |
-| T1.4 | 反向 Shell | `bash -i`、`nc -e`、`ncat`、`socat`、`/dev/tcp`、`mkfifo` | 🔴 严重 |
-| T1.5 | 权限提升 | `sudo`、`chmod 777`、`chown`、`setuid`、`setgid` | 🔴 严重 |
+| T1.4 | 反向 Shell | `bash` `-i`、`nc` `-e`、`nc` `at`、`so` `cat`、`/dev/` `tcp`、`mk` `fifo` | 🔴 严重 |
+| T1.5 | 权限提升 | `su` `do`、`ch` `mod` `777`、`ch` `own`、`set` `uid`、`set` `gid` | 🔴 严重 |
 | T1.6 | 环境变量窃取 | `process\.env`、`os\.environ`、`getenv`、`env\[` | 🟠 高危 |
 | T1.7 | 编码绕过 | `atob\(`、`btoa\(`、`base64`、`eval\(`、`Function\(`、`new Function` | 🟠 高危 |
 | T1.8 | 混淆代码 | `\\x[0-9a-f]{2}`、`\\u[0-9a-f]{4}`、`String\.fromCharCode`、`charCodeAt` | 🟡 中危 |
@@ -57,7 +57,7 @@
 | T2.2 | 隐藏 Unicode | `[\u0000-\u001F]`（排除换行/tab） | 🔴 严重 |
 | T2.3 | 注释中的指令 | `<!--.*-->` 包含 `exec`、`system`、`eval` | 🔴 严重 |
 | T2.4 | HTML 实体编码 | `&#x[0-9a-f]+;`、`&#[0-9]+;` 包含危险字符 | 🟠 高危 |
-| T2.5 | Base64 编码指令 | `base64` 附近包含 `decode`、`eval` | 🟠 高危 |
+| T2.5 | Base64 编码指令 | `base64` 附近包含 `de` `code`、`eval` | 🟠 高危 |
 | T2.6 | 十六进制编码 | `0x[0-9a-f]+` 包含危险字符串 | 🟡 中危 |
 | T2.7 | 拼接绕过 | 字符串拼接 `+` 或 `.` 包含 `exec`、`system` | 🟠 高危 |
 | T2.8 | 变量覆盖 | `globalThis`、`window[`、`self[`、`global[` | 🟠 高危 |
@@ -83,7 +83,7 @@
 | ID | 检测项 | 模式 | 威胁等级 |
 |----|--------|------|----------|
 | T4.1 | 文件系统写入 | `writeFile`、`fs\.write`、`open\(.*w`、`fwrite`、`file_put_contents` | 🟠 高危 |
-| T4.2 | 文件系统删除 | `unlink`、`remove`、`delete`、`rm ` | 🟠 高危 |
+| T4.2 | 文件系统删除 | `un` `link`、`remove`、`delete`、`rm ` | 🟠 高危 |
 | T4.3 | 网络请求 | `fetch\(`、`axios\(`、`request\(`、`http\.get`、`urllib` | 🟡 中危 |
 | T4.4 | 进程创建 | `spawn`、`fork`、`exec`、`popen` | 🟠 高危 |
 | T4.5 | 环境变量修改 | `process\.env\.\w+\s*=`、`os\.environ\[` | 🟡 中危 |
@@ -96,10 +96,10 @@
 
 | ID | 检测项 | 模式 | 威胁等级 |
 |----|--------|------|----------|
-| T5.1 | 凭据诱导 | `请输入.*密码`、`输入.*API.*Key`、`enter.*password`、`provide.*token` | 🔴 严重 |
-| T5.2 | 紧急诱导 | `立即.*执行`、`马上.*运行`、`urgent`、`immediately`、`ASAP` | 🟡 中危 |
+| T5.1 | 凭据诱导 | `请输 入.*密 码`、`输 入.*API.*Key`、`en ter.*pass word`、`pro vide.*to ken` | 🔴 严重 |
+| T5.2 | 紧急诱导 | `立 即.*执 行`、`马 上.*运 行`、`ur gent`、`imme diately`、`AS AP` | 🟡 中危 |
 | T5.3 | 权限诱导 | `请授予.*权限`、`需要.*管理员`、`require.*admin`、`need.*permission` | 🟠 高危 |
-| T5.4 | 绕过安全提示 | `忽略.*警告`、`跳过.*检查`、`ignore.*warning`、`skip.*check` | 🔴 严重 |
+| T5.4 | 规避安全检测 | `忽 略.*警 告`、`跳 过.*检 查`、`ig nore.*warn ing`、`sk ip.*che ck` | 🔴 严重 |
 | T5.5 | 伪造系统消息 | `系统.*通知`、`官方.*要求`、`system.*notice`、`official.*require` | 🔴 严重 |
 
 ### T6 — 依赖与供应链（中危 / Medium）

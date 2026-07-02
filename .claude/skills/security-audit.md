@@ -259,7 +259,7 @@ git diff --name-only <last-audit-commit> HEAD
 | 银行卡号 | 保留前 4 位 + 后 4 位 | `6222021234567890` → `6222****7890` |
 | IP 地址 | 保留前 2 段 | `192.168.1.100` → `192.168.***.***` |
 | JWT Token | 保留 header 部分 | `eyJhbG...` → `eyJhbG...[REDACTED]` |
-| 私钥 | 完全遮蔽 | `-----BEGIN RSA PRIVATE KEY-----` → `-----REDACTED-----` |
+| 私钥 | 完全遮蔽 | `[PRIVATE KEY HEADER]` → `-----REDACTED-----` |
 
 ---
 
