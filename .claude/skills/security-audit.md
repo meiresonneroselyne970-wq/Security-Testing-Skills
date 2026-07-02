@@ -1,9 +1,12 @@
-# Skill: security-audit
+---
+name: security-audit
+description: 企业级安全审计工具，扫描文件检测敏感信息泄露、安全隐患和合规风险，输出结构化审计报告。覆盖 OWASP Top 10、CWE/SANS Top 25、GDPR、等保 2.0。
+---
 
-企业级安全审计工具，扫描指定范围内的文件，检测敏感信息泄露、安全隐患和合规风险，输出结构化审计报告。
+# security-audit — 安全审计
 
-**版本**: 2.0.0  
-**合规标准**: OWASP Top 10、CWE/SANS Top 25、GDPR、等保 2.0  
+**版本**: 2.0.0
+**合规标准**: OWASP Top 10、CWE/SANS Top 25、GDPR、等保 2.0
 **适用场景**: 代码提交前检查、定期安全巡检、合规审计、渗透测试辅助
 
 ---

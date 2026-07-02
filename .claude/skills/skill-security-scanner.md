@@ -1,9 +1,12 @@
-# Skill: skill-security-scanner
+---
+name: skill-security-scanner
+description: Skill 安全扫描器，检测 skill 文件中的恶意代码、隐藏危险指令和安全违规。支持 T1-T7 威胁分类，CI/CD 集成。
+---
 
-企业级 Skill 安全扫描器，自动检测 skill 文件中的恶意代码、隐藏危险指令和安全违规，确保 skill 上架前通过安全审核。
+# skill-security-scanner — Skill 安全扫描器
 
-**版本**: 1.0.0  
-**安全等级**: 企业级  
+**版本**: 1.0.0
+**安全等级**: 企业级
 **适用场景**: Skill 上架审核、定期安全巡检、CI/CD 集成
 
 ---

@@ -1,7 +1,12 @@
-# Skill 安全策略
+---
+name: skill-security-policy
+description: Skill 安全策略定义，包含威胁等级、安全规则、审核流程、白名单管理、应急响应和合规要求。
+---
 
-**版本**: 1.0.0  
-**生效日期**: 2024-01-22  
+# skill-security-policy — Skill 安全策略
+
+**版本**: 1.0.0
+**生效日期**: 2024-01-22
 **适用范围**: 所有 skill 文件
 
 ---

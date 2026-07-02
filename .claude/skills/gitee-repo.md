@@ -1,6 +1,9 @@
-# Skill: gitee-repo
+---
+name: gitee-repo
+description: 拉取 `https://gitee.com/blazegraph/card-template.git` 仓库代码。支持克隆、拉取更新、分支切换。
+---
 
-拉取 `https://gitee.com/blazegraph/card-template.git` 仓库代码。
+# gitee-repo — 拉取 card-template 仓库
 
 **版本**: 1.1.0
 **目标仓库**: `https://gitee.com/blazegraph/card-template.git`
