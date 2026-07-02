@@ -9,7 +9,11 @@
   display: block;
   max-width: 380px;
   margin: 0 auto;
-  font-family: "Patrick Hand", "Comic Sans MS", cursive, sans-serif;
+  font-family: "Patrick Hand", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", cursive, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ── Sticky Note Card ── */
@@ -88,7 +92,7 @@
 /* ── Big English word (word layout) ── */
 .abc-card .big-word {
   font-size: 52px;
-  font-weight: 900;
+  font-weight: 400;
   cursor: pointer;
   user-select: none;
   color: #2c3e50;
@@ -131,8 +135,10 @@
   transform: scale(0.9);
 }
 
-.abc-card .abc-img:hover {
-  transform: scale(1.05);
+@media (hover: hover) {
+  .abc-card .abc-img:hover {
+    transform: scale(1.05);
+  }
 }
 
 /* ── Button ── */
@@ -154,6 +160,8 @@
   cursor: pointer;
   border: none;
   transition: opacity 0.2s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .abc-card .btn.primary {
@@ -222,29 +230,68 @@
 
 /* ── Playback button (inside feedback) ── */
 .abc-card .btn-play {
-  display: inline-block;
-  margin-left: 8px;
-  padding: 3px 12px;
-  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  padding: 5px 14px;
+  border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  border: 1.5px solid currentColor;
-  background: transparent;
-  color: inherit;
+  border: none;
+  background: rgba(142, 68, 173, 0.12);
+  color: #8e44ad;
   vertical-align: middle;
-  transition: background 0.2s, transform 0.15s;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
-.abc-card .btn-play:hover {
-  background: rgba(0, 0, 0, 0.08);
+@media (hover: hover) {
+  .abc-card .btn-play:hover {
+    background: rgba(142, 68, 173, 0.20);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.10);
+    transform: translateY(-1px);
+  }
 }
 
 .abc-card .btn-play:active {
-  transform: scale(0.95);
-  background: rgba(0, 0, 0, 0.12);
+  transform: scale(0.96);
+  background: rgba(142, 68, 173, 0.25);
 }
+
+/* ── AI Rating display ── */
+.abc-card .shadow-feedback.ai-rating-wrapper {
+  pointer-events: auto; text-align: left; font-weight: normal; color: inherit; animation: none;
+}
+.abc-card .ai-rating {
+  background: #fafaf5; border: 1px solid #e8e4d8; border-radius: 12px;
+  padding: 12px 14px; margin-top: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+.abc-card .rating-overall {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e8e4d8;
+}
+.abc-card .overall-score { font-size: 42px; font-weight: 700; color: #8e44ad; line-height: 1; }
+.abc-card .overall-meta { display: flex; flex-direction: column; gap: 2px; }
+.abc-card .overall-label { font-size: 13px; color: #777; font-weight: 500; }
+.abc-card .overall-stars { font-size: 16px; letter-spacing: 1px; }
+.abc-card .rating-dim { margin-bottom: 6px; }
+.abc-card .dim-head { display: flex; justify-content: space-between; align-items: center; }
+.abc-card .dim-label { font-size: 13px; color: #555; font-weight: 600; }
+.abc-card .dim-score { font-size: 16px; font-weight: 700; color: #8e44ad; }
+.abc-card .dim-bar { height: 5px; background: #e8e0f0; border-radius: 3px; margin: 3px 0; overflow: hidden; }
+.abc-card .dim-bar-fill { height: 100%; background: linear-gradient(90deg, #a78bfa, #8e44ad); border-radius: 3px; transition: width 0.6s ease; }
+.abc-card .dim-comment { font-size: 12px; color: #888; display: block; line-height: 1.4; }
+.abc-card .feedback-text { font-size: 14px; color: #444; line-height: 1.6; margin: 10px 0 0; font-weight: 500; padding-top: 8px; border-top: 1px solid #e8e4d8; }
+.abc-card .rating-suggestions { margin-top: 8px; background: #f3eff9; border-radius: 8px; padding: 8px 10px; }
+.abc-card .suggestion-label { font-size: 12px; font-weight: 700; color: #8e44ad; display: block; margin-bottom: 2px; }
+.abc-card .suggestion-text { font-size: 13px; color: #555; line-height: 1.5; margin: 0; }
+.abc-card .rating-actions { display: flex; justify-content: center; margin-top: 10px; padding-top: 8px; border-top: 1px solid #e8e4d8; }
+.abc-card .rating-actions .btn-play { margin-left: 0; vertical-align: baseline; }
 
 /* ── Pulse animation ── */
 @keyframes shadowPulse {
@@ -268,7 +315,7 @@
   .abc-card .btn { padding: 9px 32px; font-size: 16px; }
   .abc-card .btn.shadow { padding: 7px 28px; font-size: 16px; border-width: 2px; }
   .abc-card .shadow-feedback { font-size: 16px; }
-  .abc-card .btn-play { font-size: 14px; padding: 4px 14px; }
+  .abc-card .btn-play { font-size: 14px; padding: 5px 16px; }
   .abc-card .actions { gap: 12px; }
 }
 
@@ -284,7 +331,7 @@
   .abc-card .btn { padding: 10px 36px; font-size: 17px; }
   .abc-card .btn.shadow { padding: 8px 30px; font-size: 17px; }
   .abc-card .shadow-feedback { font-size: 17px; }
-  .abc-card .btn-play { font-size: 14px; padding: 4px 14px; }
+  .abc-card .btn-play { font-size: 14px; padding: 6px 18px; }
   .abc-card .actions { gap: 14px; }
 }
 
@@ -300,7 +347,7 @@
   .abc-card .btn { padding: 11px 40px; font-size: 18px; }
   .abc-card .btn.shadow { padding: 9px 34px; font-size: 18px; }
   .abc-card .shadow-feedback { font-size: 18px; }
-  .abc-card .btn-play { font-size: 15px; padding: 5px 16px; }
+  .abc-card .btn-play { font-size: 15px; padding: 6px 20px; }
   .abc-card .actions { gap: 16px; }
 }
 
@@ -316,11 +363,18 @@
   .abc-card .btn { padding: 13px 48px; font-size: 20px; }
   .abc-card .btn.shadow { padding: 10px 40px; font-size: 20px; }
   .abc-card .shadow-feedback { font-size: 19px; }
-  .abc-card .btn-play { font-size: 16px; padding: 5px 16px; }
+  .abc-card .btn-play { font-size: 16px; padding: 7px 22px; }
   .abc-card .actions { gap: 18px; }
 }
 
 /* ── Page-level: standalone index.html only (ignored inside Shadow DOM) ── */
 body {
   padding-top: 20px;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }

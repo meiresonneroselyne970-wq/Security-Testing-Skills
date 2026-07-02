@@ -1,18 +1,19 @@
 /**
- * english-word-card/ai-card.js
- * Template: Sticky note with tape + ribbon + English word + image
- * Interactive: click to speak English word + show Chinese meaning
+ * english-sentence-card/ai-card.js
+ * Template: Sticky note with tape + ribbon + English sentence + image
+ * Interactive: click to speak English sentence + show Chinese translation
  */
 
 var PALETTE = {
   purple: { brand:'#8e44ad', light:'#f5f3ff', soft:'#ede9fe', gradStart:'#8e44ad', gradEnd:'#a78bfa' },
+  blue:   { brand:'#2563eb', light:'#eff6ff', soft:'#dbeafe', gradStart:'#2563eb', gradEnd:'#60a5fa' },
 };
 
-var THEME_MAP = { abc: 'purple' };
+var THEME_MAP = { abc: 'purple', sentence: 'blue' };
 
 function themeColor(t) {
-  var c = THEME_MAP[t || 'abc'] || 'purple';
-  return PALETTE[c] || PALETTE.purple;
+  var c = THEME_MAP[t || 'sentence'] || 'blue';
+  return PALETTE[c] || PALETTE.blue;
 }
 
 function speak(text, lang, onEnd) {
@@ -20,8 +21,8 @@ function speak(text, lang, onEnd) {
   window.speechSynthesis.cancel();
   var u = new SpeechSynthesisUtterance(text);
   u.lang = lang || 'en-US';
-  u.rate = 0.85;
-  u.pitch = 1.1;
+  u.rate = 0.8;
+  u.pitch = 1.0;
   if (onEnd) u.onend = onEnd;
   window.speechSynthesis.speak(u);
 }
@@ -40,8 +41,22 @@ function createRecognition(lang) {
   return rec;
 }
 
-function listenAndCheck(shadowRoot, targetWord, maxRetries) {
-  if (!targetWord) return;
+function similarity(a, b) {
+  // Simple word-overlap similarity for sentence comparison
+  var wordsA = a.toLowerCase().replace(/[.,?!;:'"()]+/g, '').split(/\s+/).filter(Boolean);
+  var wordsB = b.toLowerCase().replace(/[.,?!;:'"()]+/g, '').split(/\s+/).filter(Boolean);
+  if (wordsA.length === 0 || wordsB.length === 0) return 0;
+  var match = 0;
+  var setB = {};
+  wordsB.forEach(function (w) { setB[w] = (setB[w] || 0) + 1; });
+  wordsA.forEach(function (w) {
+    if (setB[w] && setB[w] > 0) { match++; setB[w]--; }
+  });
+  return match / Math.max(wordsA.length, wordsB.length);
+}
+
+function listenAndCheck(shadowRoot, targetSentence, maxRetries) {
+  if (!targetSentence) return;
   maxRetries = maxRetries || 3;
 
   var host = shadowRoot.host;
@@ -67,39 +82,6 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
   var btn = shadowRoot.querySelector('.btn.shadow');
   var playBtn = null;
 
-  function showFeedback(text, stateClass, duration) {
-    if (fb) {
-      fb.textContent = text;
-      fb.className = 'shadow-feedback ' + (stateClass || '') + ' show';
-      if (playBtn) { playBtn.remove(); playBtn = null; }
-      if (host._lastRecording) {
-        playBtn = document.createElement('button');
-        playBtn.className = 'btn-play';
-        playBtn.textContent = '🔊 听我的发音';
-        playBtn.addEventListener('click', function (e) {
-          e.stopPropagation();
-          e.preventDefault();
-          var audio = new Audio(host._lastRecording);
-          audio.play().catch(function (err) {
-            log('播放录音失败:', err);
-            // Maybe the blob URL expired, try to show a hint
-            playBtn.textContent = '⚠️ 播放失败';
-            setTimeout(function () {
-              if (playBtn) playBtn.textContent = '🔊 听我的发音';
-            }, 2000);
-          });
-        });
-        fb.appendChild(playBtn);
-      }
-      if (duration) {
-        clearTimeout(host._fbTimer);
-        host._fbTimer = setTimeout(function () {
-          fb.classList.remove('show');
-        }, duration);
-      }
-    }
-  }
-
   function buildRatingHTML(result) {
     var stars = '';
     var s = Math.round((result.overall || 0) / 20);
@@ -123,9 +105,40 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
     '</div>';
   }
 
+  function showFeedback(text, stateClass, duration) {
+    if (fb) {
+      fb.textContent = text;
+      fb.className = 'shadow-feedback ' + (stateClass || '') + ' show';
+      if (playBtn) { playBtn.remove(); playBtn = null; }
+      if (host._lastRecording) {
+        playBtn = document.createElement('button');
+        playBtn.className = 'btn-play';
+        playBtn.textContent = '🔊 听我的发音';
+        playBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          e.preventDefault();
+          var audio = new Audio(host._lastRecording);
+          audio.play().catch(function (err) {
+            log('播放录音失败:', err);
+            playBtn.textContent = '⚠️ 播放失败';
+            setTimeout(function () {
+              if (playBtn) playBtn.textContent = '🔊 听我的发音';
+            }, 2000);
+          });
+        });
+        fb.appendChild(playBtn);
+      }
+      if (duration) {
+        clearTimeout(host._fbTimer);
+        host._fbTimer = setTimeout(function () {
+          fb.classList.remove('show');
+        }, duration);
+      }
+    }
+  }
+
   function stopRecording(onBlobReady) {
     if (host._mediaRecorder && host._mediaRecorder.state !== 'inactive') {
-      // Wire up a one-shot callback for when the blob is ready
       var origOnStop = host._mediaRecorder.onstop;
       host._mediaRecorder.onstop = function (e) {
         if (origOnStop) origOnStop.call(this, e);
@@ -133,10 +146,8 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
       };
       host._mediaRecorder.stop();
     } else {
-      // No active recorder, callback immediately
       if (onBlobReady) onBlobReady();
     }
-    // Stop the mic stream (tracks) immediately — blob is already captured
     if (host._mediaStream) {
       host._mediaStream.getTracks().forEach(function (t) { t.stop(); });
       host._mediaStream = null;
@@ -145,7 +156,7 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
 
   // ── Diagnostic info ──
   log('=== 开始跟读 ===');
-  log('目标单词:', targetWord);
+  log('目标句子:', targetSentence);
   log('URL协议:', location.protocol);
   log('SpeechRecognition支持:', supportsSpeechRecognition());
   log('mediaDevices可用:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
@@ -173,7 +184,6 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
   function startMediaRecorder() {
     if (recorderStarted) return;
     recorderStarted = true;
-    // Guard: mediaDevices not available on HTTP (non-localhost) or file://
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       log('mediaDevices不可用，跳过录音（可能需要HTTPS或localhost）');
       return;
@@ -222,18 +232,17 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
   var speechTimer = null;      // max speech duration timer
   var noSpeechTimer = null;    // initial "no speech" timeout
 
-  // Start the initial "no speech" timeout (8s total waiting time)
+  // Start the initial "no speech" timeout (10s for sentences, longer than words)
   noSpeechTimer = setTimeout(function () {
-    log('8秒内未检测到任何语音');
+    log('10秒内未检测到任何语音');
     host._activeRecognition = null;
     try { rec.abort(); } catch (e) {}
     stopRecording();
-    showFeedback('⏰ 未检测到声音，请大声读出单词', 'timeout', 2500);
+    showFeedback('⏰ 未检测到声音，请大声读出句子', 'timeout', 2500);
     if (btn) btn.disabled = false;
-  }, 8000);
+  }, 10000);
 
   function forceStop() {
-    // Stop recognition and process whatever we have
     clearTimeout(speechTimer);
     clearTimeout(noSpeechTimer);
     if (host._activeRecognition === rec) {
@@ -243,48 +252,44 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
 
   rec.onspeechstart = function () {
     log('onspeechstart: 检测到语音');
-    // Clear the initial no-speech timeout since we detected speech
     clearTimeout(noSpeechTimer);
-    // Set a HARD max speech duration: 4 seconds, then force stop
+    // Max speech duration: 8 seconds for sentences
     speechTimer = setTimeout(function () {
-      log('说话超过4秒，强制结束收音');
+      log('说话超过8秒，强制结束收音');
       speechEnded = true;
       forceStop();
-      // Give server 2 more seconds to return result
       setTimeout(function () {
         if (!resultReceived && host._activeRecognition === rec) {
           log('强制结束后仍无结果，中止');
           host._activeRecognition = null;
           try { rec.abort(); } catch (e) {}
           stopRecording();
-          showFeedback('⏰ 请简短清晰地读一个单词（4秒内）', 'timeout', 2500);
+          showFeedback('⏰ 请简洁清晰地朗读句子（8秒内）', 'timeout', 2500);
           if (btn) btn.disabled = false;
         }
       }, 2000);
-    }, 4000);
+    }, 8000);
   };
 
   rec.onspeechend = function () {
     log('onspeechend: 语音结束');
     speechEnded = true;
     clearTimeout(speechTimer);
-    // Speech ended naturally — give server 5s to return final result
     setTimeout(function () {
       if (!resultReceived && host._activeRecognition === rec) {
         log('语音结束后5秒无结果，中止');
         host._activeRecognition = null;
         try { rec.abort(); } catch (e) {}
         stopRecording();
-        showFeedback('🎙️ 未检测到单词，请再试一次', 'timeout', 2000);
+        showFeedback('🎙️ 未检测到句子，请再试一次', 'timeout', 2000);
         if (btn) btn.disabled = false;
       }
     }, 5000);
   };
 
   rec.onresult = function (event) {
-    // 识别已被中止（no-speech 超时 / onspeechend 超时），忽略迟到的结果
     if (host._activeRecognition !== rec) return;
-    resultReceived = true; // we got SOMETHING
+    resultReceived = true;
 
     var transcript = '';
     var confidence = 0;
@@ -296,13 +301,15 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
     } catch (e) {
       transcript = '';
     }
-    var target = targetWord.trim().toLowerCase();
+    var target = targetSentence.trim().toLowerCase();
     var cleaned = transcript.replace(/[.,?!;:'"()\s]+/g, ' ').trim();
-    var correct = cleaned === target || cleaned.split(' ').indexOf(target) !== -1;
 
-    log('识别结果:', transcript, '| 清洗后:', cleaned, '| 置信度:', confidence, '| 最终:', isFinal, '| 正确:', correct);
+    // For sentences, use similarity instead of exact match
+    var sim = similarity(cleaned, target);
+    var correct = sim >= 0.6; // 60% word overlap = correct enough
 
-    // For interim results: show progress, keep going
+    log('识别结果:', transcript, '| 清洗后:', cleaned, '| 相似度:', sim.toFixed(2), '| 置信度:', confidence, '| 最终:', isFinal, '| 正确:', correct);
+
     if (!isFinal) {
       if (cleaned) {
         showFeedback('🎤 识别中: ' + cleaned, 'listening', 0);
@@ -310,7 +317,7 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
       return;
     }
 
-    // Final result — stop everything, wait for recording blob, then show feedback
+    // Final result
     clearTimeout(speechTimer);
     clearTimeout(noSpeechTimer);
     speechEnded = true;
@@ -318,20 +325,19 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
 
     stopRecording(function () {
       if (!cleaned) {
-        showFeedback('🎙️ 未识别到单词，请再试一次', 'timeout', 2000);
+        showFeedback('🎙️ 未识别到句子，请再试一次', 'timeout', 2000);
         if (btn) btn.disabled = false;
         host._activeRecognition = null;
         return;
       }
 
-      // ── 调 english-scoring Python 服务评分 ──
       showFeedback('🤖 AI评分中…', 'listening', 0);
       fetch(self._scoreUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          card_type: 'english_word',
-          target_text: targetWord,
+          card_type: 'english_sentence',
+          target_text: targetSentence,
           recognized_text: cleaned
         })
       })
@@ -375,14 +381,14 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
 
     function showLocalResult() {
       if (correct) {
-        showFeedback('✅ 跟读正确！', 'correct', 3000);
+        showFeedback('✅ 跟读正确！（相似度: ' + Math.round(sim * 100) + '%）', 'correct', 3000);
         host._shadowAttempt = 0;
       } else {
         host._shadowAttempt = (host._shadowAttempt || 0) + 1;
         if (host._shadowAttempt < maxRetries) {
-          showFeedback('❌ 再试一次吧！ (' + (host._shadowAttempt + 1) + '/' + maxRetries + ') 你读的是: ' + cleaned, 'incorrect', 2500);
+          showFeedback('❌ 再试一次吧！ (' + (host._shadowAttempt + 1) + '/' + maxRetries + ') 相似度: ' + Math.round(sim * 100) + '%', 'incorrect', 2500);
         } else {
-          showFeedback('加油！这个单词是：' + targetWord, 'incorrect', 4000);
+          showFeedback('💪 加油！原句是：' + targetSentence, 'incorrect', 4000);
           host._shadowAttempt = 0;
         }
       }
@@ -408,7 +414,7 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
         cls = 'timeout';
         break;
       case 'no-speech':
-        msg = '🎙️ 未检测到声音，请大声读出单词';
+        msg = '🎙️ 未检测到声音，请大声读出句子';
         cls = 'timeout';
         break;
       case 'audio-capture':
@@ -442,7 +448,7 @@ function listenAndCheck(shadowRoot, targetWord, maxRetries) {
     log('onend: 识别会话结束');
     if (!host._activeRecognition || host._activeRecognition !== rec) return;
     stopRecording();
-    showFeedback('🎙️ 未识别到单词，请再试一次', 'timeout', 2000);
+    showFeedback('🎙️ 未识别到句子，请再试一次', 'timeout', 2000);
     if (btn) btn.disabled = false;
     host._activeRecognition = null;
   };
@@ -469,25 +475,21 @@ function esc(s) {
 }
 
 function cardHTML(d) {
-  var word = d.subtitle || '';
+  var sentence = d.subtitle || '';
   var zh = d.description || '';
-  var ribbon = d.title || 'ABC';
-  var btn = d.button_text || '单词发音';
+  var ribbon = d.title || '每日一句';
+  var btn = d.button_text || '句子发音';
 
-  return '<div class="abc-card">' +
-    '<div class="tape-decor"></div>' +
-    '<div class="abc-ribbon">' + esc(ribbon) + '</div>' +
-    '<div class="abc-body">' +
-      '<div class="abc-row">' +
-        '<div class="abc-word-area">' +
-          '<div class="big-word" data-speak="' + esc(word) + '">' + esc(word) + '</div>' +
-          (zh ? '<div class="word-zh">' + esc(zh) + '</div>' : '') +
-        '</div>' +
-        (d.target_url ? '<img class="abc-img" src="' + esc(d.target_url) + '" alt="' + esc(word) + '" data-speak="' + esc(word) + '">' : '') +
+  return '<div class="sentence-card">' +
+    '<div class="sentence-ribbon">' + esc(ribbon) + '</div>' +
+    '<div class="sentence-body">' +
+      '<div class="sentence-text-area">' +
+        '<div class="sentence-en" data-speak="' + esc(sentence) + '">' + esc(sentence) + '</div>' +
+        (zh ? '<div class="sentence-zh">' + esc(zh) + '</div>' : '') +
       '</div>' +
       '<div class="actions">' +
-        '<button class="btn primary" data-speak="' + esc(word) + '">' + esc(btn) + '</button>' +
-        (word && supportsSpeechRecognition() ? '<button class="btn shadow" data-shadow-speak="' + esc(word) + '">跟读</button>' : '') +
+        '<button class="btn primary" data-speak="' + esc(sentence) + '">' + esc(btn) + '</button>' +
+        (sentence && supportsSpeechRecognition() ? '<button class="btn shadow" data-shadow-speak="' + esc(sentence) + '">跟读</button>' : '') +
       '</div>' +
       '<div class="shadow-feedback"></div>' +
     '</div>' +
@@ -572,13 +574,13 @@ var AICard = (function () {
     var self = this;
     setTimeout(function () {
       if (!self._connected || !self.shadowRoot) return;
-      var zhEl = self.shadowRoot.querySelector('.word-zh');
+      var zhEl = self.shadowRoot.querySelector('.sentence-zh');
       var timer = null;
       function showZh() {
         if (!zhEl) return;
         zhEl.classList.add('show');
         clearTimeout(timer);
-        timer = setTimeout(function () { zhEl.classList.remove('show'); }, 2000);
+        timer = setTimeout(function () { zhEl.classList.remove('show'); }, 3000);
       }
       var els = self.shadowRoot.querySelectorAll('[data-speak]');
       els.forEach(function (el) {
@@ -592,8 +594,8 @@ var AICard = (function () {
       var shadowBtns = self.shadowRoot.querySelectorAll('[data-shadow-speak]');
       shadowBtns.forEach(function (btn) {
         btn.addEventListener('click', function () {
-          var targetWord = btn.getAttribute('data-shadow-speak');
-          if (!targetWord) return;
+          var targetSentence = btn.getAttribute('data-shadow-speak');
+          if (!targetSentence) return;
 
           // Disable the shadow button during speak+listen cycle
           btn.disabled = true;
@@ -603,19 +605,19 @@ var AICard = (function () {
             if (ttsFired) return;
             ttsFired = true;
             setTimeout(function () {
-              listenAndCheck(self.shadowRoot, targetWord, 3);
+              listenAndCheck(self.shadowRoot, targetSentence, 3);
             }, 1000);
           }
 
-          // Speak the word, then start listening after TTS finishes
-          speak(targetWord, 'en-US', function () {
+          // Speak the sentence, then start listening after TTS finishes
+          speak(targetSentence, 'en-US', function () {
             startListening();
           });
 
           // Fallback: if TTS onend doesn't fire (or speechSynthesis unavailable)
           setTimeout(function () {
             startListening();
-          }, 5000);
+          }, 6000);
         });
       });
     }, 0);
@@ -642,7 +644,7 @@ window.renderCards = function (containerId, cards) {
   // 本地测试数据（直接内嵌 JSON，无需 fetch / 无需起服务）
   // 后续部署时将 DATA_FILES 替换为 fetch 远程 JSON 即可
   // ══════════════════════════════════════════════════════════════
-  var DATA_FILES = [{"schema_version":"1.0","card_type":"english_word","title":"ABC · 字母启蒙","subtitle":"apple","description":"苹果","button_text":"单词发音","target_url":"https://works.blazegraph.site/works/e02656c2-d563-4ca2-8406-33031d109b48/2-1-6-4-1779693877148/images/img16.png","theme":"abc","layout":{"variant":"english_word","icon":"abc"}}];
+  var DATA_FILES = [{"schema_version":"1.0","card_type":"english_sentence","title":"每日一句","subtitle":"The best preparation for tomorrow is doing your best today.","description":"为明天做的最好准备，就是今天做到最好。","button_text":"句子发音","theme":"sentence","layout":{"variant":"english_sentence","icon":"sentence"}}];
 
   renderCards('root', DATA_FILES.map(function (d) { return { data: d }; }));
 })();
