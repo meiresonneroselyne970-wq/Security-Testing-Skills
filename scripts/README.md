@@ -148,7 +148,7 @@ scripts\skill-security-scan.bat -Scope .claude/skills/
 ```bash
 #!/bin/bash
 echo "Running skill security scan..."
-powershell -ExecutionPolicy Bypass -File scripts/skill-security-scan.ps1 -Scope staged -FailOnHigh
+powershell -ExecutionPolicy Bypass -File scripts/security/skill-security-scan.ps1 -Scope staged -FailOnHigh
 
 if [ $? -ne 0 ]; then
     echo "❌ Skill security scan failed"
@@ -170,7 +170,7 @@ echo "✅ Skill security scan passed"
       "label": "Skill Security Scan",
       "type": "shell",
       "command": "powershell",
-      "args": ["-ExecutionPolicy", "Bypass", "-File", "scripts/skill-security-scan.ps1", "-Scope", "skills/"],
+      "args": ["-ExecutionPolicy", "Bypass", "-File", "scripts/security/skill-security-scan.ps1", "-Scope", "skills/"],
       "group": "test",
       "problemMatcher": []
     }
@@ -185,8 +185,8 @@ echo "✅ Skill security scan passed"
 ```json
 {
   "scripts": {
-    "security:scan": "powershell -ExecutionPolicy Bypass -File scripts/skill-security-scan.ps1 -Scope skills/",
-    "security:scan:ci": "powershell -ExecutionPolicy Bypass -File scripts/skill-security-scan.ps1 -Scope skills/ -FailOnHigh"
+    "security:scan": "powershell -ExecutionPolicy Bypass -File scripts/security/skill-security-scan.ps1 -Scope skills/",
+    "security:scan:ci": "powershell -ExecutionPolicy Bypass -File scripts/security/skill-security-scan.ps1 -Scope skills/ -FailOnHigh"
   }
 }
 ```

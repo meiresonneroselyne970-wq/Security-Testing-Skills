@@ -45,7 +45,7 @@ Python 服务模块，调用 DeepSeek API 对 english-word-card、english-senten
 ## 文件结构
 
 ```
-english-scoring/
+services/english-scoring/
 ├── server.py            ← FastAPI HTTP 服务 (POST /api/score + GET /api/health)
 ├── scoring_service.py   ← 核心评分逻辑（async score() + 降级 + CLI）
 ├── prompts.py           ← 三套完整系统提示词 + 用户提示词模板
@@ -59,7 +59,7 @@ english-scoring/
 ## 启动服务
 
 ```bash
-cd english-scoring/
+cd services/english-scoring/
 pip install -r requirements.txt
 python server.py
 # → Uvicorn running on http://0.0.0.0:8800

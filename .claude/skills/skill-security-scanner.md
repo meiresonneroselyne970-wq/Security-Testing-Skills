@@ -419,20 +419,20 @@ whitelist:
 
 ```bash
 # 扫描所有 skill 文件（Linux / macOS / CI）
-bash scripts/ci-scan.sh --scope skills
+bash scripts/security/ci-scan.sh --scope skills
 
 # 扫描单个文件
-bash scripts/ci-scan.sh --scope skills/card.md
+bash scripts/security/ci-scan.sh --scope skills/card.md
 
 # 扫描 .claude/skills 目录
-bash scripts/ci-scan.sh --scope .claude/skills
+bash scripts/security/ci-scan.sh --scope .claude/skills
 
 # 生成 JSON 报告
-bash scripts/ci-scan.sh --scope skills --format json --output report.json
+bash scripts/security/ci-scan.sh --scope skills --format json --output report.json
 
 # Windows PowerShell
-.\scripts\skill-security-scan.ps1 -Scope skills/
-.\scripts\skill-security-scan.ps1 -Scope skills/ -Output report.json
+.\scripts\security\skill-security-scan.ps1 -Scope skills/
+.\scripts\security\skill-security-scan.ps1 -Scope skills/ -Output report.json
 ```
 
 ---
@@ -480,7 +480,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run Skill Security Scanner
         run: |
-          bash scripts/ci-scan.sh --scope skills --format json --output report.json --fail-on-high
+          bash scripts/security/ci-scan.sh --scope skills --format json --output report.json --fail-on-high
       - name: Check Result
         run: |
           if jq -e '.ReviewStatus == "Reject"' report.json; then
@@ -501,7 +501,7 @@ jobs:
 # .git/hooks/pre-commit
 
 echo "Running skill security scan..."
-bash scripts/ci-scan.sh --scope skills --scope .claude/skills --fail-on-high
+bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --fail-on-high
 
 if [ $? -ne 0 ]; then
     echo "❌ Skill security scan failed. Please fix issues before committing."

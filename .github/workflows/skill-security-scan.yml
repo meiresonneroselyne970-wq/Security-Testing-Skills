@@ -23,8 +23,8 @@ jobs:
       - name: Run Skill Security Scanner
         id: scan
         run: |
-          chmod +x scripts/ci-scan.sh
-          bash scripts/ci-scan.sh \
+          chmod +x scripts/security/ci-scan.sh
+          bash scripts/security/ci-scan.sh \
             --scope skills \
             --scope .claude/skills \
             --format json \

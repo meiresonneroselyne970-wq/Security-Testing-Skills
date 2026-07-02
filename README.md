@@ -1,0 +1,115 @@
+# Card Template — AI 卡片模板库
+
+可复用的 AI 卡片 UI 组件库，包含 8 种卡片模板，支持文本展示、作业提醒、媒体预览、英语学习、连环画、AI 问答等场景。每个卡片模板为独立的自包含组件（HTML + CSS + JS + JSON 数据），可直接通过 `<iframe>` 或自定义 `<ai-card>` 标签嵌入。
+
+---
+
+## 目录结构
+
+```
+card-template/
+├── answer-card/          # AI 问答卡片（独立 iframe 架构）
+├── comic-card/           # 连环画/漫画分页卡片
+├── english-input-card/   # 英语句子输入卡片（可编辑）
+├── english-sentence-card/# 英语句子展示卡片（每日一句）
+├── english-word-card/    # 英语单词启蒙卡片
+├── homework-card/        # 学科作业提醒卡片
+├── media-card/           # 媒体预览卡片（视频/音频/图片）
+├── text-card/            # 通用文本卡片（5 种变体）
+│
+├── services/             # 后端服务
+│   └── english-scoring/  # 英语口语 AI 评分服务（FastAPI + DeepSeek）
+│
+├── skills/               # 卡片生成技能（selector、card、card_render 等）
+├── .claude/skills/       # Claude Code 代理技能（安全审计、仓库管理等）
+│
+├── scripts/              # 工具脚本
+│   ├── analyze-skills.py
+│   └── security/         # 安全扫描脚本（CI/CD 集成）
+│
+├── assets/               # 静态资源（图片、视频、数据文件）
+├── docs/                 # 项目文档
+│   └── reports/          # 归档报告
+│
+├── .github/workflows/    # GitHub Actions CI
+└── .workflow/            # Gitee CI 流水线
+```
+
+---
+
+## 卡片模板一览
+
+| 模板 | 目录 | 适用场景 |
+|------|------|----------|
+| **文本卡片** | `text-card/` | 通用入口、AI 助手欢迎、推荐、任务提醒、健康建议 |
+| **作业提醒** | `homework-card/` | 语文/数学/英语学科作业提醒，彩色渐变横幅 |
+| **媒体预览** | `media-card/` | 视频/音频/图片/文件预览，暗色预览区 + 播放按钮 |
+| **英语单词** | `english-word-card/` | 字母/单词启蒙，笔记本横线纸 + 大字母 + 图片 + 发音 |
+| **连环画** | `comic-card/` | PEP 外研版英语连环画，视频播放 + 分页漫画气泡 |
+| **AI 问答** | `answer-card/` | AI 知识问答，DeepSeek API 集成，文件来源展示 |
+| **英语句子展示** | `english-sentence-card/` | 每日一句，缎带徽章 + 点击翻译 + TTS + 跟读评分 |
+| **英语输入** | `english-input-card/` | 自由输入句子，实时 API 翻译 + TTS + 跟读评分 |
+
+每个卡片模板目录包含：
+- `index.html` — 卡片主页面
+- `ai-card.js` — 卡片逻辑（数据加载、渲染、交互）
+- `ai-card.css` — 卡片样式（5 设备响应式适配）
+- `data.json` — 静态数据（如有）
+- `metadata.md` — 元数据文档（部分卡片）
+
+---
+
+## 技能系统
+
+项目有两套独立的技能系统：
+
+### `skills/` — 卡片生成技能
+面向卡片生成业务，帮助选择模板、查找资源、渲染卡片：`selector` → `resource_lookup` → `card_render`
+
+### `.claude/skills/` — 系统管理技能
+面向仓库管理和安全审计：安全扫描、安全策略、仓库管理、技能分析
+
+---
+
+## 英语评分服务
+
+`services/english-scoring/` 提供英语口语 AI 评分能力，调用 DeepSeek API 对跟读进行多维度评分（发音准确度、完整性、流利度、语调自然度等）。
+
+```bash
+cd services/english-scoring/
+pip install -r requirements.txt
+python server.py
+# → Uvicorn running on http://0.0.0.0:8800
+```
+
+支持 3 种评分模式：`english_word`、`english_sentence`、`english_input`
+
+---
+
+## 安全扫描
+
+项目集成了 Skill 文件安全扫描，自动检测恶意代码注入、隐藏危险指令、敏感信息泄露等问题。
+
+```bash
+# 本地扫描
+bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills
+
+# Windows
+.\scripts\security\skill-security-scan.ps1 -Scope skills/
+```
+
+CI/CD 会在 Push 和 PR 时自动触发扫描。
+
+---
+
+## 响应式适配
+
+所有卡片支持 5 设备分段：
+
+| 设备 | 断点 | 适用 |
+|------|------|------|
+| 手机 | < 480px | 竖屏手机 |
+| 平板 | ≥ 480px | 平板竖屏 |
+| 大屏 | ≥ 768px | 平板横屏 |
+| 桌面 | ≥ 1024px | PC 浏览器 |
+| 电视 | ≥ 1440px | 大屏展示 |

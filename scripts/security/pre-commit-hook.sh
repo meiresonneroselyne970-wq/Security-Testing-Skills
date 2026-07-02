@@ -5,11 +5,11 @@
 # Purpose: 本地提交前自动扫描 skill 文件，阻止危险 skill 提交
 #
 # 安装方式：
-#   cp scripts/pre-commit-hook.sh .git/hooks/pre-commit
+#   cp scripts/security/pre-commit-hook.sh .git/hooks/pre-commit
 #   chmod +x .git/hooks/pre-commit
 #
 # 或使用符号链接：
-#   ln -sf ../../scripts/pre-commit-hook.sh .git/hooks/pre-commit
+#   ln -sf ../../scripts/security/pre-commit-hook.sh .git/hooks/pre-commit
 # ============================================================
 
 set -e
@@ -22,7 +22,7 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # ---------- 配置 ----------
-SCAN_SCRIPT="scripts/ci-scan.sh"
+SCAN_SCRIPT="scripts/security/ci-scan.sh"
 WHITELIST_FILE=".security-whitelist.yml"
 
 echo ""
