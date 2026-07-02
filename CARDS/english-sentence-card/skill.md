@@ -1,10 +1,7 @@
 ---
-card_type: english_sentence
-folder: english-sentence-card
-version: "1.0"
+name: english-sentence-card
+description: 英语每日一句展示卡片。缎带徽章 + 点击翻译 + TTS 发音 + 跟读评分。
 ---
-
-# 英语句子卡片 (english-sentence-card)
 
 英语句子学习卡片模板，笔记本横线纸背景 + 便利贴卡片（缎带装饰），句子 + 中文翻译，点击发音（Web Speech API），支持跟读打分。
 

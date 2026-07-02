@@ -1,10 +1,7 @@
 ---
-card_type: english_sentence
-folder: english-input-card
-version: "1.1"
+name: english-input-card
+description: 英语自由输入卡片。可编辑 textarea + 600ms 防抖实时翻译 + TTS 发音 + 跟读评分。
 ---
-
-# 英语句子输入卡片 (english-input-card)
 
 英语句子学习卡片模板，笔记本横线纸背景 + 便利贴卡片，可编辑的英语句子输入框 + 实时中文翻译，点击发音（Web Speech API），支持跟读打分。
 

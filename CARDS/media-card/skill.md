@@ -1,10 +1,7 @@
 ---
-card_type: media_preview
-folder: media-card
-version: "1.0"
+name: media-card
+description: 媒体预览卡片。150px 暗色预览区 + 播放按钮 + 类型/时长标签，支持视频/音频/图片/文件。
 ---
-
-# 媒体卡片 (media-card)
 
 媒体预览卡片模板，150px 暗色预览区 + 播放按钮 + 类型/时长标签，适用于视频、音频、图片、文件等媒体资源分享。
 

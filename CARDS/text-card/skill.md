@@ -1,14 +1,8 @@
 ---
-card_type: h5_entry / assistant_welcome / recommendation / task / health_advice
-folder: text-card
-version: "1.0"
+name: text-card
+description: 通用文本卡片。覆盖 5 种 card_type，顶部渐变装饰条 + 图标 + 标题 + 描述 + 按钮。
 ---
 
-# 文本卡片 (text-card)
-
-通用文本类卡片模板，覆盖 5 种 card_type。顶部渐变装饰条 + 左侧品牌色条 + 图标 + 标题 + 描述 + 按钮。
-
----
 
 ## 目录
 

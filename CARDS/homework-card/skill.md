@@ -1,10 +1,7 @@
 ---
-card_type: homework_reminder
-folder: homework-card
-version: "1.0"
+name: homework-card
+description: 学科作业提醒卡片。彩色渐变横幅 + 学科图标 + 标题 + 描述 + 按钮，支持语文/数学/英语三科。
 ---
-
-# 作业提醒卡片 (homework-card)
 
 学科色条横幅模板，适用于布置作业、学习任务提醒等场景。
 

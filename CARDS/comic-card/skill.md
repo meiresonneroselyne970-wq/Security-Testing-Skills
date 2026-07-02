@@ -1,3 +1,8 @@
+---
+name: comic-card
+description: PEP 外研版英语连环画卡片。Unit 切换标签 + 视频播放 + 分页漫画气泡 + 前后翻页导航，支持触摸滑动和键盘操作。
+---
+
 # comic-card — Comic Strip Card (Paginated)
 
 ## File Structure

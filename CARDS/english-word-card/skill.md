@@ -1,10 +1,7 @@
 ---
-card_type: english_word
-folder: english-word-card
-version: "1.0"
+name: english-word-card
+description: 英语单词启蒙卡片。笔记本横线纸 + 胶带 + 缎带，左侧大字母 + 右侧单词与图片，点击发音。
 ---
-
-# 英语单词卡片 (english-word-card)
 
 英语单词启蒙卡片模板，笔记本横线纸背景 + 便利贴卡片（胶带 + 缎带装饰），左侧大字母 + 右侧单词与实物图片，点击发音（Web Speech API）。
 

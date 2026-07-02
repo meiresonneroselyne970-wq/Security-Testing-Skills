@@ -1,10 +1,7 @@
 ---
-card_type: qa_answer
-folder: Question and Answer Card-Answer
-version: "1.0"
+name: answer-card
+description: AI 知识问答卡片（独立架构）。DeepSeek API 集成，6 种文件类型色标，由外部调用渲染函数。
 ---
-
-# 问答卡片 · 精简版 (Question and Answer Card-Answer)
 
 精简 AI 知识问答结果卡片模板，专注回答展示。无头部、无快捷提问、无 API 健康检测、无输入栏，配置硬编码在 JS 中，由外部调用渲染函数。适用场景：嵌入已有页面、仅展示问答结果。
 
