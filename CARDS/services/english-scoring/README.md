@@ -21,7 +21,7 @@
 pip install httpx
 
 # CLI 调用
-cd services/english-scoring/
+cd CARDS/services/english-scoring/
 python scoring_service.py english_word apple appel
 ```
 
