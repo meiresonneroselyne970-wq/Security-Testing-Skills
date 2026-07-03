@@ -5,8 +5,8 @@ description: Skill 管理器，分析、提取、分类和打包本地 skill 文
 
 # skill-manager — Skill 分析·提取·分类·打包
 
-**版本**: 1.2.0
-**依赖**: `scripts/analyze-skills.py`（Python 3，无第三方库依赖）
+**版本**: 1.3.0
+**依赖**: `.claude/skills/analyze-skills.py`（Python 3，无第三方库依赖）
 **适用场景**: 分析本地 skill 文件、按条件筛选 skill、分类汇总、打包分发
 
 ---
@@ -31,14 +31,14 @@ description: Skill 管理器，分析、提取、分类和打包本地 skill 文
 
 ```bash
 cd card-template
-python scripts/analyze-skills.py              # 格式化输出到 stdout
-python scripts/analyze-skills.py --compact    # 紧凑 JSON
-python scripts/analyze-skills.py -o result.json  # 写入文件
+python .claude/skills/analyze-skills.py              # 格式化输出到 stdout
+python .claude/skills/analyze-skills.py --compact    # 紧凑 JSON
+python .claude/skills/analyze-skills.py -o result.json  # 写入文件
 ```
 
 **Python 路径**：`C:/Users/Pc/AppData/Roaming/uv/python/cpython-3.14.5-windows-x86_64-none/python`
 
-**扫描范围**：`skills/`（7 个 skill 文件）
+**扫描范围**：`skills/`（5 个扁平 skill）+ `cards/*/skill.md`（9 个文件夹型 skill）= 14 个
 
 **输出字段**：
 | 字段 | 说明 |
@@ -162,24 +162,29 @@ from pathlib import Path
 data = json.load(open('result.json', encoding='utf-8'))
 repo = Path('.')
 
+TEXT_EXTS = {'.md', '.json', '.html', '.js', '.css', '.py', '.txt', '.yml', '.yaml', '.xml', '.svg'}
+
 pkg = {'version': '1.0', 'skills': []}
 for s in data['skills']:
-    fpath = repo / s['file_path']
     item = {
-        'id': s['id'],
-        'name': s['name'],
-        'version': s['version'],
-        'category': s['category'],
-        'tags': s['tags'],
-        'description': s['description'],
-        'scenarios': s['scenarios'],
-        'content': fpath.read_text(encoding='utf-8') if fpath.exists() else None,
+        'id': s['id'], 'name': s['name'], 'version': s['version'],
+        'category': s['category'], 'tags': s['tags'],
+        'description': s['description'], 'scenarios': s['scenarios'],
+        'is_folder_skill': s['is_folder_skill'],
     }
+    if s['is_folder_skill']:
+        item['folder_path'] = s['folder_path']
+        item['folder_files'] = s['folder_files']
+        item['folder_size_bytes'] = s['folder_size_bytes']
+        item['folder_file_count'] = s['folder_file_count']
+    else:
+        fpath = repo / s['file_path']
+        item['content'] = fpath.read_text(encoding='utf-8') if fpath.exists() else None
     pkg['skills'].append(item)
 
 out = 'skills-package.json'
 json.dump(pkg, open(out, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
-print(f'[OK] Package written to {out} ({len(pkg[\"skills\"])} skills)')
+print(f'[OK] {out} ({len(pkg[\"skills\"])} skills)')
 "
 ```
 
@@ -196,17 +201,19 @@ repo = Path('.')
 
 groups = defaultdict(list)
 for s in data['skills']:
-    fpath = repo / s['file_path']
     item = {
-        'id': s['id'],
-        'name': s['name'],
-        'version': s['version'],
-        'category': s['category'],
-        'tags': s['tags'],
-        'description': s['description'],
-        'scenarios': s['scenarios'],
-        'content': fpath.read_text(encoding='utf-8') if fpath.exists() else None,
+        'id': s['id'], 'name': s['name'], 'version': s['version'],
+        'category': s['category'], 'tags': s['tags'],
+        'description': s['description'], 'scenarios': s['scenarios'],
+        'is_folder_skill': s['is_folder_skill'],
     }
+    if s['is_folder_skill']:
+        item['folder_path'] = s['folder_path']
+        item['folder_files'] = s['folder_files']
+        item['folder_size_bytes'] = s['folder_size_bytes']
+    else:
+        fpath = repo / s['file_path']
+        item['content'] = fpath.read_text(encoding='utf-8') if fpath.exists() else None
     groups[s['category']].append(item)
 
 import os
@@ -221,48 +228,59 @@ for cat, skills in groups.items():
 #### 4.3 生成轻量索引文件（不含内容，用于列表展示）
 
 ```bash
-python scripts/analyze-skills.py -o skills-index.json
+python .claude/skills/analyze-skills.py -o skills-index.json
 ```
 
 ---
 
 ### 5. 打包为 ZIP — 导出 skill 压缩包
 
-使用 Python 标准库 `zipfile` 将 skill 文件打包为 ZIP 压缩包，保留原始目录结构，附带分析索引。
+**文件夹型 skill**（`cards/*/`）打包整个目录（HTML + CSS + JS + JSON + 资源），**扁平型 skill**（`skills/*.md`）仅打包 `.md` 文件。所有 skill 保留原始目录结构，附带分析索引。
 
 #### 5.1 打包全部 skill（推荐分发用）
 
 ```bash
 python -c "
-import json
-import zipfile
+import json, zipfile
 from pathlib import Path
 from datetime import datetime
-
 import subprocess
+
 py = r'C:/Users/Pc/AppData/Roaming/uv/python/cpython-3.14.5-windows-x86_64-none/python'
-subprocess.run([py, 'scripts/analyze-skills.py', '-o', 'skills-index.json'], check=True)
+subprocess.run([py, '.claude/skills/analyze-skills.py', '-o', 'skills-index.json'], check=True)
 
 data = json.load(open('skills-index.json', encoding='utf-8'))
 repo = Path('.')
 
 ts = datetime.now().strftime('%Y%m%d-%H%M%S')
 zip_name = f'skills-{ts}.zip'
+folder_count = flat_count = 0
 with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zf:
     # 写入分析索引
     zf.writestr('skills-index.json', json.dumps(data, ensure_ascii=False, indent=2))
-    # 写入每个 skill 的 .md 文件（保留目录结构）
     for s in data['skills']:
-        fpath = repo / s['file_path']
-        if fpath.exists():
-            zf.write(fpath, s['file_path'])
+        if s['is_folder_skill']:
+            # 文件夹型：打包整个文件夹所有文件
+            folder = repo / s['folder_path']
+            for rf in s['folder_files']:
+                fpath = folder / rf
+                if fpath.exists():
+                    arcname = f'{s[\"folder_path\"]}/{rf}'
+                    zf.write(fpath, arcname)
+            folder_count += 1
+        else:
+            # 扁平型：仅打包 .md 文件
+            fpath = repo / s['file_path']
+            if fpath.exists():
+                zf.write(fpath, s['file_path'])
+            flat_count += 1
     print(f'[OK] {zip_name}')
-    print(f'     {len(data[\"skills\"])} skills, {sum(s[\"size_bytes\"] for s in data[\"skills\"])} bytes')
+    print(f'     {folder_count} folder skills + {flat_count} flat skills = {len(data[\"skills\"])} total')
 
 # 预览 ZIP 内容
 with zipfile.ZipFile(zip_name, 'r') as zf:
     for info in zf.infolist():
-        print(f'  {info.filename:45s} {info.file_size:>8,} bytes')
+        print(f'  {info.filename:60s} {info.file_size:>10,} bytes')
 "
 ```
 
@@ -270,16 +288,14 @@ with zipfile.ZipFile(zip_name, 'r') as zf:
 
 ```bash
 python -c "
-import json
-import zipfile
+import json, zipfile
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
-import os
+import os, subprocess
 
-import subprocess
 py = r'C:/Users/Pc/AppData/Roaming/uv/python/cpython-3.14.5-windows-x86_64-none/python'
-subprocess.run([py, 'scripts/analyze-skills.py', '-o', 'skills-index.json'], check=True)
+subprocess.run([py, '.claude/skills/analyze-skills.py', '-o', 'skills-index.json'], check=True)
 
 data = json.load(open('skills-index.json', encoding='utf-8'))
 repo = Path('.')
@@ -298,11 +314,55 @@ for cat, items in sorted(groups.items()):
         cat_index = {'category': cat, 'skills': items, 'total': len(items)}
         zf.writestr('index.json', json.dumps(cat_index, ensure_ascii=False, indent=2))
         for s in items:
-            fpath = repo / s['file_path']
-            if fpath.exists():
-                zf.write(fpath, s['file_path'])
+            if s['is_folder_skill']:
+                folder = repo / s['folder_path']
+                for rf in s['folder_files']:
+                    fpath = folder / rf
+                    if fpath.exists():
+                        zf.write(fpath, f'{s[\"folder_path\"]}/{rf}')
+            else:
+                fpath = repo / s['file_path']
+                if fpath.exists():
+                    zf.write(fpath, s['file_path'])
     print(f'[OK] {zip_name} ({len(items)} skills)')
 "
+```
+
+---
+
+### 6. 分发到 Gitee — 与 gitee-repo 联动
+
+打包完成后，借助 [gitee-repo](gitee-repo.md) 将分发包推送到 Gitee 远程仓库，供其他项目/团队成员拉取使用。
+
+#### 6.1 完整发布流程
+
+```
+skill-manager 分析打包 ──→ gitee-repo 提交推送
+       │                        │
+       │  [1] analyze            │  [4] git add packages/
+       │  [2] ZIP/JSON 打包      │  [5] git commit
+       │  [3] 生成分发包          │  [6] git push
+       └────────────────────────┘
+```
+
+```bash
+# Step 1-3: skill-manager 打包（生成 packages/ 目录下的 ZIP/JSON）
+C:/Users/Pc/AppData/Roaming/uv/python/cpython-3.14.5-windows-x86_64-none/python .claude/skills/analyze-skills.py -o skills-index.json
+# ... 执行 ZIP 打包命令（见 §5.1）...
+
+# Step 4-6: gitee-repo 推送到远程
+git add packages/ skills-index.json
+git commit -m "release: skill 分发包 $(date +%Y%m%d)"
+git push origin byl-v1.0.0
+```
+
+#### 6.2 拉取后刷新索引（反向联动）
+
+从 Gitee 拉取最新代码（可能含新增/更新的 skill）后，重新分析：
+
+```bash
+git pull   # gitee-repo 负责
+C:/Users/Pc/AppData/Roaming/uv/python/cpython-3.14.5-windows-x86_64-none/python .claude/skills/analyze-skills.py  # skill-manager 刷新索引
 ```
 
 ---
@@ -311,7 +371,8 @@ for cat, items in sorted(groups.items()):
 
 ```
 [1] 分析阶段: 运行 analyze-skills.py 生成 JSON
-     └── 扫描 skills/*.md (7 个)
+     ├── skills/*.md (5 个扁平 skill)
+     └── cards/*/skill.md + cards/services/*/skill.md (9 个文件夹型 skill)
      ↓
 [2] 提取阶段 (可选): 按分类/标签/目录/名称筛选
      ↓
@@ -342,17 +403,31 @@ for cat, items in sorted(groups.items()):
 
 ---
 
-## 当前 Skill 清单（7 个）
+## 当前 Skill 清单（14 个）
+
+### 文件夹型（9 个）— `cards/*/`
+
+| Skill | 分类 | 文件数 | 大小 |
+|-------|------|--------|------|
+| `text-card` | entry | 11 | 23 KB |
+| `homework-card` | education | 7 | 18 KB |
+| `media-card` | media | 5 | 18 KB |
+| `english-word-card` | english-learning | 9 | 103 KB |
+| `english-sentence-card` | english-learning | 9 | 103 KB |
+| `english-input-card` | english-learning | 9 | 105 KB |
+| `comic-card` | media | 51 | 107 MB |
+| `answer-card` | qa | 4 | 26 KB |
+| `english-scoring` | scoring | 11 | 69 KB |
+
+### 扁平型（5 个）— `skills/*.md`
 
 | Skill | 分类 | 用途 |
 |-------|------|------|
+| `selector` | index | 卡片选择器/索引 |
 | `card` | generator | AI 卡片生成器（8 种模板） |
-| `comic` | generator | 漫画卡片生成器 |
 | `card_render` | engine | 卡片渲染引擎 |
 | `resource_lookup` | engine | 资源查找引擎 |
 | `image-generator` | media | 图片生成器 |
-| `english-scoring` | scoring | 英语口语评分 |
-| `selector` | index | 卡片选择器/索引 |
 
 ---
 
@@ -362,7 +437,7 @@ for cat, items in sorted(groups.items()):
 
 使用完整路径：
 ```
-C:/Users/Pc/AppData/Roaming/uv/python/cpython-3.14.5-windows-x86_64-none/python scripts/analyze-skills.py
+C:/Users/Pc/AppData/Roaming/uv/python/cpython-3.14.5-windows-x86_64-none/python .claude/skills/analyze-skills.py
 ```
 
 ### Q2: 新增 skill 文件未被扫描
@@ -390,8 +465,9 @@ C:/Users/Pc/AppData/Roaming/uv/python/cpython-3.14.5-windows-x86_64-none/python 
 | 1.0.0 | 2026-07-02 | 初始版本：分析、提取、分类、JSON 打包四大功能 |
 | 1.1.0 | 2026-07-02 | 分类修正（skill-manager 改为 tool）；新增 ZIP 压缩包打包；重构 skill 清单按分类排列 |
 | 1.2.0 | 2026-07-02 | 移除 `.claude/skills/` 扫描范围，仅扫描 `skills/`；精简 ZIP 打包模式 |
+| 1.3.0 | 2026-07-03 | 新增与 gitee-repo 联动；扫描 cards/*/skill.md 文件夹型 skill；ZIP 打包整个文件夹 |
 
 ---
 
 **维护者**: card-template team
-**最后更新**: 2026-07-02
+**最后更新**: 2026-07-03

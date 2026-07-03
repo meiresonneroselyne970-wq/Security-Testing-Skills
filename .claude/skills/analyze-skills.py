@@ -2,14 +2,17 @@
 """
 analyze-skills.py — 分析本地 skill 文件，输出 JSON
 
-扫描 .claude/skills/ 和 skills/ 目录下的 .md 文件，
-解析 YAML frontmatter 和 markdown 元数据，
-输出 ModelScope 风格的 skill JSON。
+扫描 3 类 skill：
+  1. skills/*.md              — 扁平 skill 文件（通用卡片生成技能）
+  2. cards/*/skill.md         — 文件夹型技能（卡片模板，整个文件夹打包）
+  3. cards/services/*/skill.md — 文件夹型技能（服务模块，整个文件夹打包）
+
+解析 YAML frontmatter 和 markdown 元数据，输出结构化 JSON。
 
 用法:
-  python scripts/analyze-skills.py              # 格式化输出到 stdout
-  python scripts/analyze-skills.py --compact    # 紧凑 JSON
-  python scripts/analyze-skills.py --output result.json  # 写入文件
+  python .claude/skills/analyze-skills.py              # 格式化输出到 stdout
+  python .claude/skills/analyze-skills.py --compact    # 紧凑 JSON
+  python .claude/skills/analyze-skills.py -o result.json  # 写入文件
 """
 
 import argparse
@@ -22,8 +25,12 @@ from pathlib import Path
 
 # ========== 配置 ==========
 
-SKILL_DIRS = ["skills"]
-REPO_ROOT = Path(__file__).resolve().parent.parent
+SKILL_DIRS = ["skills"]                      # 扁平 .md 文件
+CARD_SKILL_GLOBS = [                         # 文件夹型 skill（含 skill.md）
+    "cards/*/skill.md",
+    "cards/services/*/skill.md",
+]
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 # ========== YAML frontmatter 解析 ==========
@@ -62,7 +69,6 @@ def parse_markdown_meta(content: str) -> dict:
     if m:
         title = m.group(1).strip()
         info["display_name"] = title
-        # 去掉 name 前缀，提取纯中文描述
         dm = re.match(r"^[\w-]+\s*[—\-—]\s*(.+)", title)
         info["title_description"] = dm.group(1).strip() if dm else title
 
@@ -86,10 +92,27 @@ def parse_markdown_meta(content: str) -> dict:
 
 # ========== 分类与标签推断 ==========
 
-def infer_category(file_path: str, frontmatter_name: str) -> str:
+def infer_category(file_path: str, frontmatter_name: str, is_folder_skill: bool = False) -> str:
     """从文件路径和名称自动推断分类。"""
     name = (frontmatter_name or "").lower()
     p = file_path.replace("\\", "/")
+
+    if is_folder_skill and p.startswith("cards/"):
+        if "services" in p:
+            return "scoring" if "english" in name or "scoring" in name else "service"
+        if any(k in name for k in ("english", "word", "sentence", "input")):
+            return "english-learning"
+        if "comic" in name:
+            return "media"
+        if "answer" in name:
+            return "qa"
+        if "homework" in name:
+            return "education"
+        if "media" in name:
+            return "media"
+        if "text" in name:
+            return "entry"
+        return "card-template"
 
     if p.startswith(".claude/skills/"):
         if any(k in name for k in ("security", "audit", "scanner")):
@@ -139,9 +162,23 @@ def infer_tags(frontmatter_name: str, category: str, directory: str) -> list[str
     return list(dict.fromkeys(tags))  # 去重保序
 
 
+def folder_stats(folder_path: Path) -> dict:
+    """统计整个文件夹的大小和文件数。"""
+    total_size = 0
+    file_count = 0
+    for f in folder_path.rglob("*"):
+        if f.is_file():
+            total_size += f.stat().st_size
+            file_count += 1
+    return {
+        "folder_size_bytes": total_size,
+        "folder_file_count": file_count,
+    }
+
+
 # ========== 主逻辑 ==========
 
-def analyze_skill(file_path: str) -> dict:
+def analyze_skill(file_path: str, is_folder_skill: bool = False) -> dict:
     """分析单个 skill 文件，返回结构化数据。"""
     full_path = REPO_ROOT / file_path
     content = full_path.read_text(encoding="utf-8")
@@ -154,9 +191,9 @@ def analyze_skill(file_path: str) -> dict:
 
     name = meta.get("name") or Path(file_path).stem
     directory = Path(file_path).parent.as_posix()
-    category = infer_category(file_path, name)
+    category = infer_category(file_path, name, is_folder_skill)
 
-    return {
+    result = {
         # 基础标识
         "id": f"@local/{name}",
         "name": name,
@@ -169,6 +206,25 @@ def analyze_skill(file_path: str) -> dict:
         "file_path": file_path.replace("\\", "/"),
         "file_name": Path(file_path).name,
 
+        # 打包方式
+        "is_folder_skill": is_folder_skill,
+    }
+
+    if is_folder_skill:
+        folder_path = full_path.parent
+        result["folder_path"] = folder_path.relative_to(REPO_ROOT).as_posix()
+        # 列出文件夹内所有文件（用于打包时精确包含）
+        result["folder_files"] = sorted(
+            f.relative_to(folder_path).as_posix()
+            for f in folder_path.rglob("*")
+            if f.is_file() and ".git" not in f.parts
+        )
+        stats = folder_stats(folder_path)
+        result.update(stats)
+        # 文件夹大小作为 size_bytes
+        result["size_bytes"] = stats["folder_size_bytes"]
+
+    result.update({
         # 元信息
         "version": md_meta.get("version"),
         "category": category,
@@ -177,8 +233,7 @@ def analyze_skill(file_path: str) -> dict:
         "maintainer": md_meta.get("maintainer"),
         "last_updated_doc": md_meta.get("last_updated_doc"),
 
-        # 文件统计
-        "size_bytes": stat.st_size,
+        # 文件统计（扁平 skill 仅 .md 自身）
         "line_count": len(content.splitlines()),
         "has_frontmatter": len(meta) > 0,
         "has_body": body.strip() != "",
@@ -186,12 +241,17 @@ def analyze_skill(file_path: str) -> dict:
         # 时间
         "file_last_modified": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
         "file_created": datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).isoformat(),
-    }
+    })
+
+    if not is_folder_skill:
+        result["size_bytes"] = stat.st_size
+
+    return result
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="分析本地 skill 文件，输出 ModelScope 风格的 JSON"
+        description="分析本地 skill 文件，输出结构化的 JSON"
     )
     parser.add_argument(
         "-c", "--compact", action="store_true",
@@ -204,7 +264,9 @@ def main():
     args = parser.parse_args()
 
     all_skills = []
+    seen_names = set()
 
+    # 1. 扫描扁平 skill 文件 (skills/*.md)
     for dir_name in SKILL_DIRS:
         dir_path = REPO_ROOT / dir_name
         if not dir_path.is_dir():
@@ -214,18 +276,37 @@ def main():
         for f in sorted(dir_path.glob("*.md")):
             rel_path = f.relative_to(REPO_ROOT).as_posix()
             try:
-                skill = analyze_skill(rel_path)
-                all_skills.append(skill)
+                skill = analyze_skill(rel_path, is_folder_skill=False)
+                if skill["name"] not in seen_names:
+                    all_skills.append(skill)
+                    seen_names.add(skill["name"])
             except Exception as err:
                 print(f"✗ 解析失败: {rel_path} — {err}", file=sys.stderr)
 
-    # 排序: 先按目录，再按名称
-    all_skills.sort(key=lambda s: (s["directory"], s["name"]))
+    # 2. 扫描文件夹型 skill (cards/*/skill.md)
+    for glob_pattern in CARD_SKILL_GLOBS:
+        for f in sorted(REPO_ROOT.glob(glob_pattern)):
+            rel_path = f.relative_to(REPO_ROOT).as_posix()
+            try:
+                skill = analyze_skill(rel_path, is_folder_skill=True)
+                if skill["name"] not in seen_names:
+                    all_skills.append(skill)
+                    seen_names.add(skill["name"])
+            except Exception as err:
+                print(f"✗ 解析失败: {rel_path} — {err}", file=sys.stderr)
+
+    # 排序: 先按 skill 类型（扁平/文件夹），再按目录，再按名称
+    all_skills.sort(key=lambda s: (
+        not s["is_folder_skill"],  # 文件夹型排前面
+        s["directory"],
+        s["name"],
+    ))
 
     output = {
         "skills": all_skills,
         "total": len(all_skills),
-        "directories": SKILL_DIRS,
+        "flat_dirs": SKILL_DIRS,
+        "folder_globs": CARD_SKILL_GLOBS,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "generator": "analyze-skills.py",
     }
