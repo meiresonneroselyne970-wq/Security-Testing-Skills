@@ -33,7 +33,6 @@ comic-card/
 ├── assets/
 │   ├── image/             # 28 张面板 PNG（unit1-6_panelN.png）
 │   └── video/             # 6 个活动 MP4（unit1-6_activity1.mp4）
-├── Educational Card/      # 原始素材（原始 JSON + Unit 文件夹）
 └── skill.md               # 本文件
 ```
 
@@ -49,11 +48,11 @@ comic-card/
   "subtitle": "Meet My Little Friends",
   "description": "PEP 外研版英语连环画…",
   "button_text": "",
-  "video_url": "../../assets/video/unit1_activity1.mp4",
+  "video_url": "assets/video/unit1_activity1.mp4",
   "theme": "comic",
   "frames": [
     {
-      "image": "../../assets/image/unit1_panel1.png",
+      "image": "assets/image/unit1_panel1.png",
       "texts": ["Hello!", "Hi there!", "Let's go!"]
     }
   ],

@@ -30,8 +30,6 @@ card-template/
 │   ├── analyze-skills.py
 │   └── security/         # 安全扫描脚本（CI/CD 集成）
 │
-├── assets/               # 静态资源（图片、视频、数据文件）
-│
 ├── .github/workflows/    # GitHub Actions CI
 └── .workflow/            # Gitee CI 流水线
 ```
