@@ -24,7 +24,7 @@ text-card/
 ├── index.html              # 页面结构（定义数据 + 加载 JS）
 ├── ai-card.css             # 卡片样式（Shadow DOM 内生效）
 ├── ai-card.js              # 渲染引擎（Web Component + 列表渲染）
-├── metadata.md             # 本文件
+├── skill.md                # 本文件
 ├── h5-ai-assistant.json    # H5 入口 · 炎图 AI 助手
 ├── h5-essay.json           # H5 入口 · 作文范文
 ├── edu-ai.json             # AI 助手 · 教育场景

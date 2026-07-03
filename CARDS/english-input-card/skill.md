@@ -29,7 +29,7 @@ english-input-card/
 ├── ai-card.css        # 组件样式 + 页面样式 + 响应式断点（Shadow DOM 内外共用）
 ├── ai-card.js         # 渲染引擎（Web Component + 语音交互 + 跟读打分 + 实时翻译）
 ├── fonts/             # 本地字体（Patrick Hand woff2 + fonts.css，无 CDN 依赖）
-├── metadata.md        # 本文件
+├── skill.md           # 本文件
 └── data.json          # 卡片数据
 ```
 

@@ -1,6 +1,6 @@
 ---
 name: english-scoring
-description: Call DeepSeek API to score English pronunciation for word/sentence/input cards. Supports 3 card types with tailored scoring dimensions and prompts. Use when the user asks for pronunciation evaluation, speaking scoring, or AI-powered English oral scoring.
+description: Call DeepSeek API to score English pronunciation for word/sentence/input cards. Supports 3 card types with tailored scoring dimensions.
 ---
 
 # english-scoring — 英语口语 AI 评分

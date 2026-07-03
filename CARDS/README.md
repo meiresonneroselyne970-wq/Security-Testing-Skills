@@ -2,24 +2,22 @@
 
 AI 卡片模板库完整目录，共 8 种卡片模板。每个模板为独立的自包含组件（HTML + CSS + JS + JSON 数据），支持 `<iframe>` 或 `<ai-card>` Web Component 嵌入。
 
-> 📂 **分文件详情**：每种卡片有独立的详细文档，见下方链接。英语评分服务文档见 [english-scoring.md](english-scoring.md)。
-
 ---
 
 ## 概览
 
-| # | 模板 | 目录 | 架构 | 适用场景 | 详情 | 对应技能 |
-|---|------|------|------|----------|------|----------|
-| 1 | **文本卡片** | [text-card/](./text-card/) | Web Component | 通用入口、AI 助手欢迎、推荐、任务提醒、健康建议 | [01-text-card.md](01-text-card.md) | — |
-| 2 | **作业提醒** | [homework-card/](./homework-card/) | Web Component | 语文/数学/英语学科作业提醒，彩色渐变横幅 | [02-homework-card.md](02-homework-card.md) | — |
-| 3 | **媒体预览** | [media-card/](./media-card/) | Web Component | 视频/音频/图片/文件预览，暗色预览区 + 播放按钮 | [03-media-card.md](03-media-card.md) | — |
-| 4 | **英语单词** | [english-word-card/](./english-word-card/) | Web Component | 字母/单词启蒙，笔记本横线纸 + 大字母 + 图片 + 发音 | [04-english-word-card.md](04-english-word-card.md) | [english-scoring](english-scoring.md) |
-| 5 | **连环画** | [comic-card/](./comic-card/) | Web Component | PEP 外研版英语连环画，视频播放 + 分页漫画气泡 | [05-comic-card.md](05-comic-card.md) | [comic-card/skill.md](./comic-card/skill.md) |
-| 6 | **AI 问答** | [answer-card/](./answer-card/) | Standalone | AI 知识问答，DeepSeek API 集成，文件来源展示 | [06-answer-card.md](06-answer-card.md) | — |
-| 7 | **英语句子展示**| [english-sentence-card/](./english-sentence-card/) | Web Component | 每日一句，缎带徽章 + 点击翻译 + TTS + 跟读评分 | [07-english-sentence-card.md](07-english-sentence-card.md) | [english-scoring](english-scoring.md) |
-| 8 | **英语输入** | [english-input-card/](./english-input-card/) | Web Component | 自由输入句子，实时 API 翻译 + TTS + 跟读评分 | [08-english-input-card.md](08-english-input-card.md) | [english-scoring](english-scoring.md) |
+| # | 模板 | 目录 | 架构 | 适用场景 |
+|---|------|------|------|----------|
+| 1 | **文本卡片** | [text-card/](./text-card/) | Web Component | 通用入口、AI 助手欢迎、推荐、任务提醒、健康建议 |
+| 2 | **作业提醒** | [homework-card/](./homework-card/) | Web Component | 语文/数学/英语学科作业提醒，彩色渐变横幅 |
+| 3 | **媒体预览** | [media-card/](./media-card/) | Web Component | 视频/音频/图片/文件预览，暗色预览区 + 播放按钮 |
+| 4 | **英语单词** | [english-word-card/](./english-word-card/) | Web Component | 字母/单词启蒙，笔记本横线纸 + 大字母 + 图片 + 发音 |
+| 5 | **连环画** | [comic-card/](./comic-card/) | Web Component | PEP 外研版英语连环画，视频播放 + 分页漫画气泡 |
+| 6 | **AI 问答** | [answer-card/](./answer-card/) | Standalone | AI 知识问答，DeepSeek API 集成，文件来源展示 |
+| 7 | **英语句子展示**| [english-sentence-card/](./english-sentence-card/) | Web Component | 每日一句，缎带徽章 + 点击翻译 + TTS + 跟读评分 |
+| 8 | **英语输入** | [english-input-card/](./english-input-card/) | Web Component | 自由输入句子，实时 API 翻译 + TTS + 跟读评分 |
 
-> **英语评分服务**：[services/english-scoring/](./services/english-scoring/) — 为 english-word、english-sentence、english-input 三类卡片提供 DeepSeek API 多维度发音评分。详见 [english-scoring.md](english-scoring.md)，对应技能：[services/english-scoring/skill.md](./services/english-scoring/skill.md)
+> **英语评分服务**：[services/english-scoring/](./services/english-scoring/) — 为 english-word、english-sentence、english-input 三类卡片提供 DeepSeek API 多维度发音评分。对应技能：[services/english-scoring/skill.md](./services/english-scoring/skill.md)
 
 ---
 

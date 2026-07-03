@@ -27,7 +27,7 @@ Question and Answer Card-Answer/
 ├── index.html       # 页面结构（卡片骨架 + 加载 CSS/JS）
 ├── style.css        # 卡片样式（渐变装饰条 + 文件类型色标 + 动画）
 ├── app.js           # 渲染逻辑（DOM 渲染 + 状态切换，配置硬编码，由外部调用）
-└── metadata.md      # 本文件
+└── skill.md         # 本文件
 ```
 
 > 与 `Question and Answer Card` 的区别：无 `data.json`，所有配置（API 地址、top_k、超时、文件图标映射）均硬编码在 `app.js` 中。

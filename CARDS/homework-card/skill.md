@@ -27,7 +27,7 @@ homework-card/
 ├── index.html       # 页面结构（定义数据 + 加载 JS）
 ├── ai-card.css      # 卡片样式（Shadow DOM 内生效）
 ├── ai-card.js       # 渲染引擎（Web Component + 列表渲染）
-├── metadata.md      # 本文件
+├── skill.md         # 本文件
 ├── chinese.json     # 语文作业
 ├── math.json        # 数学作业
 └── english.json     # 英语作业

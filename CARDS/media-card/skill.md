@@ -27,7 +27,7 @@ media-card/
 ├── index.html         # 页面结构（定义数据 + 加载 JS）
 ├── ai-card.css        # 卡片样式（Shadow DOM 内生效）
 ├── ai-card.js         # 渲染引擎（Web Component + 列表渲染）
-├── metadata.md        # 本文件
+├── skill.md           # 本文件
 └── class-video.json   # 课堂录像
 ```
 

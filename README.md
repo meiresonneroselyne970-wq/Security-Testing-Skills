@@ -12,8 +12,6 @@
 card-template/
 ├── CARDS/                 # 📋 卡片总目录（8 种卡片 + 英语评分服务）
 │   ├── README.md          # 主索引
-│   ├── 01-text-card.md ~ 08-english-input-card.md  # 卡片分文件文档
-│   ├── english-scoring.md # 评分服务文档
 │   ├── text-card/         # 通用文本卡片（5 种变体）
 │   ├── homework-card/     # 学科作业提醒卡片
 │   ├── media-card/        # 媒体预览卡片（视频/音频/图片）
@@ -33,8 +31,6 @@ card-template/
 │   └── security/         # 安全扫描脚本（CI/CD 集成）
 │
 ├── assets/               # 静态资源（图片、视频、数据文件）
-├── docs/                 # 项目文档
-│   └── reports/          # 归档报告
 │
 ├── .github/workflows/    # GitHub Actions CI
 └── .workflow/            # Gitee CI 流水线
@@ -60,7 +56,7 @@ card-template/
 - `ai-card.js` — 卡片逻辑（数据加载、渲染、交互）
 - `ai-card.css` — 卡片样式（5 设备响应式适配）
 - `data.json` — 静态数据（如有）
-- `metadata.md` — 元数据文档（部分卡片）
+- `skill.md` — 技能文档（部分卡片）
 
 ---
 
