@@ -59,7 +59,7 @@ services/english-scoring/
 ## 启动服务
 
 ```bash
-cd CARDS/services/english-scoring/
+cd cards/services/english-scoring/
 pip install -r requirements.txt
 python server.py
 # → Uvicorn running on http://0.0.0.0:8800

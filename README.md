@@ -2,7 +2,7 @@
 
 可复用的 AI 卡片 UI 组件库，包含 8 种卡片模板，支持文本展示、作业提醒、媒体预览、英语学习、连环画、AI 问答等场景。每个卡片模板为独立的自包含组件（HTML + CSS + JS + JSON 数据），可直接通过 `<iframe>` 或自定义 `<ai-card>` 标签嵌入。
 
-> 📋 完整卡片目录见 **[CARDS/](CARDS/)**（8 种卡片分文件记录）
+> 📋 完整卡片目录见 **[cards/](cards/)**（8 种卡片分文件记录）
 
 ---
 
@@ -10,7 +10,7 @@
 
 ```
 card-template/
-├── CARDS/                 # 📋 卡片总目录（8 种卡片 + 英语评分服务）
+├── cards/                 # 📋 卡片总目录（8 种卡片 + 英语评分服务）
 │   ├── README.md          # 主索引
 │   ├── text-card/         # 通用文本卡片（5 种变体）
 │   ├── homework-card/     # 学科作业提醒卡片
@@ -39,14 +39,14 @@ card-template/
 
 | 模板 | 目录 | 适用场景 |
 |------|------|----------|
-| **文本卡片** | `CARDS/text-card/` | 通用入口、AI 助手欢迎、推荐、任务提醒、健康建议 |
-| **作业提醒** | `CARDS/homework-card/` | 语文/数学/英语学科作业提醒，彩色渐变横幅 |
-| **媒体预览** | `CARDS/media-card/` | 视频/音频/图片/文件预览，暗色预览区 + 播放按钮 |
-| **英语单词** | `CARDS/english-word-card/` | 字母/单词启蒙，笔记本横线纸 + 大字母 + 图片 + 发音 |
-| **连环画** | `CARDS/comic-card/` | PEP 外研版英语连环画，视频播放 + 分页漫画气泡 |
-| **AI 问答** | `CARDS/answer-card/` | AI 知识问答，DeepSeek API 集成，文件来源展示 |
-| **英语句子展示** | `CARDS/english-sentence-card/` | 每日一句，缎带徽章 + 点击翻译 + TTS + 跟读评分 |
-| **英语输入** | `CARDS/english-input-card/` | 自由输入句子，实时 API 翻译 + TTS + 跟读评分 |
+| **文本卡片** | `cards/text-card/` | 通用入口、AI 助手欢迎、推荐、任务提醒、健康建议 |
+| **作业提醒** | `cards/homework-card/` | 语文/数学/英语学科作业提醒，彩色渐变横幅 |
+| **媒体预览** | `cards/media-card/` | 视频/音频/图片/文件预览，暗色预览区 + 播放按钮 |
+| **英语单词** | `cards/english-word-card/` | 字母/单词启蒙，笔记本横线纸 + 大字母 + 图片 + 发音 |
+| **连环画** | `cards/comic-card/` | PEP 外研版英语连环画，视频播放 + 分页漫画气泡 |
+| **AI 问答** | `cards/answer-card/` | AI 知识问答，DeepSeek API 集成，文件来源展示 |
+| **英语句子展示** | `cards/english-sentence-card/` | 每日一句，缎带徽章 + 点击翻译 + TTS + 跟读评分 |
+| **英语输入** | `cards/english-input-card/` | 自由输入句子，实时 API 翻译 + TTS + 跟读评分 |
 
 每个卡片模板目录包含：
 - `index.html` — 卡片主页面
@@ -79,8 +79,8 @@ card-template/
 
 | 技能 | 位置 | 对应卡片/服务 |
 |------|------|-------------|
-| comic | `CARDS/comic-card/skill.md` | 连环画卡片生成 |
-| english-scoring | `CARDS/services/english-scoring/skill.md` | 英语口语 AI 评分 |
+| comic | `cards/comic-card/skill.md` | 连环画卡片生成 |
+| english-scoring | `cards/services/english-scoring/skill.md` | 英语口语 AI 评分 |
 
 ### `.claude/skills/` — 系统管理技能（6 个）
 
@@ -97,10 +97,10 @@ card-template/
 
 ## 英语评分服务
 
-`CARDS/services/english-scoring/` 提供英语口语 AI 评分能力，调用 DeepSeek API 对跟读进行多维度评分（发音准确度、完整性、流利度、语调自然度等）。
+`cards/services/english-scoring/` 提供英语口语 AI 评分能力，调用 DeepSeek API 对跟读进行多维度评分（发音准确度、完整性、流利度、语调自然度等）。
 
 ```bash
-cd CARDS/services/english-scoring/
+cd cards/services/english-scoring/
 pip install -r requirements.txt
 python server.py
 # → Uvicorn running on http://0.0.0.0:8800
