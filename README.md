@@ -16,19 +16,18 @@ card-template/
 │   ├── homework-card/     # 学科作业提醒卡片
 │   ├── media-card/        # 媒体预览卡片（视频/音频/图片）
 │   ├── english-word-card/ # 英语单词启蒙卡片
-│   ├── comic-card/        # 连环画/漫画分页卡片（含 comic 技能 skill.md）
-│   ├── answer-card/       # AI 问答卡片（独立 iframe 架构）
+│   ├── comic-card/        # 连环画/漫画分页卡片（含 assets/ 图片+视频）
+│   ├── answer-card/       # AI 问答卡片（独立架构，纯 HTML+CSS+JS）
 │   ├── english-sentence-card/ # 英语句子展示卡片（每日一句）
 │   ├── english-input-card/   # 英语句子输入卡片（可编辑）
 │   └── services/
-│       └── english-scoring/  # 英语口语 AI 评分服务（FastAPI + DeepSeek，含 skill.md）
+│       └── english-scoring/  # 英语口语 AI 评分服务（FastAPI + DeepSeek）
 │
-├── skills/               # 通用卡片生成技能（selector、card、card_render 等）
-├── .claude/skills/       # Claude Code 代理技能（安全审计、仓库管理等）
+├── skills/               # 通用卡片生成技能（selector、card、card_render 等 5 个）
+├── .claude/skills/       # 系统管理技能（安全审计、仓库管理等 6 个）
 │
 ├── scripts/              # 工具脚本
-│   ├── analyze-skills.py
-│   └── security/         # 安全扫描脚本（CI/CD 集成）
+│   └── security/         # 安全扫描脚本（PowerShell + Bash + Bat）
 │
 ├── .github/workflows/    # GitHub Actions CI
 └── .workflow/            # Gitee CI 流水线
@@ -51,10 +50,12 @@ card-template/
 
 每个卡片模板目录包含：
 - `index.html` — 卡片主页面
-- `ai-card.js` — 卡片逻辑（数据加载、渲染、交互）
-- `ai-card.css` — 卡片样式（5 设备响应式适配）
-- `data.json` — 静态数据（如有）
-- `skill.md` — 技能文档（部分卡片）
+- `ai-card.js`（或 `app.js`） — 卡片逻辑（数据加载、渲染、交互）
+- `ai-card.css`（或 `style.css`） — 卡片样式（5 设备响应式适配）
+- `*.json` — 静态数据（一个或多个，answer-card 无外部数据文件）
+- `skill.md` — 技能文档（全部卡片）
+- `assets/` — 静态资源（仅 comic-card，含 38 张图片 + 7 个视频）
+- `fonts/` — 本地字体（仅英语系列 3 个卡片）
 
 ---
 
@@ -81,9 +82,16 @@ card-template/
 | comic | `CARDS/comic-card/skill.md` | 连环画卡片生成 |
 | english-scoring | `CARDS/services/english-scoring/skill.md` | 英语口语 AI 评分 |
 
-### `.claude/skills/` — 系统管理技能
+### `.claude/skills/` — 系统管理技能（6 个）
 
-面向仓库管理和安全审计：安全扫描、安全策略、仓库管理、技能分析
+| 技能 | 文件 | 职责 |
+|------|------|------|
+| 安全审计 | `.claude/skills/security-audit.md` | Skill 文件安全审计 |
+| 安全策略 | `.claude/skills/skill-security-policy.md` | 安全策略定义 |
+| 安全扫描器 | `.claude/skills/skill-security-scanner.md` | 自动安全扫描引擎 |
+| 技能管理 | `.claude/skills/skill-manager.md` | 技能生命周期管理 |
+| 仓库管理 | `.claude/skills/gitee-repo.md` | Gitee 仓库操作 |
+| 技能分析 | `.claude/skills/analyze-skills.py` | 解析 skill 文件，输出 JSON |
 
 ---
 
