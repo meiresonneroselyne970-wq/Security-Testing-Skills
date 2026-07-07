@@ -79,7 +79,7 @@ description: Render a card given templateId + data. Outputs ai_card HTML or webv
 输出 webview / iframe attachment：
 
 ```html
-<iframe src="answer-card/index.html"
+<iframe src="cards/answer-card/index.html"
   style="width:100%;max-width:600px;height:700px;border:none;">
 </iframe>
 ```
@@ -154,7 +154,7 @@ comic-card 额外需要：
 
 ```
 渲染元素: <ai-card data='...'>
-引入文件: text-card/ai-card.css + text-card/ai-card.js
+引入文件: cards/text-card/ai-card.css + cards/text-card/ai-card.js
 ```
 
 **支持的 icon:** `ai`, `link`, `sparkle`, `task`, `health`, `audio`
@@ -164,7 +164,7 @@ comic-card 额外需要：
 
 ```
 渲染元素: <ai-card data='...'>
-引入文件: homework-card/ai-card.css + homework-card/ai-card.js
+引入文件: cards/homework-card/ai-card.css + cards/homework-card/ai-card.js
 ```
 
 **支持的 icon:** `chinese`, `math`, `english`
@@ -175,7 +175,7 @@ comic-card 额外需要：
 
 ```
 渲染元素: <ai-card data='...'>
-引入文件: media-card/ai-card.css + media-card/ai-card.js
+引入文件: cards/media-card/ai-card.css + cards/media-card/ai-card.js
 ```
 
 **支持的 icon:** `video`, `audio`, `image`, `file`
@@ -186,7 +186,7 @@ comic-card 额外需要：
 
 ```
 渲染元素: <ai-card data='...'>
-引入文件: english-word-card/ai-card.css + english-word-card/ai-card.js
+引入文件: cards/english-word-card/ai-card.css + cards/english-word-card/ai-card.js
 ```
 
 **支持的 icon:** `abc`
@@ -209,7 +209,7 @@ comic-card 额外需要：
 
 ```
 渲染元素: <ai-card data='...'>
-引入文件: comic-card/ai-card.css + comic-card/ai-card.js
+引入文件: cards/comic-card/ai-card.css + cards/comic-card/ai-card.js
 ```
 
 **支持的 icon:** `comic`
@@ -220,7 +220,7 @@ comic-card 额外需要：
 
 ```
 渲染元素: <ai-card data='...'>
-引入文件: english-sentence-card/ai-card.css + english-sentence-card/ai-card.js
+引入文件: cards/english-sentence-card/ai-card.css + cards/english-sentence-card/ai-card.js
 ```
 
 **支持的 icon:** `sentence`
@@ -245,7 +245,7 @@ comic-card 额外需要：
 
 ```
 渲染元素: <ai-card data='...'>
-引入文件: english-input-card/ai-card.css + english-input-card/ai-card.js
+引入文件: cards/english-input-card/ai-card.css + cards/english-input-card/ai-card.js
 ```
 
 **支持的 icon:** `sentence`
@@ -274,7 +274,7 @@ comic-card 额外需要：
 ### answer-card
 
 ```
-渲染元素: <iframe src="answer-card/index.html">
+渲染元素: <iframe src="cards/answer-card/index.html">
 引入文件: 无需（独立页面自带 style.css + app.js）
 ```
 

@@ -38,8 +38,8 @@ description: Card template selector hub. Use to find the right skill — resourc
 | 技能 | 文件 | 用途 |
 |------|------|------|
 | **card** | [card.md](card.md) | 新建卡片数据文件或创建全新模板（8 种模板的完整参考） |
-| **comic** | [comic.md](comic.md) | 连环画卡片专用生成器 |
-| **english-scoring** | [english-scoring.md](english-scoring.md) | 英语口语 AI 评分 — 跟读后调用 DeepSeek 多维度评分 |
+| **comic** | [cards/comic-card/skill.md](../cards/comic-card/skill.md) | 连环画卡片专用生成器 |
+| **english-scoring** | [cards/services/english-scoring/skill.md](../cards/services/english-scoring/skill.md) | 英语口语 AI 评分 — 跟读后调用 DeepSeek 多维度评分 |
 
 ---
 
@@ -77,8 +77,8 @@ description: Card template selector hub. Use to find the right skill — resourc
 → 调用 card_render 技能
 → 输入: { templateId: "homework-card", data: { ... math.json 内容 ... } }
 → 输出:
-  <link rel="stylesheet" href="homework-card/ai-card.css">
-  <script src="homework-card/ai-card.js"></script>
+  <link rel="stylesheet" href="cards/homework-card/ai-card.css">
+  <script src="cards/homework-card/ai-card.js"></script>
   <ai-card data='{"card_type":"homework_reminder","title":"数学 · 第三章分数练习",...}'></ai-card>
 ```
 
@@ -89,7 +89,7 @@ description: Card template selector hub. Use to find the right skill — resourc
 | 架构 | 模板 | 渲染元素 |
 |------|------|---------|
 | **Web Component** | text, homework, media, english-word, comic, english-sentence, english-input | `<ai-card data='{...}'>` → Shadow DOM |
-| **Standalone** | answer | `<iframe src="answer-card/index.html">` |
+| **Standalone** | answer | `<iframe src="cards/answer-card/index.html">` |
 
 > 详细渲染说明、JSON Schema、主题配色、响应式断点见 [card_render.md](card_render.md)。
 
