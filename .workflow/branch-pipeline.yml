@@ -14,16 +14,14 @@ stages:
     name: security-scan
     displayName: 安全扫描
     steps:
-      - step: build@python
+      - step: script@linux
         name: skill_scanner
         displayName: Skill安全扫描器
-        pythonVersion: 3.11.0
         commands:
-          - python3 --version
-          - echo "=== 检查 bash ==="
-          - which bash || which sh
-          - echo "=== 检查 whitelist ==="
-          - ls -la .security-whitelist.yml
+          - echo "=== 环境检查 ==="
+          - whoami && pwd && ls -la
+          - echo "=== bash ==="
+          - which bash && bash --version
           - echo "=== 开始扫描 ==="
           - bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --fail-on-high
           - echo "扫描完成"
