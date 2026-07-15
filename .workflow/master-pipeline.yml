@@ -2,7 +2,6 @@ version: '1.0'
 name: master-pipeline
 displayName: Master安全扫描
 triggers:
-  trigger: auto
   push:
     branches:
       include:

@@ -2,7 +2,6 @@ version: '1.0'
 name: branch-pipeline
 displayName: Branch安全扫描
 triggers:
-  trigger: auto
   push:
     branches:
       include:
