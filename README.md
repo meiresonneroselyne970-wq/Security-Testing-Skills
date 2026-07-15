@@ -29,7 +29,6 @@ card-template/
 ├── scripts/              # 工具脚本
 │   └── security/         # 安全扫描脚本（PowerShell + Bash + Bat）
 │
-├── .github/workflows/    # GitHub Actions CI（待配置）
 └── .gitattributes        # 强制 LF 行尾（跨平台兼容）
 ```
 
