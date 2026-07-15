@@ -14,17 +14,15 @@ stages:
     name: security-scan
     displayName: 安全扫描
     steps:
-      - step: build@nodejs
+      - step: build@python
         name: skill_scanner
         displayName: Skill安全扫描器
-        nodeVersion: 20.11.0
+        pythonVersion: 3.11.0
         commands:
-          - npm --version
-          - node --version
-          - pwd && ls -la
-          - echo "--- 检查 bash ---"
-          - which bash || which sh || echo "NO SHELL"
-          - echo "--- 检查 whitelist ---"
+          - python3 --version
+          - echo "=== 检查 bash ==="
+          - which bash || which sh
+          - echo "=== 检查 whitelist ==="
           - ls -la .security-whitelist.yml
           - echo "=== 开始扫描 ==="
           - bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --fail-on-high
