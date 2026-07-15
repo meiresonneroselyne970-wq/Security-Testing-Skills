@@ -30,11 +30,30 @@ jobs:
       # ==========================================
       # 第一关：硬编码凭证扫描 (Secret Scanning)
       # ==========================================
+      # Push 事件：从 merge-base 开始扫描整个分支的增量变更
+      # PR 事件：扫描 PR 的 base..head diff
+      - name: Determine TruffleHog base ref
+        id: base-ref
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            # 计算分支与 master 的 merge-base，只扫描分支新增的 commits
+            git fetch origin ${{ github.event.repository.default_branch }} --depth=100 2>/dev/null || true
+            MERGE_BASE=$(git merge-base HEAD origin/${{ github.event.repository.default_branch }} 2>/dev/null || echo "")
+            if [ -n "$MERGE_BASE" ]; then
+              echo "base=$MERGE_BASE" >> "$GITHUB_OUTPUT"
+            else
+              # 退化：使用 HEAD~1（只扫描最新 commit）
+              echo "base=HEAD~1" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
       - name: Scan Secrets (TruffleHog)
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
+          base: ${{ steps.base-ref.outputs.base }}
           head: HEAD
           extra_args: --only-verified
 
