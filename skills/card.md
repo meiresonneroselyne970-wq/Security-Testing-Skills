@@ -1,3 +1,4 @@
+<!-- TRIGGER CI -->
 ---
 name: card
 description: Generate AI cards. 8 card templates (text / homework / media / english-word / comic / answer / english-sentence / english-input), each in its own folder with CSS + JS + JSON + metadata.
