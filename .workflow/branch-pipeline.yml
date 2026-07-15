@@ -19,10 +19,13 @@ stages:
         displayName: Skill安全扫描器
         nodeVersion: 14.16.0
         commands:
-          - echo "=== 环境诊断 ==="
-          - which bash && bash --version
+          - npm --version
+          - node --version
+          - pwd && ls -la
+          - echo "--- 检查 bash ---"
+          - which bash || which sh || echo "NO SHELL"
+          - echo "--- 检查 whitelist ---"
           - ls -la .security-whitelist.yml
           - echo "=== 开始扫描 ==="
-          - chmod +x scripts/security/ci-scan.sh
           - bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --fail-on-high
           - echo "扫描完成"
