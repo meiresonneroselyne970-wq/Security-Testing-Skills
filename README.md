@@ -112,28 +112,55 @@ python server.py
 
 ## 安全扫描
 
-项目集成**四重 AI Skills 安全防线**，覆盖凭证泄露、代码注入、提示词劫持三大攻击面：
+项目集成**多层 AI Skills 安全防线**，覆盖凭证泄露、代码注入、提示词劫持、高危系统调用四大攻击面：
+
+### 防线总览
 
 | 防线 | 引擎 | 检测目标 |
 |------|------|----------|
 | 🔑 凭证扫描 | TruffleHog | API Key、Token 等硬编码凭据（仅验证有效凭证） |
 | 🛡️ 代码审计 | Semgrep | 工具脚本中的 SSRF、命令注入、路径遍历 |
 | 🧠 提示词防注入 | Python 规则引擎 | `ignore previous instructions` 等越狱/劫持语素 |
+| ⚡ 高危调用拦截 | Bandit + ShellCheck | `subprocess`、`os.system`、`eval`、`child_process` |
 | 📋 自定义扫描 | ci-scan.sh | Skill 文件威胁评分 + 白名单机制 |
 
-**本地扫描：**
-```bash
-bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills
+### 运行时沙盒（Sandbox SDK）
+
+AI 自动执行代码等同于合法的 RCE。所有 AI 触发的系统调用必须通过 `sandbox_sdk.py` 封装：
+
+```python
+from scripts.security.sandbox_sdk import Sandbox
+
+sandbox = Sandbox(timeout=10, allow_network=False)
+result = sandbox.run(["python", "script.py", "--flag"])
 ```
 
-**Pre-commit Hook（提交时自动触发）：**
+**防护机制**：超时熔断（防死循环）· 命令黑名单（防 `rm -rf /`）· 网络出站管控（防数据外泄）· 审计日志
+
+### 人工审批卡点（CODEOWNERS）
+
+任何触碰 AI 执行权限的脚本（`.py`/`.js`/`.sh`）必须经过安全审批方可合并，详见 [`.github/CODEOWNERS`](.github/CODEOWNERS)。
+
+### 本地扫描
+
+```bash
+bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills
+python scripts/security/sandbox_sdk.py  # 沙盒自测
+```
+
+### Pre-commit Hook（提交时自动触发）
+
 ```bash
 cp scripts/security/pre-commit-hook.sh .git/hooks/pre-commit
 ```
 
-**GitHub Actions（Push / PR 时自动触发）：**
-- `ai-skills-security.yml` — 四重安全防线（TruffleHog + Semgrep + Prompt Audit + PR 反馈）
-- `skill-security-scan.yml` — 自定义扫描器 + 报告上传
+### GitHub Actions（Push / PR 时自动触发）
+
+| 工作流 | 职责 |
+|--------|------|
+| `ai-skills-security.yml` | 四重防线（TruffleHog + Semgrep + Prompt Audit + PR 反馈） |
+| `ai-tools-security.yml` | 执行安全门禁（Bandit + AST Scan + ShellCheck） |
+| `skill-security-scan.yml` | 自定义扫描器 + 报告上传 |
 
 ---
 

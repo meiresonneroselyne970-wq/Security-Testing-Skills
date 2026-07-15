@@ -1,0 +1,27 @@
+# ============================================================
+# CODEOWNERS — AI Skills 代码审查强制卡点
+# ============================================================
+# 任何触碰 AI 自动执行权限的脚本，必须经过安全审批方可合并。
+# 不允许任何人未经 review 合并包含执行权限的工具代码。
+# ============================================================
+
+# 全局默认所有者（普通业务代码）
+*       @meiresonneroselyne970-wq
+
+# ── AI 工具执行脚本（最高风险） ──
+# Python 工具脚本 — 可被 AI Agent 直接执行
+/.claude/skills/**/*.py   @meiresonneroselyne970-wq
+/cards/services/**/*.py   @meiresonneroselyne970-wq
+/skills/**/*.py           @meiresonneroselyne970-wq
+
+# Bash 脚本 — 可被 AI Agent 通过 shell 工具调用
+/scripts/**/*.sh          @meiresonneroselyne970-wq
+/skills/**/*.sh           @meiresonneroselyne970-wq
+
+# JS 工具脚本 — 可被 AI Agent 通过 Node 工具调用
+/skills/**/*.js           @meiresonneroselyne970-wq
+/.claude/skills/**/*.js   @meiresonneroselyne970-wq
+
+# ── 安全配置（敏感文件） ──
+/.security-whitelist.yml  @meiresonneroselyne970-wq
+/.github/workflows/       @meiresonneroselyne970-wq
