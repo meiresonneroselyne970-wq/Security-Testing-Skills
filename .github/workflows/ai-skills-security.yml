@@ -30,32 +30,37 @@ jobs:
       # ==========================================
       # 第一关：硬编码凭证扫描 (Secret Scanning)
       # ==========================================
-      # Push 事件：从 merge-base 开始扫描整个分支的增量变更
-      # PR 事件：扫描 PR 的 base..head diff
-      - name: Determine TruffleHog base ref
-        id: base-ref
+      # 策略：计算 merge-base，仅扫描分支增量；若无法计算则全量扫描
+      - name: Scan Secrets (TruffleHog)
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+          set -e
+          echo "🔑 正在扫描硬编码凭证..."
+
+          # 安装 TruffleHog
+          if command -v trufflehog &>/dev/null; then
+            echo "  trufflehog 已安装"
           else
-            # 计算分支与 master 的 merge-base，只扫描分支新增的 commits
-            git fetch origin ${{ github.event.repository.default_branch }} --depth=100 2>/dev/null || true
-            MERGE_BASE=$(git merge-base HEAD origin/${{ github.event.repository.default_branch }} 2>/dev/null || echo "")
-            if [ -n "$MERGE_BASE" ]; then
-              echo "base=$MERGE_BASE" >> "$GITHUB_OUTPUT"
-            else
-              # 退化：使用 HEAD~1（只扫描最新 commit）
-              echo "base=HEAD~1" >> "$GITHUB_OUTPUT"
-            fi
+            echo "  安装 trufflehog..."
+            curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
           fi
 
-      - name: Scan Secrets (TruffleHog)
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: ${{ steps.base-ref.outputs.base }}
-          head: HEAD
-          extra_args: --only-verified
+          # 计算增量范围
+          git fetch origin ${{ github.event.repository.default_branch }} --depth=100 2>/dev/null || true
+          MERGE_BASE=$(git merge-base HEAD origin/${{ github.event.repository.default_branch }} 2>/dev/null || echo "")
+
+          if [ -n "$MERGE_BASE" ] && [ "$MERGE_BASE" != "$(git rev-parse HEAD)" ]; then
+            # 有明确的增量范围，仅扫描分支新增的 commit 变更
+            echo "  扫描范围: $MERGE_BASE..HEAD"
+            trufflehog filesystem --since-commit "$MERGE_BASE" --only-verified --json --fail ./
+          elif git rev-parse HEAD~1 >/dev/null 2>&1; then
+            # 退化：扫描最近一次 commit 的变更
+            echo "  扫描范围: HEAD~1..HEAD（仅最新 commit）"
+            trufflehog filesystem --since-commit "HEAD~1" --only-verified --json --fail ./
+          else
+            # 仓库仅有一个 commit，全量扫描
+            echo "  扫描范围: 全量扫描（仓库仅有一个 commit）"
+            trufflehog filesystem --only-verified --json --fail ./
+          fi
 
       # ==========================================
       # 第二关：工具脚本静态安全扫描 (SAST for Agent Tools)
