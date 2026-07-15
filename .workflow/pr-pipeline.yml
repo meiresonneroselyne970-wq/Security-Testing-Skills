@@ -7,6 +7,7 @@ triggers:
       include:
         - master
         - main
+        - feat-ly
 stages:
   - name: security-scan
     displayName: 安全扫描

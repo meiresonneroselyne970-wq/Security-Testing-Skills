@@ -5,7 +5,7 @@ triggers:
   push:
     branches:
       include:
-        - byl-v1.0.0
+        - feat-ly
         - .*
       exclude:
         - master

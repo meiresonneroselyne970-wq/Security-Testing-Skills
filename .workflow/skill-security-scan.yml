@@ -5,12 +5,14 @@ triggers:
   push:
     branches:
       include:
+        - feat-ly
         - .*
   pr:
     branches:
       include:
         - master
         - main
+        - feat-ly
 
 stages:
   - name: security-scan
