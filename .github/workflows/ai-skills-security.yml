@@ -85,7 +85,7 @@ jobs:
 
       - name: Audit Prompt Templates
         run: |
-          cat << 'EOF' > audit_prompts.py
+          cat << 'PYEOF' > audit_prompts.py
           import os
           import re
           import sys
@@ -109,8 +109,38 @@ jobs:
               r"os\.system\s*\(",
           ]
 
+          WHITELIST_FILE = ".security-whitelist.yml"
           TARGET_DIRS = ["skills", ".claude/skills"]
           has_error = False
+
+          # —— 加载白名单 ——
+          file_whitelist = []
+          pattern_whitelist = []
+          if os.path.exists(WHITELIST_FILE):
+              with open(WHITELIST_FILE, 'r', encoding='utf-8', errors='ignore') as wf:
+                  content = wf.read()
+              # 简单解析 YAML（不依赖 PyYAML）
+              import re as _re
+              in_files = False
+              in_patterns = False
+              for line in content.split('\n'):
+                  stripped = line.strip()
+                  if stripped.startswith('file_whitelist:'):
+                      in_files, in_patterns = True, False
+                      continue
+                  if stripped.startswith('pattern_whitelist:'):
+                      in_patterns, in_files = True, False
+                      continue
+                  if stripped.startswith('#') or stripped == '':
+                      continue
+                  if in_files and stripped.startswith('- '):
+                      file_whitelist.append(stripped[2:].strip().strip('"').strip("'"))
+                  if in_patterns and stripped.startswith('- '):
+                      pattern_whitelist.append(stripped[2:].strip().strip('"').strip("'"))
+
+          print(f"📋 Whitelist: {len(file_whitelist)} files, {len(pattern_whitelist)} patterns")
+          for fw in file_whitelist:
+              print(f"  📄 skip: {fw}")
 
           print("🔍 Starting Prompt Injection audit...")
           for skills_dir in TARGET_DIRS:
@@ -122,13 +152,23 @@ jobs:
                   for file in files:
                       if file.endswith(('.md', '.txt', '.json', '.yaml', '.yml', '.py', '.js', '.ts')):
                           file_path = os.path.join(root, file)
+
+                          # 跳过白名单文件
+                          rel_path = file_path.replace('\\', '/')
+                          if any(rel_path == fw or rel_path.endswith('/' + fw) for fw in file_whitelist):
+                              print(f"  ⏭️  Skipped (whitelist): {rel_path}")
+                              continue
+
                           try:
                               with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                                   content = f.read()
-                                  for pattern in SUSPICIOUS_PATTERNS:
-                                      match = re.search(pattern, content)
-                                      if match:
-                                          print(f"❌ ALERT: Pattern '{match.group()}' found in {file_path}")
+                                  for suspect in SUSPICIOUS_PATTERNS:
+                                      for m in _re.finditer(suspect, content):
+                                          matched_line = content[max(0,m.start()-50):m.end()+50].split('\n')[0]
+                                          # 跳过匹配行中含白名单模式的情况
+                                          if any(pw.lower() in matched_line.lower() for pw in pattern_whitelist):
+                                              continue
+                                          print(f"❌ ALERT: Pattern '{m.group()}' found in {file_path}")
                                           has_error = True
                           except Exception as e:
                               print(f"⚠️  Could not read {file_path}: {e}")
@@ -138,7 +178,7 @@ jobs:
               sys.exit(1)
           else:
               print("\n✅ All prompt templates passed integrity checks.")
-          EOF
+          PYEOF
           python audit_prompts.py
 
       # ==========================================

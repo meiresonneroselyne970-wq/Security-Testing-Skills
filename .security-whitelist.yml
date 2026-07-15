@@ -4,8 +4,14 @@
 file_whitelist:
   # skill-manager: 包含 Python subprocess 代码示例用于文档演示
   - ".claude/skills/skill-manager.md"
+  # skill-security-scanner: 安全检测规则定义文档，自身含威胁特征示例
+  - ".claude/skills/skill-security-scanner.md"
+  # skill-security-policy: 安全策略文档，含检测规则说明
+  - ".claude/skills/skill-security-policy.md"
 
 pattern_whitelist:
   - "示例"
   - "example"
   - "placeholder"
+  - "代码示例"
+  - "威胁特征"
