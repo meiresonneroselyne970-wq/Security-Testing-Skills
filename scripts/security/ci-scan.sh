@@ -103,6 +103,7 @@ load_whitelist() {
 
   local in_section=false
   while IFS= read -r line; do
+    line="${line%$''}"  # strip CR from CRLF
     if $in_section && [[ "$line" =~ ^[[:space:]]*-[[:space:]]*\"(.+)\"$ ]]; then
       FILE_WHITELIST+=("${BASH_REMATCH[1]}")
     elif [[ "$line" == "file_whitelist:" ]]; then
@@ -118,6 +119,7 @@ load_whitelist() {
 
   local in_patterns=false
   while IFS= read -r line; do
+    line="${line%$''}"  # strip CR from CRLF
     if $in_patterns && [[ "$line" =~ ^[[:space:]]*-[[:space:]]*\"(.+)\"$ ]]; then
       SKIP_PATTERNS+=("${BASH_REMATCH[1]}")
     elif [[ "$line" == "pattern_whitelist:" ]]; then
