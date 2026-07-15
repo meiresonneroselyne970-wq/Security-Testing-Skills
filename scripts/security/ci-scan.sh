@@ -24,6 +24,10 @@ FAIL_ON_HIGH=false
 STRICT_MODE=false
 QUIET_MODE=false
 WHITELIST_FILE=".security-whitelist.yml"
+# Fallback: also check .workflow/ directory (Gitee Go convention)
+if [[ ! -f "$WHITELIST_FILE" ]]; then
+  [[ -f ".workflow/.security-whitelist.yml" ]] && WHITELIST_FILE=".workflow/.security-whitelist.yml"
+fi
 
 # ---------- Scoring ----------
 declare -i CRITICAL_WEIGHT=10
