@@ -1,0 +1,133 @@
+name: AI Skills Security Gate
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'skills/**'
+      - '.claude/skills/**'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'skills/**'
+      - '.claude/skills/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  security-audit:
+    name: Skills Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ==========================================
+      # 第一关：硬编码凭证扫描 (Secret Scanning)
+      # ==========================================
+      - name: Scan Secrets (TruffleHog)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+
+      # ==========================================
+      # 第二关：工具脚本静态安全扫描 (SAST for Agent Tools)
+      # ==========================================
+      - name: Security Scan for Code Tools (Semgrep)
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+          path: |
+            skills/
+            .claude/skills/
+
+      # ==========================================
+      # 第三关：提示词注入与越狱检测 (Prompt Integrity Check)
+      # ==========================================
+      - name: Setup Python for Prompt Audit
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Audit Prompt Templates
+        run: |
+          cat << 'EOF' > audit_prompts.py
+          import os
+          import re
+          import sys
+
+          SUSPICIOUS_PATTERNS = [
+              r"(?i)ignore\s*(all\s*)?previous\s*instructions",
+              r"(?i)system\s*prompt\s*bypass",
+              r"(?i)you\s*are\s*now\s*a\s*bypass",
+              r"(?i)developer\s*mode\s*enabled",
+              r"(?i)dump\s*(all\s*)?(previous\s*)?instructions",
+              r"(?i)reveal\s*your\s*system\s*prompt",
+              r"(?i)act\s*as\s*DAN\b",
+              r"(?i)jailbreak",
+              r"\bsudo\s+",
+              r"curl\s+.*http",
+              r"wget\s+.*http",
+              r"eval\s*\(.*\)",
+              r"exec\s*\(.*\)",
+              r"__import__\s*\(.*\)",
+              r"subprocess\.",
+              r"os\.system\s*\(",
+          ]
+
+          TARGET_DIRS = ["skills", ".claude/skills"]
+          has_error = False
+
+          print("🔍 Starting Prompt Injection audit...")
+          for skills_dir in TARGET_DIRS:
+              if not os.path.exists(skills_dir):
+                  print(f"  📂 Directory '{skills_dir}' not found, skipping.")
+                  continue
+
+              for root, _, files in os.walk(skills_dir):
+                  for file in files:
+                      if file.endswith(('.md', '.txt', '.json', '.yaml', '.yml', '.py', '.js', '.ts')):
+                          file_path = os.path.join(root, file)
+                          try:
+                              with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                  content = f.read()
+                                  for pattern in SUSPICIOUS_PATTERNS:
+                                      match = re.search(pattern, content)
+                                      if match:
+                                          print(f"❌ ALERT: Pattern '{match.group()}' found in {file_path}")
+                                          has_error = True
+                          except Exception as e:
+                              print(f"⚠️  Could not read {file_path}: {e}")
+
+          if has_error:
+              print("\n🚨 Build blocked: Prompt injection or malicious payload detected!")
+              sys.exit(1)
+          else:
+              print("\n✅ All prompt templates passed integrity checks.")
+          EOF
+          python audit_prompts.py
+
+      # ==========================================
+      # 第四关：PR 自动化安全反馈
+      # ==========================================
+      - name: Comment PR on Failure
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚨 **安全扫描未通过！**\n\n在你修改的 AI Skills 中发现了敏感凭证、高危脚本或疑似提示词注入攻击特征。\n\n请检查 [Actions 运行日志](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) 并及时修正。'
+            })

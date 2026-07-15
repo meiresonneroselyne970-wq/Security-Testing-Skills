@@ -29,7 +29,7 @@ card-template/
 ├── scripts/              # 工具脚本
 │   └── security/         # 安全扫描脚本（PowerShell + Bash + Bat）
 │
-├── .github/workflows/    # GitHub Actions 安全扫描 CI
+├── .github/workflows/    # AI Skills 安全防御 CI（四重校验）
 └── .gitattributes        # 强制 LF 行尾（跨平台兼容）
 ```
 
@@ -112,17 +112,28 @@ python server.py
 
 ## 安全扫描
 
-项目集成了 Skill 文件安全扫描，自动检测恶意代码注入、隐藏危险指令、敏感信息泄露等问题。
+项目集成**四重 AI Skills 安全防线**，覆盖凭证泄露、代码注入、提示词劫持三大攻击面：
 
+| 防线 | 引擎 | 检测目标 |
+|------|------|----------|
+| 🔑 凭证扫描 | TruffleHog | API Key、Token 等硬编码凭据（仅验证有效凭证） |
+| 🛡️ 代码审计 | Semgrep | 工具脚本中的 SSRF、命令注入、路径遍历 |
+| 🧠 提示词防注入 | Python 规则引擎 | `ignore previous instructions` 等越狱/劫持语素 |
+| 📋 自定义扫描 | ci-scan.sh | Skill 文件威胁评分 + 白名单机制 |
+
+**本地扫描：**
 ```bash
-# 本地扫描
 bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills
-
-# Windows
-.\scripts\security\skill-security-scan.ps1 -Scope skills/
 ```
 
-通过 Git pre-commit hook 在每次 commit 时自动触发扫描。安装方式：`cp scripts/security/pre-commit-hook.sh .git/hooks/pre-commit`
+**Pre-commit Hook（提交时自动触发）：**
+```bash
+cp scripts/security/pre-commit-hook.sh .git/hooks/pre-commit
+```
+
+**GitHub Actions（Push / PR 时自动触发）：**
+- `ai-skills-security.yml` — 四重安全防线（TruffleHog + Semgrep + Prompt Audit + PR 反馈）
+- `skill-security-scan.yml` — 自定义扫描器 + 报告上传
 
 ---
 
