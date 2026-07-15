@@ -1,4 +1,5 @@
 # 安全扫描白名单及流水线配置 — 必须 LF 行尾
+.gitattributes text eol=lf
 .security-whitelist.yml text eol=lf
 .workflow/*.yml text eol=lf
 scripts/security/*.sh text eol=lf
