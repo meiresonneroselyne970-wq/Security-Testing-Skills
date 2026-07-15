@@ -29,8 +29,8 @@ card-template/
 ├── scripts/              # 工具脚本
 │   └── security/         # 安全扫描脚本（PowerShell + Bash + Bat）
 │
-├── .github/workflows/    # GitHub Actions CI
-└── .workflow/            # Gitee CI 流水线
+├── .github/workflows/    # GitHub Actions CI（待配置）
+└── .gitattributes        # 强制 LF 行尾（跨平台兼容）
 ```
 
 ---
@@ -122,7 +122,7 @@ bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills
 .\scripts\security\skill-security-scan.ps1 -Scope skills/
 ```
 
-CI/CD 会在 Push 和 PR 时自动触发扫描。
+通过 Git pre-commit hook 在每次 commit 时自动触发扫描。安装方式：`cp scripts/security/pre-commit-hook.sh .git/hooks/pre-commit`
 
 ---
 
