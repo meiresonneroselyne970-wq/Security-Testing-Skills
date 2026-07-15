@@ -5,7 +5,6 @@ triggers:
   push:
     branches:
       include:
-        - feat-ly
         - .*
       exclude:
         - master
@@ -17,9 +16,7 @@ stages:
       - step: build@nodejs
         name: skill_scanner
         displayName: Skill安全扫描器
-        nodeVersion: 14.16.0
         commands:
-          - echo "开始扫描 Skill 文件..."
-          - chmod +x scripts/security/ci-scan.sh
+          - npm --version
+          - node --version
           - bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --fail-on-high
-          - echo "扫描完成"
