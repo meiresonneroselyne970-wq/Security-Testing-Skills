@@ -1,0 +1,58 @@
+name: Skill Security Scan
+
+on:
+  push:
+    paths:
+      - 'skills/**'
+      - '.claude/skills/**'
+  pull_request:
+    paths:
+      - 'skills/**'
+      - '.claude/skills/**'
+  workflow_dispatch:
+
+jobs:
+  security-scan:
+    name: Skill Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Skill Security Scanner
+        id: scan
+        run: |
+          chmod +x scripts/security/ci-scan.sh
+          bash scripts/security/ci-scan.sh \
+            --scope skills \
+            --scope .claude/skills \
+            --format json \
+            --output skill-security-report.json \
+            --fail-on-high
+
+      - name: Generate Report
+        if: always()
+        run: |
+          if [ -f skill-security-report.json ]; then
+            echo "=== 扫描报告 ==="
+            cat skill-security-report.json | python3 -m json.tool 2>/dev/null || cat skill-security-report.json
+          else
+            echo "未生成报告文件"
+          fi
+
+      - name: Upload Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-security-report
+          path: |
+            skill-security-report.json
+          retention-days: 30
+
+      - name: Check Result
+        if: steps.scan.outcome == 'failure'
+        run: |
+          echo "❌ Skill 安全扫描失败"
+          echo "请修复安全问题后重试"
+          exit 1
