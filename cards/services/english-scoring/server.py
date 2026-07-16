@@ -11,6 +11,8 @@ API 端点:
     GET  /api/health →  健康检查
 """
 
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -101,8 +103,8 @@ async def health():
 if __name__ == "__main__":
     uvicorn.run(
         "server:app",
-        host="0.0.0.0",
-        port=8800,
+        host=os.getenv("HOST", "127.0.0.1"),  # 默认仅本地，容器通过 HOST=0.0.0.0 覆盖
+        port=int(os.getenv("PORT", 8800)),
         reload=True,
         log_level="info",
     )
