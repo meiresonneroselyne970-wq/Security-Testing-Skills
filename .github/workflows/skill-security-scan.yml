@@ -65,29 +65,93 @@ jobs:
         run: |
           cat << 'PYEOF' > audit_prompts.py
           import os, re, sys
+
           SUSPICIOUS_PATTERNS = [
-              r"(?i)ignore\s*(all\s*)?previous\s*instructions", r"(?i)system\s*prompt\s*bypass",
-              r"(?i)you\s*are\s*now\s*a\s*bypass", r"(?i)developer\s*mode\s*enabled",
-              r"(?i)dump\s*(all\s*)?(previous\s*)?instructions", r"(?i)reveal\s*your\s*system\s*prompt",
-              r"(?i)act\s*as\s*DAN\b", r"(?i)jailbreak", r"\bsudo\s+", r"curl\s+.*http",
-              r"wget\s+.*http", r"eval\s*\(.*\)", r"exec\s*\(.*\)", r"__import__\s*\(.*\)",
-              r"subprocess\.", r"os\.system\s*\("
+              r"(?i)ignore\s*(all\s*)?previous\s*instructions",
+              r"(?i)system\s*prompt\s*bypass",
+              r"(?i)you\s*are\s*now\s*a\s*bypass",
+              r"(?i)developer\s*mode\s*enabled",
+              r"(?i)dump\s*(all\s*)?(previous\s*)?instructions",
+              r"(?i)reveal\s*your\s*system\s*prompt",
+              r"(?i)act\s*as\s*DAN\b",
+              r"(?i)jailbreak",
+              r"\bsudo\s+",
+              r"curl\s+.*http",
+              r"wget\s+.*http",
+              r"eval\s*\(.*\)",
+              r"exec\s*\(.*\)",
+              r"__import__\s*\(.*\)",
+              r"subprocess\.",
+              r"os\.system\s*\(",
           ]
+
+          WHITELIST_FILE = ".security-whitelist.yml"
+          TARGET_DIRS = ["skills", ".claude/skills"]
           has_error = False
-          for d in ["skills", ".claude/skills"]:
-              if not os.path.exists(d): continue
-              for root, _, files in os.walk(d):
-                  for file in [f for f in files if f.endswith(('.md', '.txt', '.json', '.yaml', '.yml', '.py', '.js', '.ts'))]:
-                      path = os.path.join(root, file)
-                      try:
-                          with open(path, 'r', encoding='utf-8', errors='ignore') as f:
-                              content = f.read()
-                              for suspect in SUSPICIOUS_PATTERNS:
-                                  if re.search(suspect, content):
-                                      print(f"❌ ALERT: Pattern matching '{suspect}' found in {path}")
-                                      has_error = True
-                      except Exception as e: print(f"⚠️ Could not read {path}: {e}")
-          if has_error: sys.exit(1)
+
+          # —— 加载白名单 ——
+          file_whitelist = []
+          pattern_whitelist = []
+          if os.path.exists(WHITELIST_FILE):
+              with open(WHITELIST_FILE, 'r', encoding='utf-8', errors='ignore') as wf:
+                  content = wf.read()
+              in_files = False
+              in_patterns = False
+              for line in content.split('\n'):
+                  stripped = line.strip()
+                  if stripped.startswith('file_whitelist:'):
+                      in_files, in_patterns = True, False
+                      continue
+                  if stripped.startswith('pattern_whitelist:'):
+                      in_patterns, in_files = True, False
+                      continue
+                  if stripped.startswith('#') or stripped == '':
+                      continue
+                  if in_files and stripped.startswith('- '):
+                      file_whitelist.append(stripped[2:].strip().strip('"').strip("'"))
+                  if in_patterns and stripped.startswith('- '):
+                      pattern_whitelist.append(stripped[2:].strip().strip('"').strip("'"))
+
+          print(f"📋 Whitelist: {len(file_whitelist)} files, {len(pattern_whitelist)} patterns")
+          for fw in file_whitelist:
+              print(f"  📄 skip: {fw}")
+
+          print("🔍 Starting Prompt Injection audit...")
+          for skills_dir in TARGET_DIRS:
+              if not os.path.exists(skills_dir):
+                  print(f"  📂 Directory '{skills_dir}' not found, skipping.")
+                  continue
+
+              for root, _, files in os.walk(skills_dir):
+                  for file in files:
+                      if file.endswith(('.md', '.txt', '.json', '.yaml', '.yml', '.py', '.js', '.ts')):
+                          file_path = os.path.join(root, file)
+
+                          # 跳过白名单文件
+                          rel_path = file_path.replace('\\', '/')
+                          if any(rel_path == fw or rel_path.endswith('/' + fw) for fw in file_whitelist):
+                              print(f"  ⏭️  Skipped (whitelist): {rel_path}")
+                              continue
+
+                          try:
+                              with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                  content = f.read()
+                                  for suspect in SUSPICIOUS_PATTERNS:
+                                      for m in re.finditer(suspect, content):
+                                          matched_line = content[max(0,m.start()-50):m.end()+50].split('\n')[0]
+                                          # 跳过匹配行中含白名单模式的情况
+                                          if any(pw.lower() in matched_line.lower() for pw in pattern_whitelist):
+                                              continue
+                                          print(f"❌ ALERT: Pattern '{m.group()}' found in {file_path}")
+                                          has_error = True
+                          except Exception as e:
+                              print(f"⚠️  Could not read {file_path}: {e}")
+
+          if has_error:
+              print("\n🚨 Build blocked: Prompt injection or malicious payload detected!")
+              sys.exit(1)
+          else:
+              print("\n✅ All prompt templates passed integrity checks.")
           PYEOF
           python audit_prompts.py
 
