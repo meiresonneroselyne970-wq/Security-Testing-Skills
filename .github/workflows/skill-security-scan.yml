@@ -1,58 +1,198 @@
-name: Skill Security Scan
+name: AI DevSecOps Pipeline
 
 on:
   push:
+    branches: ['main', 'master', 'byl-v1.0.0']
     paths:
       - 'skills/**'
       - '.claude/skills/**'
+      - 'cards/**'
+      - 'scripts/**'
   pull_request:
+    branches: ['main', 'master', 'byl-v1.0.0']
     paths:
       - 'skills/**'
       - '.claude/skills/**'
+      - 'cards/**'
+      - 'scripts/**'
+  schedule:
+    - cron: '31 21 * * 4'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+  actions: read
+
 jobs:
-  security-scan:
-    name: Skill Security Scan
+  # ==========================================
+  # 1. 🔑 凭证泄漏扫描 (TruffleHog)
+  # ==========================================
+  secrets-audit:
+    name: 🔑 Secrets Scan
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # TruffleHog 增量扫描必须
 
-      - name: Run Skill Security Scanner
-        id: scan
+      - name: Scan Secrets (TruffleHog)
         run: |
-          chmod +x scripts/security/ci-scan.sh
-          bash scripts/security/ci-scan.sh \
-            --scope skills \
-            --scope .claude/skills \
-            --format json \
-            --output skill-security-report.json \
-            --fail-on-high
-
-      - name: Generate Report
-        if: always()
-        run: |
-          if [ -f skill-security-report.json ]; then
-            echo "=== 扫描报告 ==="
-            cat skill-security-report.json | python3 -m json.tool 2>/dev/null || cat skill-security-report.json
+          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+          MERGE_BASE=$(git merge-base HEAD origin/${{ github.event.repository.default_branch }} 2>/dev/null || echo "")
+          if [ -n "$MERGE_BASE" ] && [ "$MERGE_BASE" != "$(git rev-parse HEAD)" ]; then
+            trufflehog git file://. --since-commit "$MERGE_BASE" --only-verified --fail
           else
-            echo "未生成报告文件"
+            trufflehog git file://. --since-commit "HEAD~1" --only-verified --fail
           fi
 
-      - name: Upload Report
+  # ==========================================
+  # 2. 💉 提示词注入与越狱审计
+  # ==========================================
+  prompt-security:
+    name: 💉 Prompt Injection Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Audit Prompt Templates
+        run: |
+          cat << 'PYEOF' > audit_prompts.py
+          import os, re, sys
+          SUSPICIOUS_PATTERNS = [
+              r"(?i)ignore\s*(all\s*)?previous\s*instructions", r"(?i)system\s*prompt\s*bypass",
+              r"(?i)you\s*are\s*now\s*a\s*bypass", r"(?i)developer\s*mode\s*enabled",
+              r"(?i)dump\s*(all\s*)?(previous\s*)?instructions", r"(?i)reveal\s*your\s*system\s*prompt",
+              r"(?i)act\s*as\s*DAN\b", r"(?i)jailbreak", r"\bsudo\s+", r"curl\s+.*http",
+              r"wget\s+.*http", r"eval\s*\(.*\)", r"exec\s*\(.*\)", r"__import__\s*\(.*\)",
+              r"subprocess\.", r"os\.system\s*\("
+          ]
+          has_error = False
+          for d in ["skills", ".claude/skills"]:
+              if not os.path.exists(d): continue
+              for root, _, files in os.walk(d):
+                  for file in [f for f in files if f.endswith(('.md', '.txt', '.json', '.yaml', '.yml', '.py', '.js', '.ts'))]:
+                      path = os.path.join(root, file)
+                      try:
+                          with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+                              content = f.read()
+                              for suspect in SUSPICIOUS_PATTERNS:
+                                  if re.search(suspect, content):
+                                      print(f"❌ ALERT: Pattern matching '{suspect}' found in {path}")
+                                      has_error = True
+                      except Exception as e: print(f"⚠️ Could not read {path}: {e}")
+          if has_error: sys.exit(1)
+          PYEOF
+          python audit_prompts.py
+
+  # ==========================================
+  # 3. 🛑 AI 工具沙箱执行门禁 (RCE 防御)
+  # ==========================================
+  execution-gate:
+    name: 🛑 Execution Sandbox Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Python Bandit Scan
+        uses: PyCQA/bandit-action@v1
+        with:
+          targets: '.claude/skills/ cards/services/ skills/'
+          args: '-ll -ii -s B404,B602,B603'
+
+      - name: ShellCheck for Bash
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: 'scripts'
+          severity: error
+
+      - name: JS/Node System Call Check
+        run: |
+          if grep -Hn -E "child_process|execSync|spawnSync|fork\(" $(find skills .claude/skills cards -name "*.js" -type f 2>/dev/null) 2>/dev/null; then
+            echo "❌ SECURITY ALERT: Prohibited functions found. Use SandboxSDK."
+            exit 1
+          fi
+
+  # ==========================================
+  # 4. 🐛 静态应用安全测试 (Semgrep & 内部脚本)
+  # ==========================================
+  sast-analysis:
+    name: 🐛 Semgrep & Internal Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Semgrep Scan
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: p/security-audit p/secrets
+          path: 'skills/ .claude/skills/'
+
+      - name: Internal Skill Security Scanner
+        run: |
+          chmod +x scripts/security/ci-scan.sh
+          bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --fail-on-high
+
+      - name: Upload Security Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: skill-security-report
-          path: |
-            skill-security-report.json
-          retention-days: 30
+          path: skill-security-report.json
+          retention-days: 14
 
-      - name: Check Result
-        if: steps.scan.outcome == 'failure'
-        run: |
-          echo "❌ Skill 安全扫描失败"
-          echo "请修复安全问题后重试"
-          exit 1
+  # ==========================================
+  # 5. 🧠 CodeQL 高级分析 (矩阵并行)
+  # ==========================================
+  codeql-analysis:
+    name: 🧠 CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: javascript-typescript
+            build-mode: none
+          - language: python
+            build-mode: none
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{matrix.language}}"
+
+  # ==========================================
+  # 6. 🚨 PR 失败状态聚合通知 (防刷屏)
+  # ==========================================
+  pr-failure-notification:
+    name: 🚨 Report Failures to PR
+    runs-on: ubuntu-latest
+    # 仅在 PR 事件触发，且只要前面有任意一个 Job 失败/取消，就执行此任务
+    if: always() && github.event_name == 'pull_request' && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
+    needs: [secrets-audit, prompt-security, execution-gate, sast-analysis, codeql-analysis]
+    steps:
+      - name: Comment PR on Failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚨 **AI DevSecOps Pipeline Failed!**\n\n部分安全门禁未通过，请检查对应模块并修复：\n- 检查 PR 顶部的具体失败状态 (如 🔑 Secrets, 💉 Prompts, 🛑 Execution)。\n- 你可以点击 `Re-run failed jobs` 仅重试失败的模块。\n\n📋 [点击查看完整日志详情](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+            })
