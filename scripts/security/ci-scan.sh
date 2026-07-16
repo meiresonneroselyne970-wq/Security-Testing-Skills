@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # Skill Security Scanner — Bash / CI Version
-# Version: 2.0.1
+# Version: 2.1.0
 # Part of AI DevSecOps Pipeline (skill-security-scan.yml)
 # Purpose: Automated security scanning of skill files in CI/CD
 # Compatible: Gitee Go, GitHub Actions, GitLab CI, local Linux/macOS
@@ -486,7 +486,7 @@ main() {
   load_whitelist
 
   log_info "=============================================="
-  log_info "  Skill Security Scanner v2.0.0"
+  log_info "  Skill Security Scanner v2.1.0"
   log_info "  Scope: ${SCOPE_DIRS[*]}"
   log_info "=============================================="
   echo ""

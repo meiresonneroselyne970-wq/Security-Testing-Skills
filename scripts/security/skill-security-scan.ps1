@@ -1,7 +1,8 @@
 # Skill Security Scanner - PowerShell Version
-# Version: 2.0.0
+# Version: 2.1.0
+# Part of AI DevSecOps Pipeline (skill-security-scan.yml)
 # Purpose: Auto scan skill files for security threats
-# Aligned with ci-scan.sh v2.0.0 rule set
+# Aligned with ci-scan.sh v2.1.0 rule set
 
 param(
     [string]$Scope = "skills/",

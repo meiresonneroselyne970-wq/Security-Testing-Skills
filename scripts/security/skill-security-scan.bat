@@ -1,12 +1,13 @@
 @echo off
 REM Skill Security Scanner - 批处理版本
-REM 版本: 1.0.0
+REM 版本: 2.1.0
+REM Part of AI DevSecOps Pipeline (skill-security-scan.yml)
 REM 用途: 自动扫描 skill 文件，检测安全威胁
 
 setlocal enabledelayedexpansion
 
 echo ==========================================
-echo Skill 安全扫描器 v1.0.0
+echo Skill 安全扫描器 v2.1.0
 echo ==========================================
 echo.
 
