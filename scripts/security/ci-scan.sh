@@ -1,17 +1,13 @@
 #!/bin/bash
 # ============================================================
 # Skill Security Scanner — Bash / CI Version
-# Version: 2.1.0
+# Version: 2.2.0 (Added Incremental Scan & Inline Ignore)
 # Part of AI DevSecOps Pipeline (skill-security-scan.yml)
-# Purpose: Automated security scanning of skill files in CI/CD
-# Compatible: Gitee Go, GitHub Actions, GitLab CI, local Linux/macOS
 # ============================================================
 set -o pipefail
 
-# Force UTF-8 locale
 export LC_ALL=C.UTF-8 2>/dev/null || export LC_ALL=en_US.UTF-8 2>/dev/null || true
 
-# Auto-detect CI: disable color if not a real terminal
 if [[ ! -t 1 ]] || [[ -n "$CI" ]] || [[ -n "$GITEE_PIPELINE_BUILD_NUMBER" ]]; then
   NO_COLOR=true
 fi
@@ -25,6 +21,10 @@ FAIL_ON_HIGH=false
 STRICT_MODE=false
 QUIET_MODE=false
 WHITELIST_FILE=".security-whitelist.yml"
+
+# 增量扫描参数
+INCREMENTAL_MODE=false
+BASE_BRANCH=""
 
 # ---------- Scoring ----------
 declare -i CRITICAL_WEIGHT=10
@@ -45,6 +45,7 @@ declare -i LOW_COUNT=0
 declare -a THREATS_JSON=()
 declare -a FILE_WHITELIST=()
 declare -a SKIP_PATTERNS=()
+declare -a TARGET_FILES=()
 
 # ---------- Help ----------
 usage() {
@@ -58,12 +59,14 @@ Options:
   --strict              Exit 1 on Medium+ threats
   --quiet               Suppress non-error output
   --whitelist <file>    Whitelist config path
+  --incremental         Enable git-based incremental scan (PR-friendly)
+  --base <branch>       Base branch for diff (default: origin/main)
   -h, --help            Show this help
 EOF
   exit 2
 }
 
-# ---------- Color helpers (auto-disabled in CI) ----------
+# ---------- Color helpers ----------
 if [[ -n "$NO_COLOR" ]]; then
   C_RESET=""; C_CYAN=""; C_GREEN=""; C_YELLOW=""; C_RED=""; C_MAGENTA=""; C_BOLD_RED=""
 else
@@ -71,7 +74,6 @@ else
   C_YELLOW="\033[33m"; C_RED="\033[31m"; C_MAGENTA="\033[35m"; C_BOLD_RED="\033[1;31m"
 fi
 
-# ---------- Logging ----------
 log_info()  { $QUIET_MODE || echo -e "${C_CYAN}[INFO]${C_RESET} $*"; }
 log_pass()  { $QUIET_MODE || echo -e "${C_GREEN}[PASS]${C_RESET} $*"; }
 log_warn()  { echo -e "${C_YELLOW}[WARN]${C_RESET} $*"; }
@@ -88,6 +90,8 @@ parse_args() {
       --strict) STRICT_MODE=true; shift ;;
       --quiet)  QUIET_MODE=true; shift ;;
       --whitelist) WHITELIST_FILE="$2"; shift 2 ;;
+      --incremental) INCREMENTAL_MODE=true; shift ;;
+      --base) BASE_BRANCH="$2"; shift 2 ;;
       -h|--help) usage ;;
       *) log_error "Unknown option: $1"; usage ;;
     esac
@@ -96,15 +100,12 @@ parse_args() {
 
 # ---------- Load Whitelist ----------
 load_whitelist() {
-  if [[ ! -f "$WHITELIST_FILE" ]]; then
-    log_info "No whitelist file at $WHITELIST_FILE"
-    return
-  fi
+  if [[ ! -f "$WHITELIST_FILE" ]]; then return; fi
   log_info "Loading whitelist from $WHITELIST_FILE"
 
   local in_section=false
   while IFS= read -r line; do
-    line="${line%$''}"  # strip CR from CRLF
+    line="${line%$'\r'}"
     if $in_section && [[ "$line" =~ ^[[:space:]]*-[[:space:]]*\"(.+)\"$ ]]; then
       FILE_WHITELIST+=("${BASH_REMATCH[1]}")
     elif [[ "$line" == "file_whitelist:" ]]; then
@@ -115,23 +116,10 @@ load_whitelist() {
   done < "$WHITELIST_FILE"
 
   if [[ ${#FILE_WHITELIST[@]} -gt 0 ]]; then
-    log_info "Whitelisted: ${FILE_WHITELIST[*]}"
+    log_info "Whitelisted files: ${FILE_WHITELIST[*]}"
   fi
-
-  local in_patterns=false
-  while IFS= read -r line; do
-    line="${line%$''}"  # strip CR from CRLF
-    if $in_patterns && [[ "$line" =~ ^[[:space:]]*-[[:space:]]*\"(.+)\"$ ]]; then
-      SKIP_PATTERNS+=("${BASH_REMATCH[1]}")
-    elif [[ "$line" == "pattern_whitelist:" ]]; then
-      in_patterns=true
-    elif [[ "$line" =~ ^[a-z] ]] && $in_patterns; then
-      in_patterns=false
-    fi
-  done < "$WHITELIST_FILE"
 }
 
-# ---------- Whitelist Check ----------
 is_whitelisted() {
   local file="$1"
   for wf in "${FILE_WHITELIST[@]}"; do
@@ -140,21 +128,19 @@ is_whitelisted() {
   return 1
 }
 
-should_skip_line() {
-  local line_lower
-  line_lower=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-  for pattern in "${SKIP_PATTERNS[@]}"; do
-    if [[ "$line_lower" =~ $pattern ]]; then
-      return 0
-    fi
-  done
-  return 1
-}
-
-# ---------- Record Threat ----------
+# ---------- Record Threat (with Inline Ignore support) ----------
 record_threat() {
   local rule_id="$1" category="$2" severity="$3" file="$4" line_num="$5"
   local match="$6" description="$7" recommendation="$8"
+  local inline_ignore="$9"
+
+  # 内联豁免: <!-- sec-ignore: T1.1, T3.1 --> 或 <!-- sec-ignore: ALL -->
+  if [[ -n "$inline_ignore" ]]; then
+    if [[ "$inline_ignore" == *"ALL"* || "$inline_ignore" == *"$rule_id"* ]]; then
+      log_info "  ⏭️  Line ${line_num} in ${file} bypassed ${rule_id} via sec-ignore"
+      return 0
+    fi
+  fi
 
   local weight=0
   case "$severity" in
@@ -186,94 +172,96 @@ record_threat() {
   fi
 }
 
-# ---------- Scan Single File (fast: uses bash built-in [[ =~ ]]) ----------
+# ---------- Scan Single File ----------
 scan_file() {
   local file="$1"
 
   if is_whitelisted "$file"; then
-    log_info "Skipping whitelisted: $file"
+    log_info "⏭️  Skipping whitelisted: $file"
     return
   fi
-
   [[ ! -f "$file" || ! -r "$file" || ! -s "$file" ]] && return
 
   TOTAL_FILES=$((TOTAL_FILES + 1))
   log_info "Scanning: $file"
 
-  local line_num=0 found=false line line_lower
+  local line_num=0 found=false line line_lower inline_ignore
 
   while IFS= read -r line || [[ -n "$line" ]]; do
     line_num=$((line_num + 1))
     [[ -z "$line" ]] && continue
-
-    # Skip documentation patterns (check once)
     line_lower=$(echo "$line" | tr '[:upper:]' '[:lower:]')
-    should_skip_line "$line_lower" && continue
+
+    # 提取行级内联豁免: <!-- sec-ignore: T1.1, T3.1 --> 或 <!-- sec-ignore: ALL -->
+    inline_ignore=""
+    if [[ "$line" =~ \<!--[[:space:]]*sec-ignore:[[:space:]]*([A-Za-z0-9.,_[:space:]-]+)--\> ]]; then
+      inline_ignore="${BASH_REMATCH[1]}"
+    fi
 
     # === T1: Malicious Command Injection ===
 
     # T1.1: System command execution
     if [[ "$line_lower" =~ exec\(|system\(|popen\(|subprocess\.call|subprocess\.run|os\.system|child_process\.exec|child_process\.spawn|eval\(|shell_exec|passthru ]]; then
       record_threat "T1.1" "Malicious Command" "Critical" "$file" "$line_num" "${line:0:80}" \
-        "检测到系统命令执行函数" "移除系统命令执行函数，使用安全的替代方案"
+        "检测到系统命令执行函数" "移除系统命令执行函数，使用 SandboxSDK" "$inline_ignore"
       found=true
     fi
 
     # T1.2: File system destruction
     if [[ "$line_lower" =~ rm\ -rf|rm\ -r\ /|rmdir\ /s|del\ /f|unlink|rmdir|shutil\.rmtree|fs\.rmdir|fs\.unlink ]]; then
       record_threat "T1.2" "Malicious Command" "Critical" "$file" "$line_num" "${line:0:80}" \
-        "检测到文件系统破坏命令" "移除文件系统破坏命令，使用安全的文件操作"
+        "检测到文件系统破坏命令" "移除文件系统破坏命令" "$inline_ignore"
       found=true
     fi
 
     # T1.3: Network data exfiltration
     if [[ "$line_lower" =~ curl.*POST|wget.*POST|fetch\(.*POST|XMLHttpRequest|axios\.post|requests\.post|urllib.*urlopen ]]; then
       record_threat "T1.3" "Malicious Command" "Critical" "$file" "$line_num" "${line:0:80}" \
-        "检测到数据外传操作" "验证数据传输合法性，移除非必要的网络请求"
+        "检测到数据外传操作" "验证数据传输合法性" "$inline_ignore"
       found=true
     fi
 
     # T1.4: Reverse shell
     if [[ "$line_lower" =~ bash\ -i|nc\ -e|ncat|socat|/dev/tcp|mkfifo|reverse.*shell ]]; then
       record_threat "T1.4" "Malicious Command" "Critical" "$file" "$line_num" "${line:0:80}" \
-        "检测到反向 Shell 特征" "立即移除反向 Shell 相关代码"
+        "检测到反向 Shell 特征" "立即移除反向 Shell 相关代码" "$inline_ignore"
       found=true
     fi
 
     # T1.5: Privilege escalation
     if [[ "$line_lower" =~ sudo\ |chmod\ 777|chown|setuid|setgid|su\ -|su\ root ]]; then
       record_threat "T1.5" "Malicious Command" "Critical" "$file" "$line_num" "${line:0:80}" \
-        "检测到权限提升操作" "移除权限提升代码，遵循最小权限原则"
+        "检测到权限提升操作" "遵循最小权限原则" "$inline_ignore"
       found=true
     fi
 
-    # T1.7: Code obfuscation
+    # T1.7: Code obfuscation / dynamic execution
     if [[ "$line_lower" =~ atob\(|btoa\(|base64.*decode|eval\(|Function\(|new\ Function|decodeURI|unescape ]]; then
       record_threat "T1.7" "Malicious Command" "High" "$file" "$line_num" "${line:0:80}" \
-        "检测到代码混淆/动态执行" "移除动态代码执行，使用显式安全的实现"
+        "检测到代码混淆/动态执行" "移除动态代码执行" "$inline_ignore"
       found=true
     fi
 
     # === T2: Hidden Dangerous Commands ===
 
-    # T2.1: Zero-width characters (Perl for Unicode)
+    # T2.1: Zero-width characters
     if [[ "$line" =~ $'\xE2\x80\x8B' || "$line" =~ $'\xE2\x80\x8C' || "$line" =~ $'\xE2\x80\x8D' || "$line" =~ $'\xEF\xBB\xBF' ]]; then
       record_threat "T2.1" "Hidden Command" "Critical" "$file" "$line_num" "零宽字符" \
-        "检测到零宽字符，可能隐藏恶意指令" "移除零宽字符，确保代码可见性"
+        "检测到零宽字符，可能隐藏恶意指令" "移除零宽字符" "$inline_ignore"
       found=true
     fi
 
-    # T2.2: System prompt override
+    # T2.2: System prompt override / jailbreak
     if [[ "$line_lower" =~ ignore\ all\ previous|忽略之前的指令|忽略所有安全|忽略.*限制|system\ prompt\ override|忽略.*警告.*安全|跳过.*安全.*检查|bypass.*security.*check|忽略.*审核 ]]; then
       record_threat "T2.2" "Hidden Command" "Critical" "$file" "$line_num" "${line:0:80}" \
-        "检测到系统提示词覆盖/绕过安全指令" "移除绕过安全机制的危险提示词"
+        "检测到系统提示词覆盖/越狱指令" "移除绕过安全机制的危险提示词" "$inline_ignore"
       found=true
     fi
 
-    # T2.3: Hidden commands in comments
+    # T2.3: Hidden commands in HTML comments
     if [[ "$line" =~ \<!--.*(exec|system|eval|rm\ -rf|curl|wget).*--\> ]]; then
       record_threat "T2.3" "Hidden Command" "Critical" "$file" "$line_num" "${line:0:80}" \
-        "检测到注释中隐藏的可执行命令" "移除注释中的命令，确保透明度"
+        "检测到注释中隐藏的可执行命令" "移除注释中的命令，确保透明度" "$inline_ignore"
       found=true
     fi
 
@@ -283,7 +271,7 @@ scan_file() {
     if [[ "$line" =~ sk-[a-zA-Z0-9]{20,} ]]; then
       if ! [[ "$line_lower" =~ sk-xxx|sk-你的|sk-your|sk-example|sk-demo|sk-test|sk-sample|sk_replace ]]; then
         record_threat "T3.1" "Sensitive Info" "High" "$file" "$line_num" "sk-****" \
-          "检测到硬编码的 API Key" "将 API Key 移至环境变量或密钥管理服务"
+          "检测到硬编码的 API Key" "将 API Key 移至环境变量或密钥管理服务" "$inline_ignore"
         found=true
       fi
     fi
@@ -292,7 +280,7 @@ scan_file() {
     if [[ "$line" =~ Bearer[[:space:]]+[a-zA-Z0-9._-]{20,} ]]; then
       if ! [[ "$line_lower" =~ bearer\ xxx|bearer\ your|bearer\ example|bearer\ demo|bearer\ test|bearer\ replace ]]; then
         record_threat "T3.2" "Sensitive Info" "High" "$file" "$line_num" "Bearer ****" \
-          "检测到硬编码的 Bearer Token" "将 Token 移至环境变量或密钥管理服务"
+          "检测到硬编码的 Bearer Token" "将 Token 移至环境变量或密钥管理服务" "$inline_ignore"
         found=true
       fi
     fi
@@ -301,7 +289,7 @@ scan_file() {
     if [[ "$line_lower" =~ password[[:space:]]*[=:][[:space:]]*[\"\'][^[:space:]\"\']{4,}[\"\'] ]]; then
       if ! [[ "$line_lower" =~ placeholder|替换|示例|example|demo|test|replace ]]; then
         record_threat "T3.3" "Sensitive Info" "High" "$file" "$line_num" "password=****" \
-          "检测到硬编码的密码" "将密码移至环境变量或密钥管理服务"
+          "检测到硬编码的密码" "将密码移至环境变量或密钥管理服务" "$inline_ignore"
         found=true
       fi
     fi
@@ -309,7 +297,7 @@ scan_file() {
     # T3.4: Private key
     if [[ "$line" =~ -----BEGIN[[:space:]]+(RSA[[:space:]]+)?PRIVATE[[:space:]]+KEY ]]; then
       record_threat "T3.4" "Sensitive Info" "High" "$file" "$line_num" "PRIVATE KEY" \
-        "检测到硬编码的私钥" "私钥必须存储在安全的密钥管理服务中"
+        "检测到硬编码的私钥" "私钥必须存储在安全的密钥管理服务中" "$inline_ignore"
       found=true
     fi
 
@@ -318,38 +306,38 @@ scan_file() {
     # T5.1: Credential solicitation
     if [[ "$line_lower" =~ enter.*password|provide.*token|input.*api.*key|请.*输入.*密码|输入.*token|提供.*密钥|请输入.*API ]]; then
       record_threat "T5.1" "Social Engineering" "Critical" "$file" "$line_num" "${line:0:80}" \
-        "检测到凭据诱导语句（社会工程攻击）" "移除凭据诱导语句，使用安全的认证流程"
+        "检测到凭据诱导语句（社会工程攻击）" "移除凭据诱导语句" "$inline_ignore"
       found=true
     fi
 
     # T5.2: Urgency inducement
     if [[ "$line_lower" =~ 立即.*执行|马上.*运行|urgent|immediately|asap|紧急.*处理|不.*执行.*将会|马上.*否则 ]]; then
       record_threat "T5.2" "Social Engineering" "Medium" "$file" "$line_num" "${line:0:80}" \
-        "检测到紧急诱导语句" "移除紧急诱导措辞，避免用户仓促操作"
+        "检测到紧急诱导语句" "移除紧急诱导措辞" "$inline_ignore"
       found=true
     fi
 
     # T5.4: Security bypass inducement
     if [[ "$line_lower" =~ ignore.*warning|skip.*check|bypass.*security|忽略.*警告|跳过.*检测|绕过.*安全|disable.*security ]]; then
       record_threat "T5.4" "Social Engineering" "Critical" "$file" "$line_num" "${line:0:80}" \
-        "检测到安全绕过诱导语句" "移除安全绕过语句，尊重安全机制"
+        "检测到安全绕过诱导语句" "移除安全绕过语句" "$inline_ignore"
       found=true
     fi
 
     # === T6: Dependency & Supply Chain Risks ===
 
-    # T6.1: External script reference (only flag http/https URLs, not local paths)
+    # T6.1: External script reference
     if [[ "$line" =~ \<script[[:space:]]+src=[\"\']https?:// ]]; then
       record_threat "T6.1" "Dependency Risk" "Medium" "$file" "$line_num" "${line:0:80}" \
-        "检测到外部脚本引用" "验证外部脚本来源可信，优先使用官方 CDN"
+        "检测到外部脚本引用" "验证外部脚本来源可信，优先使用官方 CDN" "$inline_ignore"
       found=true
     fi
 
-    # T6.2: Non-whitelist CDN reference
+    # T6.2: Non-whitelist CDN
     if [[ "$line_lower" =~ cdn\.|unpkg\.|jsdelivr\. ]]; then
       if ! [[ "$line_lower" =~ cdnjs\.cloudflare\.com|unpkg\.com|jsdelivr\.net|cdn\.jsdelivr\.net|cdn\.bootcdn\.net|lib\.baomitu\.com ]]; then
         record_threat "T6.2" "Dependency Risk" "Medium" "$file" "$line_num" "${line:0:80}" \
-          "检测到非白名单 CDN 引用" "使用受信任的 CDN 来源，或将此来源加入白名单"
+          "检测到非白名单 CDN 引用" "使用受信任的 CDN 来源" "$inline_ignore"
         found=true
       fi
     fi
@@ -359,13 +347,43 @@ scan_file() {
   $found || log_pass "$file — 安全"
 }
 
-# ---------- Scan Directory ----------
-scan_directory() {
-  local dir="$1"
-  [[ ! -d "$dir" ]] && return
-  while IFS= read -r -d '' file; do
-    scan_file "$file"
-  done < <(find "$dir" -type f -name "*.md" -print0 2>/dev/null || true)
+# ---------- File Gathering (Incremental or Full) ----------
+gather_files() {
+  if $INCREMENTAL_MODE; then
+    BASE_BRANCH="${BASE_BRANCH:-origin/main}"
+    log_info "运行模式: Git 增量扫描 (比对基准: $BASE_BRANCH)"
+
+    # 确保远程分支可用
+    git fetch origin "$(echo "$BASE_BRANCH" | sed 's|origin/||')" --depth=50 2>/dev/null || true
+
+    local diff_files
+    mapfile -t diff_files < <(git diff --name-only --diff-filter=AMR "$BASE_BRANCH"...HEAD 2>/dev/null || echo "")
+
+    for file in "${diff_files[@]}"; do
+      if [[ -n "$file" && "$file" == *.md ]]; then
+        for dir in "${SCOPE_DIRS[@]}"; do
+          if [[ "$file" == "$dir"* ]]; then
+            TARGET_FILES+=("$file")
+            break
+          fi
+        done
+      fi
+    done
+
+    if [[ ${#TARGET_FILES[@]} -eq 0 ]]; then
+      log_info "✅ 本次变更中没有需要扫描的 Skill 文件 (.md)，跳过扫描"
+    else
+      log_info "增量扫描文件列表: ${TARGET_FILES[*]}"
+    fi
+  else
+    log_info "运行模式: 目录全量扫描"
+    for dir in "${SCOPE_DIRS[@]}"; do
+      [[ ! -d "$dir" ]] && continue
+      while IFS= read -r -d '' file; do
+        TARGET_FILES+=("$file")
+      done < <(find "$dir" -type f -name "*.md" -print0 2>/dev/null || true)
+    done
+  fi
 }
 
 # ---------- Status Helpers ----------
@@ -398,6 +416,7 @@ generate_json_report() {
   printf '  "ReportId": "%s",\n' "$report_id"
   printf '  "ScanTime": "%s",\n' "$scan_time"
   printf '  "ScanScope": "%s",\n' "$scope_str"
+  printf '  "ScanMode": "%s",\n' "$($INCREMENTAL_MODE && echo 'incremental' || echo 'full')"
   printf '  "ScanFileCount": %d,\n' "$TOTAL_FILES"
   printf '  "ReviewStatus": "%s",\n' "$review_status"
   printf '  "ThreatScore": %d,\n' "$THREAT_SCORE"
@@ -425,6 +444,7 @@ print_text_report() {
   echo "================================================="
   echo "    Skill Security Scan Report"
   echo "================================================="
+  echo "  Scan Mode   : $($INCREMENTAL_MODE && echo 'Incremental' || echo 'Full')"
   echo "  Scan Time   : $(date '+%Y-%m-%d %H:%M:%S')"
   echo "  Scan Scope  : ${SCOPE_DIRS[*]}"
   echo "  Files       : ${TOTAL_FILES}"
@@ -478,7 +498,6 @@ determine_exit() {
 main() {
   parse_args "$@"
 
-  # Default scope if none specified
   if [[ ${#SCOPE_DIRS[@]} -eq 0 ]]; then
     SCOPE_DIRS=("skills" ".claude/skills")
   fi
@@ -486,13 +505,16 @@ main() {
   load_whitelist
 
   log_info "=============================================="
-  log_info "  Skill Security Scanner v2.1.0"
+  log_info "  Skill Security Scanner v2.2.0"
   log_info "  Scope: ${SCOPE_DIRS[*]}"
+  $INCREMENTAL_MODE && log_info "  Mode: Incremental (base: ${BASE_BRANCH:-origin/main})"
   log_info "=============================================="
   echo ""
 
-  for dir in "${SCOPE_DIRS[@]}"; do
-    scan_directory "$dir"
+  gather_files
+
+  for file in "${TARGET_FILES[@]}"; do
+    scan_file "$file"
   done
 
   print_text_report

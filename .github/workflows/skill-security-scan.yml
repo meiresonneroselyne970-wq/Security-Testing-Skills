@@ -192,6 +192,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Semgrep Scan
         run: |
@@ -201,7 +203,11 @@ jobs:
       - name: Internal Skill Security Scanner
         run: |
           chmod +x scripts/security/ci-scan.sh
-          bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --fail-on-high
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --fail-on-high --incremental --base "origin/${{ github.base_ref }}"
+          else
+            bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --fail-on-high
+          fi
 
       - name: Upload Security Report
         if: always()

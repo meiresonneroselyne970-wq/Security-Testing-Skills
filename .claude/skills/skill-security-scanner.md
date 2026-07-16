@@ -479,7 +479,9 @@ AI DevSecOps Pipeline
 
 ### 在管道中的角色
 
-本扫描器在 `sast-analysis` Job 中运行，与 Semgrep 并行执行：
+本扫描器在 `sast-analysis` Job 中运行，与 Semgrep 并行执行。
+
+**PR 事件**自动启用增量扫描（只扫描变更的 `.md` 文件），**Push/Schedule/手动**执行全量扫描：
 
 ```yaml
 sast-analysis:
@@ -487,18 +489,27 @@ sast-analysis:
   runs-on: ubuntu-latest
   steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 增量扫描需要完整 git 历史
     - name: Semgrep Scan
       run: |
         python -m pip install semgrep
         semgrep scan --config "p/security-audit" --config "p/secrets" skills/ .claude/skills/
     - name: Internal Skill Security Scanner
       run: |
-        bash scripts/security/ci-scan.sh \
-          --scope skills \
-          --scope .claude/skills \
-          --format json \
-          --output skill-security-report.json \
-          --fail-on-high
+        chmod +x scripts/security/ci-scan.sh
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          # PR: 增量扫描 — 仅扫描相对 base 分支变更的 .md 文件
+          bash scripts/security/ci-scan.sh \
+            --scope skills --scope .claude/skills \
+            --format json --output skill-security-report.json --fail-on-high \
+            --incremental --base "origin/${{ github.base_ref }}"
+        else
+          # Push/Schedule/手动: 全量扫描
+          bash scripts/security/ci-scan.sh \
+            --scope skills --scope .claude/skills \
+            --format json --output skill-security-report.json --fail-on-high
+        fi
     - name: Upload Security Report
       if: always()
       uses: actions/upload-artifact@v4
@@ -506,6 +517,28 @@ sast-analysis:
         name: skill-security-report
         path: skill-security-report.json
         retention-days: 14
+```
+
+### 增量扫描 (`--incremental`)
+
+v2.2.0 新增。通过 `git diff --name-only <base>...HEAD` 仅扫描 PR 中变更的 `.md` 文件，解决全量扫描的历史包袱和性能问题。
+
+- **无 `.md` 变更时**：毫秒级通过，不遍历文件系统
+- **CI 用法**：`--incremental --base "origin/${{ github.base_ref }}"`
+
+### 内联豁免 (`<!-- sec-ignore -->`)
+
+v2.2.0 新增。在 Markdown 文件中加注释即可精准豁免指定行，无需修改 `.security-whitelist.yml`：
+
+```markdown
+# 豁免单个规则
+`rm -rf /tmp/cache` <!-- sec-ignore: T1.2 -->
+
+# 豁免多个规则
+export API_KEY="sk-abc123" <!-- sec-ignore: T3.1, T1.1 -->
+
+# 豁免所有规则
+sudo systemctl restart nginx <!-- sec-ignore: ALL -->
 ```
 
 ### 触发条件
@@ -546,6 +579,7 @@ echo "✅ Skill security scan passed."
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
+| 2.1.0 | 2026-07-16 | 新增增量扫描 (`--incremental`) 和内联豁免 (`<!-- sec-ignore -->`)，PR 事件自动启用增量模式 |
 | 2.0.0 | 2026-07-16 | CI/CD 集成更新：迁移至 AI DevSecOps Pipeline 单文件多并行架构；管道触发条件、聚合通知、独立重试机制 |
 | 1.0.0 | 2024-01-22 | 初始版本：T1-T7 威胁检测规则 |
 
