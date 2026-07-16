@@ -1,13 +1,13 @@
 ---
 name: skill-security-scanner
-description: Skill 安全扫描器，检测 skill 文件中的恶意代码、隐藏危险指令和安全违规。支持 T1-T7 威胁分类，CI/CD 集成。
+description: Skill 安全扫描器，检测 skill 文件中的恶意代码、隐藏危险指令和安全违规。支持 T1-T7 威胁分类，作为 AI DevSecOps 管道的内部 SAST 引擎运行。
 ---
 
 # skill-security-scanner — Skill 安全扫描器
 
-**版本**: 1.0.0
+**版本**: 2.0.0
 **安全等级**: 企业级
-**适用场景**: Skill 上架审核、定期安全巡检、CI/CD 集成
+**适用场景**: Skill 上架审核、定期安全巡检、AI DevSecOps 管道集成
 
 ---
 
@@ -463,42 +463,71 @@ bash scripts/security/ci-scan.sh --scope skills --format json --output report.js
 
 ## CI/CD 集成
 
-### GitHub Actions
+本扫描器作为 **AI DevSecOps Pipeline** ([skill-security-scan.yml](../../.github/workflows/skill-security-scan.yml)) 的 SAST 引擎运行。
+
+### 管道架构（单文件 6 Job 并行）
+
+```
+AI DevSecOps Pipeline
+├── 🔑 Secrets Scan        (TruffleHog 增量扫描)
+├── 💉 Prompt Injection    (提示词注入/越狱检测 + 白名单)
+├── 🛑 Execution Sandbox   (Bandit + ShellCheck + JS 系统调用)
+├── 🐛 SAST Analysis       (Semgrep + ci-scan.sh 本扫描器)  ← 本 Skill
+├── 🧠 CodeQL Analysis     (JS/TS + Python 矩阵并行)
+└── 🚨 Failure Report      (聚合通知：仅发一条 PR 评论)
+```
+
+### 在管道中的角色
+
+本扫描器在 `sast-analysis` Job 中运行，与 Semgrep 并行执行：
 
 ```yaml
-name: Skill Security Scan
-on:
-  pull_request:
-    paths:
-      - 'skills/**'
-      - '.claude/skills/**'
-
-jobs:
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run Skill Security Scanner
-        run: |
-          bash scripts/security/ci-scan.sh --scope skills --format json --output report.json --fail-on-high
-      - name: Check Result
-        run: |
-          if jq -e '.ReviewStatus == "Reject"' report.json; then
-            echo "❌ Skill security scan failed"
-            exit 1
-          fi
-      - name: Upload Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: skill-security-report
-          path: report.json
+sast-analysis:
+  name: 🐛 Semgrep & Internal Scan
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - name: Semgrep Scan
+      run: |
+        python -m pip install semgrep
+        semgrep scan --config "p/security-audit" --config "p/secrets" skills/ .claude/skills/
+    - name: Internal Skill Security Scanner
+      run: |
+        bash scripts/security/ci-scan.sh \
+          --scope skills \
+          --scope .claude/skills \
+          --format json \
+          --output skill-security-report.json \
+          --fail-on-high
+    - name: Upload Security Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: skill-security-report
+        path: skill-security-report.json
+        retention-days: 14
 ```
+
+### 触发条件
+
+| 事件 | 条件 |
+|------|------|
+| Push | `main`/`master`/`byl-v1.0.0` 分支 + 命中 `skills/**`、`.claude/skills/**`、`cards/**`、`scripts/**` |
+| Pull Request | 同上分支 & 路径 |
+| Schedule | 每周四 21:31 (UTC+8) 全量扫描 |
+| Manual | `workflow_dispatch` 手动触发 |
+
+### 失败处理
+
+- **独立重试**: 每个 Job 失败可单独 `Re-run failed jobs`，无需重跑全管道
+- **报告留存**: `skill-security-report.json` 作为 Artifact 保留 14 天，可从 Actions 页面下载
+- **聚合通知**: `pr-failure-notification` Job 仅在 PR 事件 + 前序任意 Job 失败时，统一发送**一条** PR 评论，避免刷屏
 
 ### Pre-commit Hook
 
 ```bash
 #!/bin/bash
-# .git/hooks/pre-commit
+# .git/hooks/pre-commit (由 scripts/security/pre-commit-hook.sh 调用)
 
 echo "Running skill security scan..."
 bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --fail-on-high
@@ -517,10 +546,11 @@ echo "✅ Skill security scan passed."
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
+| 2.0.0 | 2026-07-16 | CI/CD 集成更新：迁移至 AI DevSecOps Pipeline 单文件多并行架构；管道触发条件、聚合通知、独立重试机制 |
 | 1.0.0 | 2024-01-22 | 初始版本：T1-T7 威胁检测规则 |
 
 ---
 
-**维护者**: MiMoCode Security Team  
-**最后更新**: 2024-01-22  
-**下次审查**: 2024-04-22
+**维护者**: card-template Security Team
+**最后更新**: 2026-07-16
+**下次审查**: 2026-10-16
