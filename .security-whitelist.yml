@@ -8,6 +8,8 @@ file_whitelist:
   - ".claude/skills/skill-security-scanner.md"
   # skill-security-policy: 安全策略文档，含检测规则说明
   - ".claude/skills/skill-security-policy.md"
+  # security-audit: 安全审计文档，含检测规则示例和威胁特征
+  - ".claude/skills/security-audit.md"
 
 pattern_whitelist:
   - "示例"
