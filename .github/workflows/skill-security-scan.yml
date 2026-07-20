@@ -4,16 +4,12 @@ on:
   push:
     branches: ['main', 'master', 'byl-v1.0.0']
     paths:
-      - 'skills/**'
       - '.claude/skills/**'
-      - 'cards/**'
       - 'scripts/**'
   pull_request:
     branches: ['main', 'master', 'byl-v1.0.0']
     paths:
-      - 'skills/**'
       - '.claude/skills/**'
-      - 'cards/**'
       - 'scripts/**'
   schedule:
     - cron: '31 21 * * 4'
@@ -103,7 +99,7 @@ jobs:
           ]
 
           WHITELIST_FILE = ".security-whitelist.yml"
-          TARGET_DIRS = ["skills", ".claude/skills"]
+          TARGET_DIRS = [".claude/skills", "scripts"]
           has_error = False
 
           # —— 加载白名单 ——
@@ -185,7 +181,7 @@ jobs:
       - name: Python Bandit Scan
         run: |
           pip install bandit
-          bandit -r .claude/skills/ cards/services/ skills/ -ll -ii -s B404,B602,B603
+          bandit -r .claude/skills/ scripts/ -ll -ii -s B404,B602,B603
 
       - name: ShellCheck for Bash
         uses: ludeeus/action-shellcheck@master
@@ -195,7 +191,7 @@ jobs:
 
       - name: JS/Node System Call Check
         run: |
-          if grep -Hn -E "child_process|execSync|spawnSync|fork\(" $(find skills .claude/skills cards -name "*.js" -type f 2>/dev/null) 2>/dev/null; then
+          if grep -Hn -E "child_process|execSync|spawnSync|fork\(" $(find .claude/skills scripts -name "*.js" -type f 2>/dev/null) 2>/dev/null; then
             echo "❌ SECURITY ALERT: Prohibited functions found. Use SandboxSDK."
             exit 1
           fi
@@ -215,15 +211,15 @@ jobs:
       - name: Semgrep Scan
         run: |
           python -m pip install semgrep
-          semgrep scan --config "p/security-audit" --config "p/secrets" skills/ .claude/skills/
+          semgrep scan --config "p/security-audit" --config "p/secrets" .claude/skills/ scripts/
 
       - name: Internal Skill Security Scanner
         run: |
           chmod +x scripts/security/ci-scan.sh
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --fail-on-high --incremental --base "origin/${{ github.base_ref }}"
+            bash scripts/security/ci-scan.sh --scope .claude/skills --scope scripts --format json --output skill-security-report.json --fail-on-high --incremental --base "origin/${{ github.base_ref }}"
           else
-            bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --format json --output skill-security-report.json --fail-on-high
+            bash scripts/security/ci-scan.sh --scope .claude/skills --scope scripts --format json --output skill-security-report.json --fail-on-high
           fi
 
       - name: Upload Security Report
@@ -238,14 +234,12 @@ jobs:
   # 5. 🧠 CodeQL 高级分析 (矩阵并行)
   # ==========================================
   codeql-analysis:
-    name: 🧠 CodeQL (${{ matrix.language }})
+    name: 🧠 CodeQL (python)
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - language: javascript-typescript
-            build-mode: none
           - language: python
             build-mode: none
     steps:
@@ -259,7 +253,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
         with:
-          category: "/language:${{matrix.language}}"
+          category: "/language:python"
 
   # ==========================================
   # 6. 🚨 PR 失败状态聚合通知 (防刷屏)
