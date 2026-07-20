@@ -1,0 +1,12 @@
+# CODEOWNERS — 安全策略文件必须安全团队审批
+
+# === 安全策略 & 管道（保护，需审批）===
+.github/workflows/skill-security-scan.yml    @card-template/security-team
+.security-whitelist.yml                      @card-template/security-team
+.claude/skills/security-audit.md             @card-template/security-team
+.claude/skills/skill-security-policy.md      @card-template/security-team
+.claude/skills/skill-security-scanner.md     @card-template/security-team
+scripts/security/                            @card-template/security-team
+
+# === 其余文件可由任意维护者审批 ===
+*                                            @card-template/maintainers
