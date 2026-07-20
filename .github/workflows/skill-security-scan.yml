@@ -67,6 +67,7 @@ jobs:
           import os, re, sys
 
           SUSPICIOUS_PATTERNS = [
+              # English prompt injection / jailbreak
               r"(?i)ignore\s*(all\s*)?previous\s*instructions",
               r"(?i)system\s*prompt\s*bypass",
               r"(?i)you\s*are\s*now\s*a\s*bypass",
@@ -75,6 +76,21 @@ jobs:
               r"(?i)reveal\s*your\s*system\s*prompt",
               r"(?i)act\s*as\s*DAN\b",
               r"(?i)jailbreak",
+              r"(?i)ignore\s+.*warning",
+              r"(?i)skip\s+.*check",
+              r"(?i)bypass\s+.*security",
+              r"(?i)disable\s+.*security",
+              # Chinese prompt injection / jailbreak (aligned with ci-scan.sh v2.2.0)
+              r"忽略之前的指令",
+              r"忽略所有安全",
+              r"忽略.*限制",
+              r"忽略.*警告.*安全",
+              r"跳过.*安全.*检查",
+              r"忽略.*审核",
+              r"绕过.*安全",
+              r"跳过.*检测",
+              r"忽略.*警告",
+              # Command injection
               r"\bsudo\s+",
               r"curl\s+.*http",
               r"wget\s+.*http",
@@ -83,6 +99,7 @@ jobs:
               r"__import__\s*\(.*\)",
               r"subprocess\.",
               r"os\.system\s*\(",
+              r"child_process\.",
           ]
 
           WHITELIST_FILE = ".security-whitelist.yml"

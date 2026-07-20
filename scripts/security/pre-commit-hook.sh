@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # Skill Security Pre-commit Hook
-# Version: 2.0.0
+# Version: 2.2.0 (Aligned with ci-scan.sh v2.2.0)
 # Part of AI DevSecOps Pipeline (skill-security-scan.yml)
 # Purpose: 本地提交前自动扫描 skill 文件，阻止危险 skill 提交
 #
