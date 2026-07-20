@@ -1,4 +1,4 @@
-# Skill Security Scanner — PowerShell Version
+﻿# Skill Security Scanner — PowerShell Version
 # Version: 2.2.0 (Added Incremental Scan & Inline Ignore)
 # Part of AI DevSecOps Pipeline (skill-security-scan.yml)
 # Purpose: Auto scan skill files for security threats
@@ -102,7 +102,7 @@ function Add-Threat {
     # Inline ignore: <!-- sec-ignore: T1.1, T3.1 --> or <!-- sec-ignore: ALL -->
     if ($InlineIgnore) {
         if ($InlineIgnore -match '\bALL\b' -or $InlineIgnore -match [regex]::Escape($RuleId)) {
-            if (-not $Quiet) { Write-ColorOutput "  `u23ED`uFE0F  Line ${Line} in ${File} bypassed ${RuleId} via sec-ignore" "Cyan" }
+            if (-not $Quiet) { Write-ColorOutput "  [SKIP] Line ${Line} in ${File} bypassed ${RuleId} via sec-ignore" "Cyan" }
             return
         }
     }
@@ -193,7 +193,7 @@ function Scan-File {
     param([string]$FilePath)
 
     if (Test-Whitelisted -FilePath $FilePath) {
-        if (-not $Quiet) { Write-ColorOutput "`u23ED`uFE0F  Skipping whitelisted: $FilePath" "Cyan" }
+        if (-not $Quiet) { Write-ColorOutput "[SKIP] Skipping whitelisted: $FilePath" "Cyan" }
         return
     }
     if (-not (Test-Path $FilePath)) { return }
@@ -307,7 +307,7 @@ function Scan-File {
         }
 
         # T3.3: Hardcoded password
-        if ($lineLower -match 'password\s*[=:]\s*["\x27][^"'\'']{4,}["\x27]') {
+        if ($lineLower -match 'password\s*[=:]\s*["\x27][^"\x27]{4,}["\x27]') {
             if (-not ($lineLower -match 'placeholder|替换|示例|example|demo|test|replace')) {
                 Add-Threat -RuleId "T3.3" -Category "Sensitive Info" -Severity "High" -File $FilePath -Line $lineNum -Match "password=****" `
                     -Description "Detected hardcoded password" -Recommendation "Move password to environment variables or key management service" -InlineIgnore $inlineIgnore
