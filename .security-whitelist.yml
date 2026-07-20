@@ -10,6 +10,8 @@ file_whitelist:
   - ".claude/skills/skill-security-policy.md"
   # security-audit: 安全审计文档，含检测规则示例和威胁特征
   - ".claude/skills/security-audit.md"
+  # sandbox_sdk: 沙箱 SDK 本身封装 subprocess/os.system 并提供安全替代方案
+  - "scripts/security/sandbox_sdk.py"
 
 pattern_whitelist:
   - "示例"
