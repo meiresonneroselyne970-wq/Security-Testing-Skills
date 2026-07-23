@@ -1,10 +1,15 @@
 #!/bin/bash
 # ============================================================
 # Skill Security Pre-commit Hook
-# Version: 2.3.0 (Added protected-files gate)
+# Version: 2.4.0 (CI protected-files gate reference)
 # Part of AI DevSecOps Pipeline (skill-security-scan.yml)
 # Purpose: 本地提交前自动扫描 skill 文件，阻止危险 skill 提交，
 #          并锁定安全策略文件防止未授权修改。
+#
+# ⚠️  CI 管道现在也会独立校验受保护文件：
+#    即使使用 --no-verify 绕过本地 hook，推送/PR 后
+#    CI 的 🔒 Protected Files Integrity 门禁仍会拦截未授权的修改。
+#    放行方式：PR 打 security-approved 标签，或提交信息含 [SECURITY-APPROVED]。
 #
 # 安装方式：
 #   cp scripts/security/pre-commit-hook.sh .git/hooks/pre-commit
@@ -47,7 +52,7 @@ PROTECTED_FILES=(
 
 echo ""
 echo -e "${CYAN}============================================="
-echo "  🔒 Skill 安全扫描 — Pre-commit Hook v2.3.0"
+echo "  🔒 Skill 安全扫描 — Pre-commit Hook v2.4.0"
 echo -e "=============================================${NC}"
 echo ""
 
@@ -86,7 +91,9 @@ if [[ ${#PROTECTED_CHANGED[@]} -gt 0 ]]; then
     echo ""
     echo -e "${YELLOW}  或跳过本地钩子（不推荐）：${NC}"
     echo -e "    ${BOLD}git commit --no-verify${NC}"
-    echo -e "    ⚠️  --no-verify 仅跳过本地钩子，CI 管道仍会独立扫描"
+    echo -e "    ⚠️  --no-verify 仅跳过本地钩子。"
+    echo -e "    ⚠️  推送/PR 后，CI 的 🔒 Protected Files Integrity 门禁仍会拦截！"
+    echo -e "    ⚠️  放行需 PR 打 security-approved 标签 或提交含 [SECURITY-APPROVED]。"
     echo ""
     exit 1
   fi
@@ -155,7 +162,9 @@ if [[ ${SCAN_EXIT:-0} -ne 0 ]]; then
   echo ""
   echo -e "${YELLOW}如果确认安全但仍被阻止，可使用：${NC}"
   echo "  git commit --no-verify"
-  echo "  ⚠️  注意：--no-verify 仅跳过本地 pre-commit hook，推送后 AI DevSecOps 管道仍会独立扫描"
+  echo "  ⚠️  注意：--no-verify 仅跳过本地 pre-commit hook。"
+  echo "  ⚠️  推送/PR 后，CI 的 🔒 Protected Files Integrity 门禁仍会独立拦截！"
+  echo "  ⚠️  放行需 PR 打 security-approved 标签 或提交含 [SECURITY-APPROVED]。"
   echo ""
 
   exit 1

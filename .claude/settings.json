@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(git -C \"c:/Users/Pc/Desktop/card-template-gitee\" log --oneline -10)",
-      "Bash(git -C \"c:/Users/Pc/Desktop/card-template-gitee\" branch -a)"
+      "Bash(git -C \"c:/Users/Pc/Desktop/card-template-gitee\" branch -a)",
+      "Bash(xxd)",
+      "Bash(cd \"c:/Users/Pc/Desktop/card-template\" && cp scripts/security/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit && echo \"✅ Hook synced\")",
+      "Bash(ALLOW_PROTECTED=1 git rebase --continue)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Pc\\Desktop\\card-template\\.git\\hooks"
     ]
   }
 }
