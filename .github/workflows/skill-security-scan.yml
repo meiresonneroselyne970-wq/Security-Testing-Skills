@@ -34,7 +34,7 @@ jobs:
   protected-files-check:
     name: 🔒 Protected Files Integrity
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     permissions:
       contents: read
       pull-requests: read
