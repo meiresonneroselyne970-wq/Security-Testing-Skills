@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"c:/Users/Pc/Desktop/card-template-gitee\" log --oneline -10)",
+      "Bash(git -C \"c:/Users/Pc/Desktop/card-template-gitee\" branch -a)"
+    ]
+  }
+}
