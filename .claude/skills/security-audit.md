@@ -5,9 +5,9 @@ description: 企业级安全审计工具，扫描文件检测敏感信息泄露�
 
 # security-audit — 安全审计
 
-**版本**: 2.0.0
+**版本**: 2.1.0
 **合规标准**: OWASP Top 10、CWE/SANS Top 25、GDPR、等保 2.0
-**适用场景**: 代码提交前检查、定期安全巡检、合规审计、渗透测试辅助
+**适用场景**: 代码提交前检查、定期安全巡检、合规审计、AI DevSecOps 管道集成
 
 ---
 
@@ -623,11 +623,37 @@ pattern="(localhost:\d{2,5}|127\.0\.0\.1:\d{2,5}|10\.\d+\.\d+\.\d+|192\.168\.\d+
 
 ## 自动化集成
 
-### Git Pre-commit Hook
+本审计工具通过 **AI DevSecOps Pipeline** ([skill-security-scan.yml](../../.github/workflows/skill-security-scan.yml)) 自动运行，详见 [skill-security-policy.md](skill-security-policy.md) §2。
+
+### 管道中的角色
+
+本审计工具的检测规则 R1-R8 由 `ci-scan.sh` 实现，在管道的 `sast-analysis` Job 中与 Semgrep 并行执行：
+
+```
+AI DevSecOps Pipeline
+├── 🔑 Secrets Scan        (TruffleHog — 覆盖 R1 硬编码凭据)
+├── 💉 Prompt Injection    (Prompt Audit — 专用注入检测)
+├── 🛑 Execution Sandbox   (Bandit + ShellCheck — 覆盖 R6 代码安全)
+├── 🐛 SAST Analysis       (Semgrep + ci-scan.sh — 覆盖 R1-R8 全规则)  ← 本 Skill
+├── 🧠 CodeQL Analysis     (语义级深度分析)
+└── 🚨 Failure Report      (聚合 PR 通知)
+```
+
+### 各 Job 与本审计规则的对应关系
+
+| 管道 Job | 工具 | 覆盖的审计规则 |
+|----------|------|---------------|
+| `secrets-audit` | TruffleHog | R1.1-R1.18 (凭据), R3 (PII) |
+| `prompt-security` | Python 自研脚本 | 提示词注入（本项目特有） |
+| `execution-gate` | Bandit + ShellCheck | R6.3 (命令注入), R6.1 (注入风险) |
+| `sast-analysis` | Semgrep + ci-scan.sh | R1-R8 全规则集 |
+| `codeql-analysis` | CodeQL | R6.1-R6.10 (代码安全深度分析) |
+
+### Pre-commit Hook
 
 ```bash
 #!/bin/bash
-# .git/hooks/pre-commit
+# .git/hooks/pre-commit (由 scripts/security/pre-commit-hook.sh 调用)
 
 echo "Running security audit..."
 bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --fail-on-high
@@ -640,49 +666,20 @@ fi
 echo "✅ Security audit passed."
 ```
 
-### CI/CD 集成
+### 管道触发条件
 
-```yaml
-# GitHub Actions
-name: Security Audit
-on: [push, pull_request]
+| 事件 | 条件 |
+|------|------|
+| Push | `main`/`master`/`byl-v1.0.0` + 命中 `skills/**`、`.claude/skills/**`、`cards/**`、`scripts/**` |
+| Pull Request | 同上分支 & 路径 |
+| Schedule | 每周四 21:31 (UTC+8) 全量扫描 |
+| Manual | `workflow_dispatch` |
 
-jobs:
-  security-audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run Security Audit
-        run: |
-          bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --format json --output audit-report.json
-      - name: Upload Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: security-audit-report
-          path: audit-report.json
-```
+### 失败处理
 
-### 定期扫描
-
-```yaml
-# 每周定期扫描
-name: Weekly Security Audit
-on:
-  schedule:
-    - cron: '0 0 * * 1'  # 每周一 00:00
-
-jobs:
-  security-audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run Full Security Audit
-        run: bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --format json --output report.json
-      - name: Send Report
-        uses: ./.github/actions/send-report
-        with:
-          report: report.html
-```
+- **独立重试**: 管道每个 Job 可单独 `Re-run failed jobs`
+- **报告留存**: 审计报告作为 Artifact 保留 14 天
+- **聚合通知**: 仅 PR 事件触发，所有失败 Job 合并为**一条** PR 评论，避免刷屏
 
 ---
 
@@ -693,8 +690,8 @@ jobs:
 ```markdown
 ## 历史对比
 
-**上次审计**: 2024-01-15 10:00:00
-**本次审计**: 2024-01-22 10:00:00
+**上次审计**: 2026-07-09 21:31:00
+**本次审计**: 2026-07-16 21:31:00
 
 | 指标 | 上次 | 本次 | 变化 |
 |------|------|------|------|
@@ -720,11 +717,12 @@ jobs:
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
+| 2.1.0 | 2026-07-16 | 自动化集成更新：迁移至 AI DevSecOps Pipeline 单文件多并行架构；管道 Job 与审计规则对应关系；更新触发条件与失败处理 |
 | 2.0.0 | 2024-01-22 | 企业级重构：增加 R6-R8 规则、CVSS 评分、合规映射、自动化集成 |
 | 1.0.0 | 2024-01-01 | 初始版本：R1-R5 基础规则 |
 
 ---
 
-**维护者**: MiMoCode Security Team  
-**最后更新**: 2024-01-22  
-**下次审查**: 2024-04-22
+**维护者**: card-template Security Team
+**最后更新**: 2026-07-16
+**下次审查**: 2026-10-16

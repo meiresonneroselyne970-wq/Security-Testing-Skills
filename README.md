@@ -1,139 +1,124 @@
-# Card Template — AI 卡片模板库
+# AI DevSecOps Pipeline — Skill Security Scanner
 
-可复用的 AI 卡片 UI 组件库，包含 8 种卡片模板，支持文本展示、作业提醒、媒体预览、英语学习、连环画、AI 问答等场景。每个卡片模板为独立的自包含组件（HTML + CSS + JS + JSON 数据），可直接通过 `<iframe>` 或自定义 `<ai-card>` 标签嵌入。
-
-> 📋 完整卡片目录见 **[cards/](cards/)**（8 种卡片分文件记录）
+企业级 AI Skill 安全扫描管道，6 个并行安全门禁覆盖凭据泄露、提示词注入、RCE 防御、SAST、CodeQL 全维度检测。
 
 ---
+
+## 管道架构
+
+```
+AI DevSecOps Pipeline
+├── 🔑 Secrets Scan        (TruffleHog 增量扫描)
+├── 💉 Prompt Injection    (提示词注入/越狱检测 + 白名单)
+├── 🛑 Execution Sandbox   (Bandit + ShellCheck + JS 系统调用)
+├── 🐛 SAST Analysis       (Semgrep + ci-scan.sh 内部扫描)
+├── 🧠 CodeQL Analysis     (JS/TS + Python 矩阵并行)
+└── 🚨 Failure Report      (聚合通知：仅发一条 PR 评论)
+```
+
+## 触发条件
+
+| 事件 | 条件 |
+|------|------|
+| Push | `main` / `master` / `byl-v1.0.0` 分支 + 命中扫描路径 |
+| Pull Request | 同上分支 & 路径 |
+| Schedule | 每周四 21:31 (UTC+8) |
+| Manual | `workflow_dispatch` |
+
+## 快速开始
+
+### 本地扫描
+
+```bash
+# Linux / macOS / CI（全量扫描）
+bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --fail-on-high
+
+# 增量扫描（仅扫描 PR 变更文件）
+bash scripts/security/ci-scan.sh --scope skills --incremental --base origin/main --fail-on-high
+
+# 生成 JSON 报告
+bash scripts/security/ci-scan.sh --scope skills --format json --output report.json
+```
+
+### Windows PowerShell
+
+```powershell
+.\scripts\security\skill-security-scan.ps1 -Scope skills/,.claude/skills/ -FailOnHigh
+.\scripts\security\skill-security-scan.ps1 -Scope skills/ -Incremental -BaseBranch origin/main
+```
+
+### Pre-commit Hook
+
+```bash
+bash scripts/security/pre-commit-hook.sh
+```
 
 ## 目录结构
 
 ```
-card-template/
-├── cards/                 # 📋 卡片总目录（8 种卡片 + 英语评分服务）
-│   ├── README.md          # 主索引
-│   ├── text-card/         # 通用文本卡片（5 种变体）
-│   ├── homework-card/     # 学科作业提醒卡片
-│   ├── media-card/        # 媒体预览卡片（视频/音频/图片）
-│   ├── english-word-card/ # 英语单词启蒙卡片
-│   ├── comic-card/        # 连环画/漫画分页卡片（含 assets/ 图片+视频）
-│   ├── answer-card/       # AI 问答卡片（独立架构，纯 HTML+CSS+JS）
-│   ├── english-sentence-card/ # 英语句子展示卡片（每日一句）
-│   ├── english-input-card/   # 英语句子输入卡片（可编辑）
-│   └── services/
-│       └── english-scoring/  # 英语口语 AI 评分服务（FastAPI + DeepSeek）
-│
-├── skills/               # 通用卡片生成技能（selector、card、card_render 等 5 个）
-├── .claude/skills/       # 系统管理技能（安全审计、仓库管理等 6 个）
-│
-├── scripts/              # 工具脚本
-│   └── security/         # 安全扫描脚本（PowerShell + Bash + Bat）
-│
-├── .github/workflows/    # GitHub Actions CI
-└── .workflow/            # Gitee CI 流水线
+.
+├── .github/workflows/
+│   └── skill-security-scan.yml   # AI DevSecOps 管道定义
+├── .claude/skills/
+│   ├── security-audit.md         # 企业级安全审计（OWASP/CWE/GDPR/等保2.0）
+│   ├── skill-security-policy.md  # 安全策略定义与管道架构文档
+│   ├── skill-security-scanner.md # T1-T7 威胁检测规则引擎
+│   ├── skill-manager.md          # Skill 分析·提取·分类·打包管理器
+│   ├── gitee-repo.md             # Gitee 仓库管理（与 skill-manager 联动）
+│   └── analyze-skills.py         # Skill 结构化分析脚本
+├── scripts/security/
+│   ├── ci-scan.sh                # Bash 安全扫描器 (v2.2.0)
+│   ├── skill-security-scan.ps1   # PowerShell 安全扫描器 (v2.2.0)
+│   ├── skill-security-scan.bat   # Windows CMD 安全扫描器
+│   ├── pre-commit-hook.sh        # Git Pre-commit 钩子
+│   └── sandbox_sdk.py            # 沙箱 SDK
+├── .security-whitelist.yml       # 白名单配置
+└── README.md
 ```
 
----
+## 威胁检测规则 (T1-T7)
 
-## 卡片模板一览
+| 类别 | 威胁 | 等级 |
+|------|------|------|
+| T1 | 恶意指令注入（命令执行、文件破坏、外传数据、反向Shell） | 🔴 严重 |
+| T2 | 隐藏危险指令（零宽字符、越狱、注释注入、编码绕过） | 🔴 严重 |
+| T3 | 敏感信息泄露（API Key、Token、密码、私钥、内网地址） | 🟠 高危 |
+| T4 | 权限越界（文件写入、进程创建、环境变量修改） | 🟠 高危 |
+| T5 | 社会工程攻击（凭据诱导、紧急诱导、安全规避） | 🔴 严重 |
+| T6 | 依赖与供应链风险（外部脚本、CDN、未锁定版本） | 🟡 中危 |
+| T7 | 合规性违规（隐私政策、用户同意、审计日志缺失） | 🟡 中危 |
 
-| 模板 | 目录 | 适用场景 |
+## 风险评分
+
+| 威胁分数 | 风险等级 | 审核决策 |
+|----------|----------|----------|
+| ≥ 12 | 🔴 严重 | 自动拒绝 |
+| 8 - 11 | 🟠 高危 | 需人工审核 |
+| 4 - 7 | 🟡 中危 | 需人工审核 |
+| 1 - 3 | 🟢 低危 | 自动通过 |
+| 0 | ✅ 安全 | 自动通过 |
+
+## 白名单
+
+[`.security-whitelist.yml`](.security-whitelist.yml) 支持两类豁免：
+
+- **file_whitelist** — 跳过整个文件扫描（适用于文档类文件含代码示例）
+- **pattern_whitelist** — 行级豁免（匹配行含 `示例`、`example` 等关键词时放行）
+
+内联豁免：在代码行末尾添加 `<!-- sec-ignore: T1.1 -->` 或 `<!-- sec-ignore: ALL -->`。
+
+## 支持的扫描工具
+
+| 工具 | 用途 | 管道 Job |
 |------|------|----------|
-| **文本卡片** | `cards/text-card/` | 通用入口、AI 助手欢迎、推荐、任务提醒、健康建议 |
-| **作业提醒** | `cards/homework-card/` | 语文/数学/英语学科作业提醒，彩色渐变横幅 |
-| **媒体预览** | `cards/media-card/` | 视频/音频/图片/文件预览，暗色预览区 + 播放按钮 |
-| **英语单词** | `cards/english-word-card/` | 字母/单词启蒙，笔记本横线纸 + 大字母 + 图片 + 发音 |
-| **连环画** | `cards/comic-card/` | PEP 外研版英语连环画，视频播放 + 分页漫画气泡 |
-| **AI 问答** | `cards/answer-card/` | AI 知识问答，DeepSeek API 集成，文件来源展示 |
-| **英语句子展示** | `cards/english-sentence-card/` | 每日一句，缎带徽章 + 点击翻译 + TTS + 跟读评分 |
-| **英语输入** | `cards/english-input-card/` | 自由输入句子，实时 API 翻译 + TTS + 跟读评分 |
-
-每个卡片模板目录包含：
-- `index.html` — 卡片主页面
-- `ai-card.js`（或 `app.js`） — 卡片逻辑（数据加载、渲染、交互）
-- `ai-card.css`（或 `style.css`） — 卡片样式（5 设备响应式适配）
-- `*.json` — 静态数据（一个或多个，answer-card 无外部数据文件）
-- `skill.md` — 技能文档（全部卡片）
-- `assets/` — 静态资源（仅 comic-card，含 38 张图片 + 7 个视频）
-- `fonts/` — 本地字体（仅英语系列 3 个卡片）
+| TruffleHog | 凭证扫描 | `secrets-audit` |
+| Python 自研脚本 | 提示词注入检测 | `prompt-security` |
+| Bandit | Python SAST | `execution-gate` |
+| ShellCheck | Bash SAST | `execution-gate` |
+| Semgrep | 多语言 SAST | `sast-analysis` |
+| ci-scan.sh | 内部 T1-T7 扫描 | `sast-analysis` |
+| CodeQL | 语义级深度分析 | `codeql-analysis` |
 
 ---
 
-## 技能系统
-
-项目有两套独立的技能系统，按归属分为三类：
-
-### `skills/` — 通用卡片生成技能（5 个）
-
-面向卡片生成业务的核心流水线：`selector` → `resource_lookup` → `card_render`
-
-| 技能 | 文件 | 职责 |
-|------|------|------|
-| selector | `skills/selector.md` | 技能索引，路由查找/渲染 |
-| resource_lookup | `skills/resource_lookup.md` | 跨目录搜索已有资源 |
-| card_render | `skills/card_render.md` | 纯渲染引擎，templateId + data → HTML |
-| card | `skills/card.md` | 卡片生成入口，决策复用/新建模板 |
-| image-generator | `skills/image-generator.md` | AI 插图生成，替换 target_url |
-
-### 卡片专属技能（已归入对应目录）
-
-| 技能 | 位置 | 对应卡片/服务 |
-|------|------|-------------|
-| comic | `cards/comic-card/skill.md` | 连环画卡片生成 |
-| english-scoring | `cards/services/english-scoring/skill.md` | 英语口语 AI 评分 |
-
-### `.claude/skills/` — 系统管理技能（6 个）
-
-| 技能 | 文件 | 职责 |
-|------|------|------|
-| 安全审计 | `.claude/skills/security-audit.md` | Skill 文件安全审计 |
-| 安全策略 | `.claude/skills/skill-security-policy.md` | 安全策略定义 |
-| 安全扫描器 | `.claude/skills/skill-security-scanner.md` | 自动安全扫描引擎 |
-| 技能管理 | `.claude/skills/skill-manager.md` | 技能生命周期管理 |
-| 仓库管理 | `.claude/skills/gitee-repo.md` | Gitee 仓库操作 |
-| 技能分析 | `.claude/skills/analyze-skills.py` | 解析 skill 文件，输出 JSON |
-
----
-
-## 英语评分服务
-
-`cards/services/english-scoring/` 提供英语口语 AI 评分能力，调用 DeepSeek API 对跟读进行多维度评分（发音准确度、完整性、流利度、语调自然度等）。
-
-```bash
-cd cards/services/english-scoring/
-pip install -r requirements.txt
-python server.py
-# → Uvicorn running on http://0.0.0.0:8800
-```
-
-支持 3 种评分模式：`english_word`、`english_sentence`、`english_input`
-
----
-
-## 安全扫描
-
-项目集成了 Skill 文件安全扫描，自动检测恶意代码注入、隐藏危险指令、敏感信息泄露等问题。
-
-```bash
-# 本地扫描
-bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills
-
-# Windows
-.\scripts\security\skill-security-scan.ps1 -Scope skills/
-```
-
-CI/CD 会在 Push 和 PR 时自动触发扫描。
-
----
-
-## 响应式适配
-
-所有卡片支持 5 设备分段：
-
-| 设备 | 断点 | 适用 |
-|------|------|------|
-| 手机 | < 480px | 竖屏手机 |
-| 平板 | ≥ 480px | 平板竖屏 |
-| 大屏 | ≥ 768px | 平板横屏 |
-| 桌面 | ≥ 1024px | PC 浏览器 |
-| 电视 | ≥ 1440px | 大屏展示 |
+**版本**: 2.2.0 | **维护者**: card-template Security Team | **最后更新**: 2026-07

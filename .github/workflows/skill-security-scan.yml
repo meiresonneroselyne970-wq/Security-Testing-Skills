@@ -1,58 +1,418 @@
-name: Skill Security Scan
+name: AI DevSecOps Pipeline
 
 on:
   push:
+    branches: ['main', 'master', 'byl-v1.0.0']
     paths:
-      - 'skills/**'
       - '.claude/skills/**'
+      - 'scripts/**'
+      - '.github/workflows/**'
+      - '.github/CODEOWNERS'
+      - '.security-whitelist.yml'
   pull_request:
+    branches: ['main', 'master', 'byl-v1.0.0']
     paths:
-      - 'skills/**'
       - '.claude/skills/**'
+      - 'scripts/**'
+      - '.github/workflows/**'
+      - '.github/CODEOWNERS'
+      - '.security-whitelist.yml'
+  schedule:
+    - cron: '31 21 * * 4'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+  actions: read
+
 jobs:
-  security-scan:
-    name: Skill Security Scan
+  # ==========================================
+  # 0. 🔒 受保护文件完整性校验（第一道门禁）
+  # ==========================================
+  protected-files-check:
+    name: 🔒 Protected Files Integrity
     runs-on: ubuntu-latest
-
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Run Skill Security Scanner
-        id: scan
+      - name: Check Protected Files
         run: |
-          chmod +x scripts/security/ci-scan.sh
-          bash scripts/security/ci-scan.sh \
-            --scope skills \
-            --scope .claude/skills \
-            --format json \
-            --output skill-security-report.json \
-            --fail-on-high
+          set -e
 
-      - name: Generate Report
-        if: always()
-        run: |
-          if [ -f skill-security-report.json ]; then
-            echo "=== 扫描报告 ==="
-            cat skill-security-report.json | python3 -m json.tool 2>/dev/null || cat skill-security-report.json
+          # ============================================================
+          # 受保护文件列表 — 与 pre-commit hook Gate 1 保持一致
+          # 修改这些文件需 security-approved 标签或 [SECURITY-APPROVED] 提交标记
+          # ============================================================
+          PROTECTED_FILES=(
+            ".github/workflows/skill-security-scan.yml"
+            ".security-whitelist.yml"
+            ".github/CODEOWNERS"
+            "scripts/security/pre-commit-hook.sh"
+            "scripts/security/ci-scan.sh"
+            "scripts/security/skill-security-scan.ps1"
+            "scripts/security/skill-security-scan.bat"
+            "scripts/security/sandbox_sdk.py"
+            ".claude/skills/security-audit.md"
+            ".claude/skills/skill-security-policy.md"
+            ".claude/skills/skill-security-scanner.md"
+          )
+
+          echo "=============================================="
+          echo "  🔒 受保护文件完整性校验"
+          echo "=============================================="
+          echo ""
+
+          # --- 获取变更文件列表 ---
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "📋 事件类型: Pull Request (base: ${{ github.base_ref }})"
+            CHANGED=$(git diff --name-only --diff-filter=ACM "origin/${{ github.base_ref }}...HEAD" 2>/dev/null || echo "")
           else
-            echo "未生成报告文件"
+            echo "📋 事件类型: Push (branch: ${{ github.ref_name }})"
+            # push 事件：尝试获取与父提交的差异
+            CHANGED=$(git diff --name-only --diff-filter=ACM "HEAD~1...HEAD" 2>/dev/null || echo "")
+            if [[ -z "$CHANGED" ]]; then
+              # 可能是首次推送或浅克隆导致没有父提交引用
+              CHANGED=$(git diff --name-only --diff-filter=ACM "HEAD~1" 2>/dev/null || echo "")
+            fi
+            if [[ -z "$CHANGED" ]]; then
+              echo "⚠️  无法计算差异（可能是首次推送），跳过保护文件检查"
+              exit 0
+            fi
           fi
 
-      - name: Upload Report
+          echo ""
+          echo "变更文件:"
+          echo "$CHANGED" | while read -r f; do [[ -n "$f" ]] && echo "  $f"; done
+          echo ""
+
+          # --- 检测受保护文件变更 ---
+          PROTECTED_CHANGED=()
+          for pf in "${PROTECTED_FILES[@]}"; do
+            if echo "$CHANGED" | grep -Fxq "$pf"; then
+              PROTECTED_CHANGED+=("$pf")
+            fi
+          done
+
+          if [[ ${#PROTECTED_CHANGED[@]} -eq 0 ]]; then
+            echo "✅ 没有受保护文件变更，通过"
+            exit 0
+          fi
+
+          # --- 有受保护文件变更 ---
+          echo "╔══════════════════════════════════════════════════╗"
+          echo "║  ⚠️  检测到受保护文件变更                           ║"
+          echo "╚══════════════════════════════════════════════════╝"
+          echo ""
+          echo "  以下安全策略文件已被修改："
+          for f in "${PROTECTED_CHANGED[@]}"; do
+            echo "    🔒 $f"
+          done
+          echo ""
+
+          # --- 检查 PR 标签 ---
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "🔍 检查 PR 是否有 'security-approved' 标签..."
+            LABELS=$(gh pr view "${{ github.event.pull_request.number }}" --json labels --jq '.labels[].name' 2>/dev/null || echo "")
+            if echo "$LABELS" | grep -q "security-approved"; then
+              echo "✅ PR 带有 'security-approved' 标签，放行"
+              exit 0
+            else
+              echo "❌ PR 没有 'security-approved' 标签"
+            fi
+          fi
+
+          # --- 检查提交信息标记 ---
+          echo "🔍 检查提交信息是否有 [SECURITY-APPROVED] 标记..."
+          COMMIT_MSG=$(git log --format=%B -n 1 2>/dev/null || echo "")
+          if echo "$COMMIT_MSG" | grep -q '\[SECURITY-APPROVED\]'; then
+            echo "✅ 提交信息含有 [SECURITY-APPROVED] 标记，放行"
+            exit 0
+          fi
+          echo "❌ 提交信息没有 [SECURITY-APPROVED] 标记"
+
+          # --- 拒绝 ---
+          echo ""
+          echo "=============================================="
+          echo "  🚫 受保护文件完整性校验失败！"
+          echo "=============================================="
+          echo ""
+          echo "  安全策略文件已变更，但未获得安全审批。"
+          echo ""
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "  放行方式（任选其一）："
+            echo "    1. 给 PR 添加 'security-approved' 标签后重新触发 CI"
+            echo "    2. 在提交信息中加入 [SECURITY-APPROVED] 标记后 force-push"
+          else
+            echo "  放行方式："
+            echo "    在提交信息中加入 [SECURITY-APPROVED] 标记后重新推送"
+          fi
+          echo ""
+          echo "  ⚠️  此门禁用于防止安全策略文件被未授权修改。"
+          echo "  如果是合法的安全策略更新，请走安全审批流程。"
+          echo ""
+          exit 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  # ==========================================
+  # 1. 🔑 凭证泄漏扫描 (TruffleHog)
+  # ==========================================
+  secrets-audit:
+    name: 🔑 Secrets Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # TruffleHog 增量扫描必须
+
+      - name: Scan Secrets (TruffleHog)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+          MERGE_BASE=$(git merge-base HEAD origin/${{ github.event.repository.default_branch }} 2>/dev/null || echo "")
+          if [ -n "$MERGE_BASE" ] && [ "$MERGE_BASE" != "$(git rev-parse HEAD)" ]; then
+            trufflehog git file://. --since-commit "$MERGE_BASE" --only-verified --fail
+          else
+            trufflehog git file://. --since-commit "HEAD~1" --only-verified --fail
+          fi
+
+  # ==========================================
+  # 2. 💉 提示词注入与越狱审计
+  # ==========================================
+  prompt-security:
+    name: 💉 Prompt Injection Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Audit Prompt Templates
+        run: |
+          cat << 'PYEOF' > audit_prompts.py
+          import os, re, sys
+
+          SUSPICIOUS_PATTERNS = [
+              # English prompt injection / jailbreak
+              r"(?i)ignore\s*(all\s*)?previous\s*instructions",
+              r"(?i)system\s*prompt\s*bypass",
+              r"(?i)you\s*are\s*now\s*a\s*bypass",
+              r"(?i)developer\s*mode\s*enabled",
+              r"(?i)dump\s*(all\s*)?(previous\s*)?instructions",
+              r"(?i)reveal\s*your\s*system\s*prompt",
+              r"(?i)act\s*as\s*DAN\b",
+              r"(?i)jailbreak",
+              r"(?i)ignore\s+.*warning",
+              r"(?i)skip\s+.*check",
+              r"(?i)bypass\s+.*security",
+              r"(?i)disable\s+.*security",
+              # Chinese prompt injection / jailbreak (aligned with ci-scan.sh v2.2.0)
+              r"忽略之前的指令",
+              r"忽略所有安全",
+              r"忽略.*限制",
+              r"忽略.*警告.*安全",
+              r"跳过.*安全.*检查",
+              r"忽略.*审核",
+              r"绕过.*安全",
+              r"跳过.*检测",
+              r"忽略.*警告",
+              # Command injection
+              r"\bsudo\s+",
+              r"curl\s+.*http",
+              r"wget\s+.*http",
+              r"eval\s*\(.*\)",
+              r"exec\s*\(.*\)",
+              r"__import__\s*\(.*\)",
+              r"subprocess\.",
+              r"os\.system\s*\(",
+              r"child_process\.",
+          ]
+
+          WHITELIST_FILE = ".security-whitelist.yml"
+          TARGET_DIRS = [".claude/skills", "scripts"]
+          has_error = False
+
+          # —— 加载白名单 ——
+          file_whitelist = []
+          pattern_whitelist = []
+          if os.path.exists(WHITELIST_FILE):
+              with open(WHITELIST_FILE, 'r', encoding='utf-8', errors='ignore') as wf:
+                  content = wf.read()
+              in_files = False
+              in_patterns = False
+              for line in content.split('\n'):
+                  stripped = line.strip()
+                  if stripped.startswith('file_whitelist:'):
+                      in_files, in_patterns = True, False
+                      continue
+                  if stripped.startswith('pattern_whitelist:'):
+                      in_patterns, in_files = True, False
+                      continue
+                  if stripped.startswith('#') or stripped == '':
+                      continue
+                  if in_files and stripped.startswith('- '):
+                      file_whitelist.append(stripped[2:].strip().strip('"').strip("'"))
+                  if in_patterns and stripped.startswith('- '):
+                      pattern_whitelist.append(stripped[2:].strip().strip('"').strip("'"))
+
+          print(f"📋 Whitelist: {len(file_whitelist)} files, {len(pattern_whitelist)} patterns")
+          for fw in file_whitelist:
+              print(f"  📄 skip: {fw}")
+
+          print("🔍 Starting Prompt Injection audit...")
+          for skills_dir in TARGET_DIRS:
+              if not os.path.exists(skills_dir):
+                  print(f"  📂 Directory '{skills_dir}' not found, skipping.")
+                  continue
+
+              for root, _, files in os.walk(skills_dir):
+                  for file in files:
+                      if file.endswith(('.md', '.txt', '.json', '.yaml', '.yml', '.py', '.js', '.ts')):
+                          file_path = os.path.join(root, file)
+
+                          # 跳过白名单文件
+                          rel_path = file_path.replace('\\', '/')
+                          if any(rel_path == fw or rel_path.endswith('/' + fw) for fw in file_whitelist):
+                              print(f"  ⏭️  Skipped (whitelist): {rel_path}")
+                              continue
+
+                          try:
+                              with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                  content = f.read()
+                                  for suspect in SUSPICIOUS_PATTERNS:
+                                      for m in re.finditer(suspect, content):
+                                          matched_line = content[max(0,m.start()-50):m.end()+50].split('\n')[0]
+                                          # 跳过匹配行中含白名单模式的情况
+                                          if any(pw.lower() in matched_line.lower() for pw in pattern_whitelist):
+                                              continue
+                                          print(f"❌ ALERT: Pattern '{m.group()}' found in {file_path}")
+                                          has_error = True
+                          except Exception as e:
+                              print(f"⚠️  Could not read {file_path}: {e}")
+
+          if has_error:
+              print("\n🚨 Build blocked: Prompt injection or malicious payload detected!")
+              sys.exit(1)
+          else:
+              print("\n✅ All prompt templates passed integrity checks.")
+          PYEOF
+          python audit_prompts.py
+
+  # ==========================================
+  # 3. 🛑 AI 工具沙箱执行门禁 (RCE 防御)
+  # ==========================================
+  execution-gate:
+    name: 🛑 Execution Sandbox Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Python Bandit Scan
+        run: |
+          pip install bandit
+          bandit -r .claude/skills/ scripts/ -ll -ii -s B404,B602,B603
+
+      - name: ShellCheck for Bash
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: 'scripts'
+          severity: error
+
+      - name: JS/Node System Call Check
+        run: |
+          if grep -Hn -E "child_process|execSync|spawnSync|fork\(" $(find .claude/skills scripts -name "*.js" -type f 2>/dev/null) 2>/dev/null; then
+            echo "❌ SECURITY ALERT: Prohibited functions found. Use SandboxSDK."
+            exit 1
+          fi
+
+  # ==========================================
+  # 4. 🐛 静态应用安全测试 (Semgrep & 内部脚本)
+  # ==========================================
+  sast-analysis:
+    name: 🐛 Semgrep & Internal Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Semgrep Scan
+        run: |
+          python -m pip install semgrep
+          semgrep scan --config "p/security-audit" --config "p/secrets" .claude/skills/ scripts/
+
+      - name: Internal Skill Security Scanner
+        run: |
+          chmod +x scripts/security/ci-scan.sh
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            bash scripts/security/ci-scan.sh --scope .claude/skills --scope scripts --format json --output skill-security-report.json --fail-on-high --incremental --base "origin/${{ github.base_ref }}"
+          else
+            bash scripts/security/ci-scan.sh --scope .claude/skills --scope scripts --format json --output skill-security-report.json --fail-on-high
+          fi
+
+      - name: Upload Security Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: skill-security-report
-          path: |
-            skill-security-report.json
-          retention-days: 30
+          path: skill-security-report.json
+          retention-days: 14
 
-      - name: Check Result
-        if: steps.scan.outcome == 'failure'
-        run: |
-          echo "❌ Skill 安全扫描失败"
-          echo "请修复安全问题后重试"
-          exit 1
+  # ==========================================
+  # 5. 🧠 CodeQL 高级分析 (矩阵并行)
+  # ==========================================
+  codeql-analysis:
+    name: 🧠 CodeQL (python)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: python
+            build-mode: none
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:python"
+
+  # ==========================================
+  # 6. 🚨 PR 失败状态聚合通知 (防刷屏)
+  # ==========================================
+  pr-failure-notification:
+    name: 🚨 Report Failures to PR
+    runs-on: ubuntu-latest
+    # 仅在 PR 事件触发，且只要前面有任意一个 Job 失败/取消，就执行此任务
+    if: always() && github.event_name == 'pull_request' && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
+    needs: [protected-files-check, secrets-audit, prompt-security, execution-gate, sast-analysis, codeql-analysis]
+    steps:
+      - name: Comment PR on Failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚨 **AI DevSecOps Pipeline Failed!**\n\n部分安全门禁未通过，请检查对应模块并修复：\n- 检查 PR 顶部的具体失败状态 (如 🔑 Secrets, 💉 Prompts, 🛑 Execution)。\n- 你可以点击 `Re-run failed jobs` 仅重试失败的模块。\n\n📋 [点击查看完整日志详情](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+            })

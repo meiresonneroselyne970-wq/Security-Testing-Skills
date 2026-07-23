@@ -1,0 +1,14 @@
+[2026-07-15 16:42:11,620] INFO | EXEC | echo hello | timeout=5s, network=False
+[2026-07-15 16:42:11,639] INFO | DONE | echo hello | exit=0, 19ms
+[2026-07-15 16:42:33,810] INFO | EXEC | echo hello | timeout=5s, network=False
+[2026-07-15 16:42:33,827] INFO | DONE | echo hello | exit=0, 16ms
+[2026-07-15 16:42:33,827] INFO | EXEC | sleep 10 | timeout=2s, network=False
+[2026-07-15 16:42:35,843] WARNING | TIMEOUT | sleep 10 | exceeded 2s, 2015ms
+[2026-07-15 16:42:35,844] WARNING | BLOCKED | curl http://example.com | Matched blocked pattern: curl
+[2026-07-15 16:42:57,666] INFO | EXEC | echo hello | timeout=5s, network=False
+[2026-07-15 16:42:57,683] INFO | DONE | echo hello | exit=0, 17ms
+[2026-07-15 16:42:57,683] INFO | EXEC | sleep 10 | timeout=2s, network=False
+[2026-07-15 16:42:59,689] WARNING | TIMEOUT | sleep 10 | exceeded 2s, 2005ms
+[2026-07-15 16:42:59,689] WARNING | BLOCKED | curl http://example.com | Network tool: curl
+[2026-07-15 16:42:59,690] INFO | EXEC | C:\Users\Pc\AppData\Local\Python\pythoncore-3.14-64\python.exe -c print(1+1) | timeout=5s, network=False
+[2026-07-15 16:42:59,711] INFO | DONE | C:\Users\Pc\AppData\Local\Python\pythoncore-3.14-64\python.exe -c print(1+1) | exit=0, 21ms

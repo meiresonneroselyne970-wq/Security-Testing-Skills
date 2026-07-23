@@ -1,0 +1,21 @@
+# Skill Security Scanner — 白名单配置
+# 文档类 skill 文件包含代码示例是正常行为，加入白名单跳过扫描
+
+file_whitelist:
+  # skill-manager: 包含 Python subprocess 代码示例用于文档演示
+  - ".claude/skills/skill-manager.md"
+  # skill-security-scanner: 安全检测规则定义文档，自身含威胁特征示例
+  - ".claude/skills/skill-security-scanner.md"
+  # skill-security-policy: 安全策略文档，含检测规则说明
+  - ".claude/skills/skill-security-policy.md"
+  # security-audit: 安全审计文档，含检测规则示例和威胁特征
+  - ".claude/skills/security-audit.md"
+  # sandbox_sdk: 沙箱 SDK 本身封装 subprocess/os.system 并提供安全替代方案
+  - "scripts/security/sandbox_sdk.py"
+
+pattern_whitelist:
+  - "示例"
+  - "example"
+  - "placeholder"
+  - "代码示例"
+  - "威胁特征"
