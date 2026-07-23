@@ -1,0 +1,12 @@
+# CODEOWNERS — 安全策略文件必须安全团队审批
+
+# === 安全策略 & 管道（保护，需审批）===
+.github/workflows/skill-security-scan.yml    @meiresonneroselyne970-wq
+.security-whitelist.yml                      @meiresonneroselyne970-wq
+.claude/skills/security-audit.md             @meiresonneroselyne970-wq
+.claude/skills/skill-security-policy.md      @meiresonneroselyne970-wq
+.claude/skills/skill-security-scanner.md     @meiresonneroselyne970-wq
+scripts/security/                            @meiresonneroselyne970-wq
+
+# === 其余文件可由任意维护者审批 ===
+*                                            @meiresonneroselyne970-wq
