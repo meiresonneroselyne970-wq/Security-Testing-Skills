@@ -10,7 +10,8 @@
       "Bash(ALLOW_PROTECTED=1 GIT_EDITOR=true git rebase --continue)",
       "Bash(ALLOW_PROTECTED=1 git commit --amend -m 'fix: 修复 CI protected-files-check job 的 if 条件语法 [SECURITY-APPROVED] *)",
       "Bash(python3 -c \"import json; json.load\\(open\\(r'c:\\\\Users\\\\Pc\\\\Desktop\\\\card-template\\\\.claude\\\\settings.json'\\)\\); print\\('Valid JSON'\\)\")",
-      "Bash(python3 -c \"import json; json.load\\(open\\(r'c:\\\\Users\\\\Pc\\\\Desktop\\\\card-template\\\\.claude\\\\settings.json', encoding='utf-8'\\)\\); print\\('Valid JSON'\\)\")"
+      "Bash(python3 -c \"import json; json.load\\(open\\(r'c:\\\\Users\\\\Pc\\\\Desktop\\\\card-template\\\\.claude\\\\settings.json', encoding='utf-8'\\)\\); print\\('Valid JSON'\\)\")",
+      "Bash(git branch *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\Pc\\Desktop\\card-template\\.git\\hooks"
