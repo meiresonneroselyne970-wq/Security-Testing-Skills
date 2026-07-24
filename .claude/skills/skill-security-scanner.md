@@ -585,6 +585,6 @@ echo "✅ Skill security scan passed."
 
 ---
 
-**维护者**: card-template Security Team
+**维护者**: 炎图科技
 **最后更新**: 2026-07-16
 **下次审查**: 2026-10-16

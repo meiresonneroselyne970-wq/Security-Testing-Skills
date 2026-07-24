@@ -469,5 +469,5 @@ C:/Users/Pc/AppData/Roaming/uv/python/cpython-3.14.5-windows-x86_64-none/python 
 
 ---
 
-**维护者**: card-template team
+**维护者**: 炎图科技
 **最后更新**: 2026-07-03
