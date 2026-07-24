@@ -121,9 +121,13 @@ jobs:
           # --- 检查安全审批 ---
           # ⚠️ 仅 PR label 可放行 — commit message 中的 [SECURITY-APPROVED] 不再有效。
           # 这确保只有 repo maintainer/triage 权限者能打标签审批，普通员工无法自助绕过。
+          API_BASE="https://api.github.com/repos/${{ github.repository }}"
+          AUTH_HEADER="Authorization: Bearer ${{ github.token }}"
+
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "🔍 检查 PR 是否有 'security-approved' 标签..."
-            LABELS=$(gh pr view "${{ github.event.pull_request.number }}" --json labels --jq '.labels[].name' 2>/dev/null || echo "")
+            LABELS=$(curl -sS -H "$AUTH_HEADER" "$API_BASE/pulls/${{ github.event.pull_request.number }}" | jq -r '.labels[]?.name // empty' 2>/dev/null || echo "")
+            echo "   PR 标签: $LABELS"
             if echo "$LABELS" | grep -q "security-approved"; then
               echo "✅ PR 带有 'security-approved' 标签，放行"
               exit 0
@@ -135,7 +139,8 @@ jobs:
             PR_NUM=$(git log -1 --pretty=%B | grep -oP 'Merge pull request #\K\d+' | head -1)
             if [[ -n "$PR_NUM" ]]; then
               echo "🔍 检测到合并自 PR #$PR_NUM，回查 'security-approved' 标签..."
-              LABELS=$(gh pr view "$PR_NUM" --json labels --jq '.labels[].name' 2>/dev/null || echo "")
+              LABELS=$(curl -sS -H "$AUTH_HEADER" "$API_BASE/pulls/$PR_NUM" | jq -r '.labels[]?.name // empty' 2>/dev/null || echo "")
+              echo "   PR #$PR_NUM 标签: $LABELS"
               if echo "$LABELS" | grep -q "security-approved"; then
                 echo "✅ 合并自经审批的 PR #$PR_NUM ('security-approved')，放行"
                 exit 0
