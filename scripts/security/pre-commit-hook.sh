@@ -9,7 +9,8 @@
 # ⚠️  CI 管道现在也会独立校验受保护文件：
 #    即使使用 --no-verify 绕过本地 hook，推送/PR 后
 #    CI 的 🔒 Protected Files Integrity 门禁仍会拦截未授权的修改。
-#    放行方式：PR 打 security-approved 标签，或提交信息含 [SECURITY-APPROVED]。
+#    放行方式：仅 PR 的 security-approved 标签（需 maintainer/triage 权限）。
+#    commit message 中的 [SECURITY-APPROVED] 标记不再有效。
 #
 # 安装方式：
 #   cp scripts/security/pre-commit-hook.sh .git/hooks/pre-commit
@@ -100,7 +101,7 @@ if [[ ${#PROTECTED_CHANGED[@]} -gt 0 ]]; then
     echo -e "    ${BOLD}git commit --no-verify${NC}"
     echo -e "    ⚠️  --no-verify 仅跳过本地钩子。"
     echo -e "    ⚠️  推送/PR 后，CI 的 🔒 Protected Files Integrity 门禁仍会拦截！"
-    echo -e "    ⚠️  放行需 PR 打 security-approved 标签 或提交含 [SECURITY-APPROVED]。"
+    echo -e "    ⚠️  放行需 PR 打 security-approved 标签（需 maintainer/triage 权限）。"
     echo ""
     exit 1
   fi
@@ -179,7 +180,7 @@ if [[ ${SCAN_EXIT:-0} -ne 0 ]]; then
   echo "  git commit --no-verify"
   echo "  ⚠️  注意：--no-verify 仅跳过本地 pre-commit hook。"
   echo "  ⚠️  推送/PR 后，CI 的 🔒 Protected Files Integrity 门禁仍会独立拦截！"
-  echo "  ⚠️  放行需 PR 打 security-approved 标签 或提交含 [SECURITY-APPROVED]。"
+  echo "  ⚠️  放行需 PR 打 security-approved 标签（需 maintainer/triage 权限）。"
   echo ""
 
   exit 1

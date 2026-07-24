@@ -1,12 +1,21 @@
 # CODEOWNERS — 安全策略文件必须安全团队审批
+#
+# ⚠️ TODO: 将 @PLACEHOLDER 替换为实际安全团队 GitHub Team/用户
+#   例: @your-org/security-team 或 @security-lead-username
+#   GitHub Team 需在组织 Settings → Teams 中创建。
+#
+# 审批规则：
+#   - 安全策略文件（下方列表）变更 → 必须安全团队审批
+#   - 其余文件 → 任意维护者可审批
+#   - CI 的 protected-files-check 门禁进一步要求 PR 带 security-approved 标签
 
-# === 安全策略 & 管道（保护，需审批）===
-.github/workflows/skill-security-scan.yml    @meiresonneroselyne970-wq
-.security-whitelist.yml                      @meiresonneroselyne970-wq
-.claude/skills/security-audit.md             @meiresonneroselyne970-wq
-.claude/skills/skill-security-policy.md      @meiresonneroselyne970-wq
-.claude/skills/skill-security-scanner.md     @meiresonneroselyne970-wq
-scripts/security/                            @meiresonneroselyne970-wq
+# === 安全策略 & 管道（保护，需安全团队审批）===
+.github/workflows/skill-security-scan.yml    @meiresonneroselyne970-wq  # TODO: 替换为安全团队
+.security-whitelist.yml                      @meiresonneroselyne970-wq  # TODO: 替换为安全团队
+.claude/skills/security-audit.md             @meiresonneroselyne970-wq  # TODO: 替换为安全团队
+.claude/skills/skill-security-policy.md      @meiresonneroselyne970-wq  # TODO: 替换为安全团队
+.claude/skills/skill-security-scanner.md     @meiresonneroselyne970-wq  # TODO: 替换为安全团队
+scripts/security/                            @meiresonneroselyne970-wq  # TODO: 替换为安全团队
 
 # === 其余文件可由任意维护者审批 ===
-*                                            @meiresonneroselyne970-wq
+*                                            @meiresonneroselyne970-wq  # TODO: 替换为维护者团队
