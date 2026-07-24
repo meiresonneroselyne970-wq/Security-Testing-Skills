@@ -1,21 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git -C \"c:/Users/Pc/Desktop/card-template-gitee\" log --oneline -10)",
-      "Bash(git -C \"c:/Users/Pc/Desktop/card-template-gitee\" branch -a)",
       "Bash(xxd)",
-      "Bash(cd \"c:/Users/Pc/Desktop/card-template\" && cp scripts/security/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit && echo \"✅ Hook synced\")",
-      "Bash(ALLOW_PROTECTED=1 git rebase --continue)",
-      "Bash(ALLOW_PROTECTED=1 git commit -m 'feat: CI 管道新增受保护文件完整性校验门禁 [SECURITY-APPROVED] *)",
-      "Bash(ALLOW_PROTECTED=1 GIT_EDITOR=true git rebase --continue)",
-      "Bash(ALLOW_PROTECTED=1 git commit --amend -m 'fix: 修复 CI protected-files-check job 的 if 条件语法 [SECURITY-APPROVED] *)",
-      "Bash(python3 -c \"import json; json.load\\(open\\(r'c:\\\\Users\\\\Pc\\\\Desktop\\\\card-template\\\\.claude\\\\settings.json'\\)\\); print\\('Valid JSON'\\)\")",
-      "Bash(python3 -c \"import json; json.load\\(open\\(r'c:\\\\Users\\\\Pc\\\\Desktop\\\\card-template\\\\.claude\\\\settings.json', encoding='utf-8'\\)\\); print\\('Valid JSON'\\)\")",
-      "Bash(git branch *)",
-      "Bash(ALLOW_PROTECTED=1 git commit -m \"docs: 将维护者统一改为炎图科技\")"
-    ],
-    "additionalDirectories": [
-      "c:\\Users\\Pc\\Desktop\\card-template\\.git\\hooks"
+      "Bash(git branch *)"
     ]
   }
 }
