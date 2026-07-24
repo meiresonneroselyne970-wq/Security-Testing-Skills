@@ -50,7 +50,7 @@ jobs:
 
           # ============================================================
           # 受保护文件列表 — 与 pre-commit hook Gate 1 保持一致
-          # 修改这些文件需 security-approved 标签或 [SECURITY-APPROVED] 提交标记
+          # 修改这些文件需 security-approved PR 标签（maintainer/triage 权限）
           # ============================================================
           PROTECTED_FILES=(
             ".github/workflows/skill-security-scan.yml"
@@ -119,6 +119,8 @@ jobs:
           echo ""
 
           # --- 检查 PR 标签 ---
+          # ⚠️ 仅 PR label 可放行 — commit message 中的 [SECURITY-APPROVED] 不再有效。
+          # 这确保只有 repo maintainer/triage 权限者能打标签审批，普通员工无法自助绕过。
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "🔍 检查 PR 是否有 'security-approved' 标签..."
             LABELS=$(gh pr view "${{ github.event.pull_request.number }}" --json labels --jq '.labels[].name' 2>/dev/null || echo "")
@@ -130,15 +132,6 @@ jobs:
             fi
           fi
 
-          # --- 检查提交信息标记 ---
-          echo "🔍 检查提交信息是否有 [SECURITY-APPROVED] 标记..."
-          COMMIT_MSG=$(git log --format=%B -n 1 2>/dev/null || echo "")
-          if echo "$COMMIT_MSG" | grep -q '\[SECURITY-APPROVED\]'; then
-            echo "✅ 提交信息含有 [SECURITY-APPROVED] 标记，放行"
-            exit 0
-          fi
-          echo "❌ 提交信息没有 [SECURITY-APPROVED] 标记"
-
           # --- 拒绝 ---
           echo ""
           echo "=============================================="
@@ -148,12 +141,12 @@ jobs:
           echo "  安全策略文件已变更，但未获得安全审批。"
           echo ""
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "  放行方式（任选其一）："
-            echo "    1. 给 PR 添加 'security-approved' 标签后重新触发 CI"
-            echo "    2. 在提交信息中加入 [SECURITY-APPROVED] 标记后 force-push"
-          else
             echo "  放行方式："
-            echo "    在提交信息中加入 [SECURITY-APPROVED] 标记后重新推送"
+            echo "    给 PR 添加 'security-approved' 标签后重新触发 CI"
+            echo "    （只有 maintainer/triage 权限者可添加标签）"
+          else
+            echo "  直接推送到受保护分支的安全策略变更需通过 PR 流程。"
+            echo "  请创建 PR 并由安全团队添加 'security-approved' 标签。"
           fi
           echo ""
           echo "  ⚠️  此门禁用于防止安全策略文件被未授权修改。"
