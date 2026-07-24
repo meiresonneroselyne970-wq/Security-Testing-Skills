@@ -2,7 +2,7 @@ name: AI DevSecOps Pipeline
 
 on:
   push:
-    branches: ['main', 'master', 'byl-v1.0.0']
+    branches: ['main', 'master']
     paths:
       - '.claude/skills/**'
       - 'scripts/**'
@@ -10,7 +10,7 @@ on:
       - '.github/CODEOWNERS'
       - '.security-whitelist.yml'
   pull_request:
-    branches: ['main', 'master', 'byl-v1.0.0']
+    branches: ['main', 'master']
     paths:
       - '.claude/skills/**'
       - 'scripts/**'

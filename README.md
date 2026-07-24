@@ -1,6 +1,6 @@
 # AI DevSecOps Pipeline — Skill Security Scanner
 
-企业级 AI Skill 安全扫描管道，6 个并行安全门禁覆盖凭据泄露、提示词注入、RCE 防御、SAST、CodeQL 全维度检测。
+企业级 AI Skill 安全扫描管道，7 个并行安全门禁覆盖受保护文件完整性校验、凭据泄露、提示词注入、RCE 防御、SAST、CodeQL 全维度检测。
 
 ---
 
@@ -8,11 +8,12 @@
 
 ```
 AI DevSecOps Pipeline
+├── 🔒 Protected Files     (受保护文件完整性校验，须 security-approved 标签)
 ├── 🔑 Secrets Scan        (TruffleHog 增量扫描)
 ├── 💉 Prompt Injection    (提示词注入/越狱检测 + 白名单)
 ├── 🛑 Execution Sandbox   (Bandit + ShellCheck + JS 系统调用)
 ├── 🐛 SAST Analysis       (Semgrep + ci-scan.sh 内部扫描)
-├── 🧠 CodeQL Analysis     (JS/TS + Python 矩阵并行)
+├── 🧠 CodeQL Analysis     (Python 深度分析)
 └── 🚨 Failure Report      (聚合通知：仅发一条 PR 评论)
 ```
 
@@ -20,7 +21,7 @@ AI DevSecOps Pipeline
 
 | 事件 | 条件 |
 |------|------|
-| Push | `main` / `master` / `byl-v1.0.0` 分支 + 命中扫描路径 |
+| Push | `main` / `master` 分支 + 命中扫描路径 |
 | Pull Request | 同上分支 & 路径 |
 | Schedule | 每周四 21:31 (UTC+8) |
 | Manual | `workflow_dispatch` |
