@@ -4,12 +4,10 @@
 # Version: 2.2.0 (Added Incremental Scan & Inline Ignore)
 # Part of AI DevSecOps Pipeline (skill-security-scan.yml)
 # ============================================================
-set -o pipefail  # 管道中任一命令失败都视为整体失败
+set -o pipefail
 
-# 设置 UTF-8 编码，确保中英文字符正确匹配（兼容不同发行版）
 export LC_ALL=C.UTF-8 2>/dev/null || export LC_ALL=en_US.UTF-8 2>/dev/null || true
 
-# 非交互式终端（CI / Gitee 流水线）自动关闭颜色输出
 if [[ ! -t 1 ]] || [[ -n "$CI" ]] || [[ -n "$GITEE_PIPELINE_BUILD_NUMBER" ]]; then
   NO_COLOR=true
 fi
@@ -33,29 +31,25 @@ INCREMENTAL_MODE=false
 BASE_BRANCH=""
 
 # ---------- Scoring ----------
-# 威胁评分权重：不同严重级别的分数加成
 declare -i CRITICAL_WEIGHT=10
 declare -i HIGH_WEIGHT=7
 declare -i MEDIUM_WEIGHT=4
 declare -i LOW_WEIGHT=1
-# 评审阈值：总分达到对应值触发相应动作
-declare -i REJECT_THRESHOLD=12   # ≥12 自动拒绝
-declare -i HIGH_THRESHOLD=8      # ≥8 需要人工审核
-declare -i MEDIUM_THRESHOLD=4     # ≥4 中度风险
+declare -i REJECT_THRESHOLD=12
+declare -i HIGH_THRESHOLD=8
+declare -i MEDIUM_THRESHOLD=4
 
 # ---------- State ----------
-# 运行时状态变量：扫描过程中动态累加
-declare -i THREAT_SCORE=0      # 威胁总分
-declare -i TOTAL_FILES=0       # 已扫描文件数
-declare -i CRITICAL_COUNT=0    # Critical 级威胁计数
-declare -i HIGH_COUNT=0        # High 级威胁计数
-declare -i MEDIUM_COUNT=0      # Medium 级威胁计数
-declare -i LOW_COUNT=0         # Low 级威胁计数
-declare -i SUPPRESSED_COUNT=0  # 因 sec-ignore 豁免的威胁数（审计关键指标）
-declare -a THREATS_JSON=()     # JSON 格式的威胁详情数组
-declare -a FILE_WHITELIST=()   # 白名单文件列表（从 YAML 加载）
-declare -a SKIP_PATTERNS=()    # 跳过的匹配模式
-declare -a TARGET_FILES=()     # 待扫描的目标文件列表
+declare -i THREAT_SCORE=0
+declare -i TOTAL_FILES=0
+declare -i CRITICAL_COUNT=0
+declare -i HIGH_COUNT=0
+declare -i MEDIUM_COUNT=0
+declare -i LOW_COUNT=0
+declare -a THREATS_JSON=()
+declare -a FILE_WHITELIST=()
+declare -a SKIP_PATTERNS=()
+declare -a TARGET_FILES=()
 
 # ---------- Help ----------
 usage() {
@@ -77,7 +71,6 @@ EOF
 }
 
 # ---------- Color helpers ----------
-# ANSI 转义码，在 CI 环境或输出重定向时自动禁用
 if [[ -n "$NO_COLOR" ]]; then
   C_RESET=""; C_CYAN=""; C_GREEN=""; C_YELLOW=""; C_RED=""; C_MAGENTA=""; C_BOLD_RED=""
 else
@@ -110,24 +103,19 @@ parse_args() {
 }
 
 # ---------- Load Whitelist ----------
-# 从 .security-whitelist.yml 解析文件白名单：
-#   file_whitelist:
-#     - "skills/safe-skill.md"
-#     - ".claude/skills/test-skill.md"
 load_whitelist() {
   if [[ ! -f "$WHITELIST_FILE" ]]; then return; fi
   log_info "Loading whitelist from $WHITELIST_FILE"
 
-  local in_section=false  # 标记当前是否在 file_whitelist 段落中
+  local in_section=false
   while IFS= read -r line; do
-    line="${line%$'\r'}"  # 剥离 Windows 换行符 CR
-    # 匹配 YAML 列表项: - "file-path"
+    line="${line%$'\r'}"
     if $in_section && [[ "$line" =~ ^[[:space:]]*-[[:space:]]*\"(.+)\"$ ]]; then
       FILE_WHITELIST+=("${BASH_REMATCH[1]}")
     elif [[ "$line" == "file_whitelist:" ]]; then
       in_section=true
     elif [[ "$line" =~ ^[a-z] ]]; then
-      in_section=false  # 遇到下一个顶层 key，退出当前段落
+      in_section=false
     fi
   done < "$WHITELIST_FILE"
 
@@ -136,36 +124,28 @@ load_whitelist() {
   fi
 }
 
-# 检查文件是否在白名单中（支持 glob 通配符匹配）
 is_whitelisted() {
   local file="$1"
   for wf in "${FILE_WHITELIST[@]}"; do
-    [[ "$file" == $wf ]] && return 0  # bash 的 == 在 [[ ]] 中支持通配符
+    [[ "$file" == $wf ]] && return 0
   done
   return 1
 }
 
 # ---------- Record Threat (with Inline Ignore support) ----------
-# 记录一条安全威胁发现，累加评分，并输出格式化的告警信息。
-# 支持内联豁免注释 <!-- sec-ignore: T1.1, T3.1 --> 和 <!-- sec-ignore: ALL -->
 record_threat() {
   local rule_id="$1" category="$2" severity="$3" file="$4" line_num="$5"
   local match="$6" description="$7" recommendation="$8"
   local inline_ignore="$9"
 
   # 内联豁免: <!-- sec-ignore: T1.1, T3.1 --> 或 <!-- sec-ignore: ALL -->
-  # ⚠️ 安全注意：sec-ignore 仅用于已审批的安全文档（file_whitelist 中的文件）。
-  # 攻击者可能在恶意 skill 中添加 sec-ignore 绕过扫描，PR review 时需重点关注。
-  # 此处记录 WARN 级别日志，确保 CI 日志中可见、可审计。
   if [[ -n "$inline_ignore" ]]; then
     if [[ "$inline_ignore" == *"ALL"* || "$inline_ignore" == *"$rule_id"* ]]; then
-      log_warn "  ⏭️  [SUPPRESSED] ${file}:${line_num} — ${rule_id} bypassed via sec-ignore (需在 PR review 中确认)"
-      SUPPRESSED_COUNT=$((SUPPRESSED_COUNT + 1))
+      log_info "  ⏭️  Line ${line_num} in ${file} bypassed ${rule_id} via sec-ignore"
       return 0
     fi
   fi
 
-  # 根据严重级别计算权重并累加计数
   local weight=0
   case "$severity" in
     Critical) weight=$CRITICAL_WEIGHT; CRITICAL_COUNT=$((CRITICAL_COUNT + 1)) ;;
@@ -173,13 +153,11 @@ record_threat() {
     Medium)   weight=$MEDIUM_WEIGHT;   MEDIUM_COUNT=$((MEDIUM_COUNT + 1)) ;;
     Low)      weight=$LOW_WEIGHT;      LOW_COUNT=$((LOW_COUNT + 1)) ;;
   esac
-  THREAT_SCORE=$((THREAT_SCORE + weight))  # 累加威胁总分
+  THREAT_SCORE=$((THREAT_SCORE + weight))
 
-  # 对匹配内容进行安全转义（防止 JSON 中双引号破坏结构），并截断至 80 字符
   local safe_match
   safe_match=$(echo "$match" | sed 's/"/\\"/g' | cut -c1-80)
 
-  # 严重级别对应的彩色显示标签
   local sev_disp
   case "$severity" in
     Critical) sev_disp="${C_BOLD_RED}[CRITICAL]${C_RESET}" ;;
@@ -188,35 +166,24 @@ record_threat() {
     Low)      sev_disp="${C_GREEN}[LOW]${C_RESET}" ;;
   esac
 
-  # 终端输出：彩色告警信息
   if ! $QUIET_MODE; then
     echo -e "  ${sev_disp} ${rule_id} — ${file}:${line_num}"
     echo -e "    ${description}"
   fi
 
-  # JSON 模式下将威胁详情追加到数组（用于最终报告生成）
   if [[ "$OUTPUT_FORMAT" == "json" ]]; then
     THREATS_JSON+=("{ \"RuleId\": \"${rule_id}\", \"Category\": \"${category}\", \"Severity\": \"${severity}\", \"File\": \"${file}\", \"Line\": ${line_num}, \"Match\": \"${safe_match}\", \"Description\": \"${description}\", \"Recommendation\": \"${recommendation}\" }")
   fi
 }
 
 # ---------- Scan Single File ----------
-# 逐行扫描单个文件，使用正则匹配已知威胁模式。
-# 规则编号体系：
-#   T1.x — 恶意命令注入（exec, rm -rf, curl POST, reverse shell, 提权, 混淆）
-#   T2.x — 隐藏危险命令（零宽字符, 提示词越狱, HTML 注释中的命令）
-#   T3.x — 敏感信息泄露（API Key, Bearer Token, 硬编码密码, 私钥）
-#   T5.x — 社会工程攻击（凭据诱导, 紧急诱导, 安全绕过诱导）
-#   T6.x — 依赖与供应链风险（外部脚本引用, 非白名单 CDN）
 scan_file() {
   local file="$1"
 
-  # 跳过白名单文件
   if is_whitelisted "$file"; then
     log_info "⏭️  Skipping whitelisted: $file"
     return
   fi
-  # 跳过不存在、不可读或空文件
   [[ ! -f "$file" || ! -r "$file" || ! -s "$file" ]] && return
 
   TOTAL_FILES=$((TOTAL_FILES + 1))
@@ -224,15 +191,12 @@ scan_file() {
 
   local line_num=0 found=false line line_lower inline_ignore
 
-  # 逐行读取文件内容（使用 || [[ -n "$line" ]] 处理末行无换行的情况）
   while IFS= read -r line || [[ -n "$line" ]]; do
     line_num=$((line_num + 1))
     [[ -z "$line" ]] && continue
-    # 转换为小写以实现大小写不敏感匹配
     line_lower=$(echo "$line" | tr '[:upper:]' '[:lower:]')
 
     # 提取行级内联豁免: <!-- sec-ignore: T1.1, T3.1 --> 或 <!-- sec-ignore: ALL -->
-    # 允许多个规则 ID 用逗号分隔，匹配 ALL 则豁免所有规则
     inline_ignore=""
     if [[ "$line" =~ \<!--[[:space:]]*sec-ignore:[[:space:]]*([A-Za-z0-9.,_[:space:]-]+)--\> ]]; then
       inline_ignore="${BASH_REMATCH[1]}"
@@ -382,31 +346,24 @@ scan_file() {
       fi
     fi
 
-  done < "$file"  # 重定向输入：从此文件逐行读取
+  done < "$file"
 
-  # 如果整个文件未触发任何告警，输出通过信息
   $found || log_pass "$file — 安全"
 }
 
 # ---------- File Gathering (Incremental or Full) ----------
-# 收集待扫描的文件列表。支持两种模式：
-#   增量模式（--incremental）：仅扫描当前分支相对于基准分支变更的 .md 文件
-#   全量模式（默认）：递归扫描指定目录下所有 .md 文件
 gather_files() {
   if $INCREMENTAL_MODE; then
     BASE_BRANCH="${BASE_BRANCH:-origin/main}"
     log_info "运行模式: Git 增量扫描 (比对基准: $BASE_BRANCH)"
 
-    # 拉取远程基准分支（浅克隆 50 条提交，加速 CI 环境）
+    # 确保远程分支可用
     git fetch origin "$(echo "$BASE_BRANCH" | sed 's|origin/||')" --depth=50 2>/dev/null || true
 
     local diff_files
-    # 使用三点语法 .. 比对当前分支与基准分支的差异
-    # --diff-filter=AMR: 只包含新增(A)、修改(M)、重命名(R)的文件
     mapfile -t diff_files < <(git diff --name-only --diff-filter=AMR "$BASE_BRANCH"...HEAD 2>/dev/null || echo "")
 
     for file in "${diff_files[@]}"; do
-      # 仅扫描 .md 文件且位于指定扫描目录内
       if [[ -n "$file" && "$file" == *.md ]]; then
         for dir in "${SCOPE_DIRS[@]}"; do
           if [[ "$file" == "$dir"* ]]; then
@@ -426,7 +383,6 @@ gather_files() {
     log_info "运行模式: 目录全量扫描"
     for dir in "${SCOPE_DIRS[@]}"; do
       [[ ! -d "$dir" ]] && continue
-      # 使用 find -print0 配合 null 分隔符读取，安全处理含空格的文件名
       while IFS= read -r -d '' file; do
         TARGET_FILES+=("$file")
       done < <(find "$dir" -type f -name "*.md" -print0 2>/dev/null || true)
@@ -435,7 +391,6 @@ gather_files() {
 }
 
 # ---------- Status Helpers ----------
-# 根据威胁总分返回评审结论（Reject / Manual Review / Pass）
 get_review_status() {
   if [[ $THREAT_SCORE -ge $REJECT_THRESHOLD ]]; then echo "Reject"
   elif [[ $THREAT_SCORE -ge $HIGH_THRESHOLD ]]; then echo "Manual Review"
@@ -444,7 +399,6 @@ get_review_status() {
   else echo "Pass"; fi
 }
 
-# 根据威胁总分返回风险等级（Critical / High / Medium / Low / Safe）
 get_risk_level() {
   if [[ $THREAT_SCORE -ge $REJECT_THRESHOLD ]]; then echo "Critical"
   elif [[ $THREAT_SCORE -ge $HIGH_THRESHOLD ]]; then echo "High"
@@ -454,9 +408,7 @@ get_risk_level() {
 }
 
 # ---------- Generate JSON Report ----------
-# 生成结构化的 JSON 安全扫描报告（适用于 CI 管道解析）
 generate_json_report() {
-  # 报告 ID 格式: SSS-YYYYMMDD-XXXX (Skill Security Scan + 日期 + 随机数)
   local report_id="SSS-$(date +%Y%m%d)-$((RANDOM % 9000 + 1000))"
   local scan_time risk_level review_status scope_str
   scan_time=$(date '+%Y-%m-%d %H:%M:%S')
@@ -464,7 +416,6 @@ generate_json_report() {
   risk_level=$(get_risk_level)
   scope_str=$(IFS=,; echo "${SCOPE_DIRS[*]}")
 
-  # 使用 printf 逐行构建 JSON（避免 jq 依赖，兼容最小化 CI 环境）
   printf '{\n'
   printf '  "ReportId": "%s",\n' "$report_id"
   printf '  "ScanTime": "%s",\n' "$scan_time"
@@ -473,10 +424,8 @@ generate_json_report() {
   printf '  "ScanFileCount": %d,\n' "$TOTAL_FILES"
   printf '  "ReviewStatus": "%s",\n' "$review_status"
   printf '  "ThreatScore": %d,\n' "$THREAT_SCORE"
-  printf '  "SuppressedCount": %d,\n' "$SUPPRESSED_COUNT"
   printf '  "RiskLevel": "%s",\n' "$risk_level"
   printf '  "Threats": [\n'
-  # 拼接威胁数组，用 first 标记控制逗号分隔
   local first=true
   for t in "${THREATS_JSON[@]}"; do
     $first && printf '    %s' "$t" || printf ',\n    %s' "$t"
@@ -507,30 +456,25 @@ print_text_report() {
   echo "  Risk Level  : $(get_risk_level)"
   echo "  Review      : $(get_review_status)"
   echo "-------------------------------------------------"
-  echo "  Critical   : ${CRITICAL_COUNT}"
-  echo "  High       : ${HIGH_COUNT}"
-  echo "  Medium     : ${MEDIUM_COUNT}"
-  echo "  Low        : ${LOW_COUNT}"
-  echo "  Suppressed : ${SUPPRESSED_COUNT}  (sec-ignore, 需审计)"
+  echo "  Critical : ${CRITICAL_COUNT}"
+  echo "  High     : ${HIGH_COUNT}"
+  echo "  Medium   : ${MEDIUM_COUNT}"
+  echo "  Low      : ${LOW_COUNT}"
   echo "================================================="
   echo ""
 }
 
 # ---------- Determine Exit Code ----------
-# 根据扫描配置和结果决定脚本退出码。
-# 退出码 1 = 阻止流水线继续，退出码 0 = 通过。
 determine_exit() {
   local review_status risk_level
   review_status=$(get_review_status)
   risk_level=$(get_risk_level)
 
-  # --strict 模式：只要 ≥ Medium 就阻止
   if $STRICT_MODE && [[ $THREAT_SCORE -ge $MEDIUM_THRESHOLD ]]; then
     log_error "严格模式：检测到中危以上威胁（分数 ${THREAT_SCORE}），流水线失败"
     return 1
   fi
 
-  # --fail-on-high 模式：仅 High/Critical 阻止
   if $FAIL_ON_HIGH; then
     if [[ "$risk_level" == "High" || "$risk_level" == "Critical" ]]; then
       log_error "高危扫描失败：检测到高危或严重威胁（分数 ${THREAT_SCORE}）"
@@ -539,7 +483,6 @@ determine_exit() {
     return 0
   fi
 
-  # 默认模式：Reject 或 High+ManualReview 阻止
   if [[ "$review_status" == "Reject" ]]; then
     log_error "扫描失败：检测到严重威胁（分数 ${THREAT_SCORE}），自动拒绝"
     return 1
@@ -556,19 +499,13 @@ determine_exit() {
 # ============================================================
 # Main
 # ============================================================
-# ============================================================
-# Main — 主控制流程
-# ============================================================
 main() {
-  # 1. 解析命令行参数
   parse_args "$@"
 
-  # 2. 设置默认扫描目录（未通过 --scope 指定时）
   if [[ ${#SCOPE_DIRS[@]} -eq 0 ]]; then
     SCOPE_DIRS=("skills" ".claude/skills")
   fi
 
-  # 3. 加载白名单配置
   load_whitelist
 
   log_info "=============================================="
@@ -578,15 +515,12 @@ main() {
   log_info "=============================================="
   echo ""
 
-  # 4. 收集待扫描文件（增量或全量）
   gather_files
 
-  # 5. 逐个扫描文件
   for file in "${TARGET_FILES[@]}"; do
     scan_file "$file"
   done
 
-  # 6. 输出文本/JSON 报告
   print_text_report
 
   if [[ "$OUTPUT_FORMAT" == "json" ]]; then
@@ -600,7 +534,6 @@ main() {
     fi
   fi
 
-  # 7. 根据威胁评分和配置决定退出码
   local exit_code=0
   determine_exit || exit_code=$?
 

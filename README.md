@@ -121,4 +121,4 @@ bash scripts/security/pre-commit-hook.sh
 
 ---
 
-**版本**: 2.2.0 | **维护者**: 炎图科技 | **最后更新**: 2026-07
+**版本**: 2.2.0 | **维护者**: card-template Security Team | **最后更新**: 2026-07

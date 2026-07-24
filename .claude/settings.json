@@ -1,20 +1,20 @@
 {
   "permissions": {
     "allow": [
+      "Bash(git -C \"c:/Users/Pc/Desktop/card-template-gitee\" log --oneline -10)",
+      "Bash(git -C \"c:/Users/Pc/Desktop/card-template-gitee\" branch -a)",
       "Bash(xxd)",
-      "Bash(git branch *)",
-      "Bash(ALLOW_PROTECTED=1 git commit --amend -m \"docs: 将维护者统一改为炎图科技 [SECURITY-APPROVED]\")",
-      "Bash(python -c \"import py_compile; py_compile.compile\\('.claude/skills/analyze-skills.py', doraise=True\\); print\\('analyze-skills.py OK'\\)\")",
-      "Bash(python -c \"import py_compile; py_compile.compile\\('scripts/security/sandbox_sdk.py', doraise=True\\); print\\('sandbox_sdk.py OK'\\)\")",
-      "Bash(bash -n scripts/security/pre-commit-hook.sh)",
-      "Bash(ALLOW_PROTECTED=1 git commit -m 'docs: 为安全扫描和技能分析代码添加详细中文注释 [SECURITY-APPROVED]' -m '为以下文件补充行内注释，说明关键逻辑、正则含义和设计决策： *)",
-      "Bash(cd c:/Users/Pc/Desktop/Security-Testing-Skills && rm -rf \".claude/skills/__pycache__\" \".claude/skills/analyze-skills.py\" \".claude/skills/gitee-repo.md\" \".claude/skills/skill-manager.md\" \"scripts/security/__pycache__\" \"scripts/security/.sandbox-logs\")",
-      "Bash(ALLOW_PROTECTED=1 git commit -m 'docs: 更新 skill-security-scanner 至 v2.2.0，同步 CI 管道变更 [SECURITY-APPROVED] *)",
-      "Bash(ALLOW_PROTECTED=1 git commit -m \"chore: 将 skill-security-scanner.md 从白名单移除，纳入常规扫描 [SECURITY-APPROVED]\")",
-      "Bash(ALLOW_PROTECTED=1 git commit -m \"chore: pattern_whitelist 加入 sec-ignore，让内联豁免在 CI Prompt Injection 检查中生效 [SECURITY-APPROVED]\")"
+      "Bash(cd \"c:/Users/Pc/Desktop/card-template\" && cp scripts/security/pre-commit-hook.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit && echo \"✅ Hook synced\")",
+      "Bash(ALLOW_PROTECTED=1 git rebase --continue)",
+      "Bash(ALLOW_PROTECTED=1 git commit -m 'feat: CI 管道新增受保护文件完整性校验门禁 [SECURITY-APPROVED] *)",
+      "Bash(ALLOW_PROTECTED=1 GIT_EDITOR=true git rebase --continue)",
+      "Bash(ALLOW_PROTECTED=1 git commit --amend -m 'fix: 修复 CI protected-files-check job 的 if 条件语法 [SECURITY-APPROVED] *)",
+      "Bash(python3 -c \"import json; json.load\\(open\\(r'c:\\\\Users\\\\Pc\\\\Desktop\\\\card-template\\\\.claude\\\\settings.json'\\)\\); print\\('Valid JSON'\\)\")",
+      "Bash(python3 -c \"import json; json.load\\(open\\(r'c:\\\\Users\\\\Pc\\\\Desktop\\\\card-template\\\\.claude\\\\settings.json', encoding='utf-8'\\)\\); print\\('Valid JSON'\\)\")",
+      "Bash(git branch *)"
     ],
     "additionalDirectories": [
-      "c:\\Users\\Pc\\Desktop\\Security-Testing-Skills\\.claude\\skills\\__pycache__"
+      "c:\\Users\\Pc\\Desktop\\card-template\\.git\\hooks"
     ]
   }
 }

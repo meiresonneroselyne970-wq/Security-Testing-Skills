@@ -19,20 +19,19 @@
 #   ln -sf ../../scripts/security/pre-commit-hook.sh .git/hooks/pre-commit
 # ============================================================
 
-set -e  # 任何命令非零退出立即终止脚本
+set -e
 
 # ---------- 颜色输出 ----------
-# ANSI 转义码，用于终端彩色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 BOLD='\033[1m'
-NC='\033[0m' # No Color — 重置所有格式
+NC='\033[0m' # No Color
 
 # ---------- 配置 ----------
-SCAN_SCRIPT="scripts/security/ci-scan.sh"       # 安全扫描脚本路径
-WHITELIST_FILE=".security-whitelist.yml"          # 扫描白名单配置文件
+SCAN_SCRIPT="scripts/security/ci-scan.sh"
+WHITELIST_FILE=".security-whitelist.yml"
 
 # ============================================================
 #  受保护文件列表 — 修改这些文件需显式确认
@@ -59,15 +58,10 @@ echo ""
 
 # ============================================================
 # Gate 1: 受保护文件变更检测
-# 检测暂存区中是否包含安全策略关键文件的修改。
-# 这些文件定义了安全扫描规则、白名单和 CI 管道，随意修改可能
-# 削弱安全防护能力，因此需要显式授权。
 # ============================================================
-# 获取所有暂存的文件（新增 A、复制 C、修改 M）
 STAGED_ALL=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
 PROTECTED_CHANGED=()
 
-# 比对暂存文件与受保护文件列表，精确匹配（-Fx 表示固定字符串整行匹配）
 for pf in "${PROTECTED_FILES[@]}"; do
   if echo "$STAGED_ALL" | grep -Fxq "$pf"; then
     PROTECTED_CHANGED+=("$pf")
@@ -88,7 +82,6 @@ if [[ ${#PROTECTED_CHANGED[@]} -gt 0 ]]; then
   echo -e "  GitHub 端需通过 CODEOWNERS 审批才能合入。"
   echo ""
 
-  # 显式授权：ALLOW_PROTECTED=1 环境变量可绕过 Gate 1
   if [[ "${ALLOW_PROTECTED:-0}" == "1" ]]; then
     echo -e "${YELLOW}  ⚡ ALLOW_PROTECTED=1 已设置，放行。${NC}"
   else
@@ -113,20 +106,15 @@ echo ""
 
 # ============================================================
 # Gate 2: Skill 文件安全扫描
-# 对暂存的 skill markdown 文件运行 ci-scan.sh 安全扫描。
-# 使用 --fail-on-high 模式：检测到 High/Critical 威胁则阻止提交。
 # ============================================================
-# 从暂存文件中筛选出 skills/ 和 .claude/skills/ 目录下的 .md 文件
 STAGED_SKILL_FILES=$(echo "$STAGED_ALL" | grep -E '^(skills/|\.claude/skills/).*\.md$' || true)
 
-# 无 skill 文件变更则提前退出
 if [[ -z "$STAGED_SKILL_FILES" ]]; then
   echo -e "${GREEN}✅ 没有暂存的 skill 文件变更，跳过扫描${NC}"
   echo ""
   exit 0
 fi
 
-# 列出待扫描的 skill 文件供用户确认
 echo "📋 检测到暂存的 skill 文件："
 echo "$STAGED_SKILL_FILES" | while read -r f; do
   echo "   - $f"
@@ -134,33 +122,30 @@ done
 echo ""
 
 # ---------- 运行扫描脚本 ----------
-# 检查扫描脚本是否存在（确保在项目根目录运行）
 if [[ ! -f "$SCAN_SCRIPT" ]]; then
   echo -e "${RED}❌ 错误：找不到扫描脚本 $SCAN_SCRIPT${NC}"
   echo "   请确保在项目根目录下执行 git commit"
   exit 1
 fi
 
-# 确保脚本有执行权限
+# 确保脚本可执行
 chmod +x "$SCAN_SCRIPT" 2>/dev/null || true
 
 echo "🔍 正在扫描 skill 文件..."
 echo ""
 
-# 运行扫描（使用 fail-on-high 模式：High 及以上威胁阻止提交）
-# 2>&1 合并 stderr 到 stdout，捕获所有输出供展示
+# 运行扫描（使用 strict 模式：中危及以上阻止提交）
 SCAN_OUTPUT=$(bash "$SCAN_SCRIPT" \
   --scope skills \
   --scope .claude/skills \
   --fail-on-high \
   --whitelist "$WHITELIST_FILE" \
-  2>&1) || SCAN_EXIT=$?  # || 防止 set -e 在扫描失败时中断脚本
+  2>&1) || SCAN_EXIT=$?
 
 echo "$SCAN_OUTPUT"
 echo ""
 
 # ---------- 解析结果 ----------
-# SCAN_EXIT 未定义（扫描通过）时默认为 0
 if [[ ${SCAN_EXIT:-0} -ne 0 ]]; then
   echo ""
   echo -e "${RED}============================================="

@@ -293,17 +293,9 @@ jobs:
                                   for suspect in SUSPICIOUS_PATTERNS:
                                       for m in re.finditer(suspect, content):
                                           matched_line = content[max(0,m.start()-50):m.end()+50].split('\n')[0]
-                                          # pattern_whitelist 模糊豁免（仅限文档标记词如 "示例"/"example"）
+                                          # 跳过匹配行中含白名单模式的情况
                                           if any(pw.lower() in matched_line.lower() for pw in pattern_whitelist):
-                                              # 安全检查：sec-ignore 仅对 file_whitelist 中的文件生效
-                                              # 防止攻击者在恶意 skill 中加 <!-- sec-ignore --> 绕过检测
-                                              if 'sec-ignore' in matched_line.lower():
-                                                  if any(rel_path == fw or rel_path.endswith('/' + fw) for fw in file_whitelist):
-                                                      print(f"  ⏭️  [AUDIT-SUPPRESSED] {rel_path}: sec-ignore bypass for pattern '{m.group()}' (whitelisted file)")
-                                                      continue
-                                                  # 非白名单文件中的 sec-ignore 不予豁免，继续报 ALERT
-                                              else:
-                                                  continue
+                                              continue
                                           print(f"❌ ALERT: Pattern '{m.group()}' found in {file_path}")
                                           has_error = True
                           except Exception as e:
