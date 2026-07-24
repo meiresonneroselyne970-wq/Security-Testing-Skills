@@ -51,6 +51,7 @@ declare -i CRITICAL_COUNT=0    # Critical 级威胁计数
 declare -i HIGH_COUNT=0        # High 级威胁计数
 declare -i MEDIUM_COUNT=0      # Medium 级威胁计数
 declare -i LOW_COUNT=0         # Low 级威胁计数
+declare -i SUPPRESSED_COUNT=0  # 因 sec-ignore 豁免的威胁数（审计关键指标）
 declare -a THREATS_JSON=()     # JSON 格式的威胁详情数组
 declare -a FILE_WHITELIST=()   # 白名单文件列表（从 YAML 加载）
 declare -a SKIP_PATTERNS=()    # 跳过的匹配模式
@@ -153,10 +154,13 @@ record_threat() {
   local inline_ignore="$9"
 
   # 内联豁免: <!-- sec-ignore: T1.1, T3.1 --> 或 <!-- sec-ignore: ALL -->
-  # 当行中存在 sec-ignore 指令且匹配当前规则 ID 或 ALL 时，跳过此条威胁
+  # ⚠️ 安全注意：sec-ignore 仅用于已审批的安全文档（file_whitelist 中的文件）。
+  # 攻击者可能在恶意 skill 中添加 sec-ignore 绕过扫描，PR review 时需重点关注。
+  # 此处记录 WARN 级别日志，确保 CI 日志中可见、可审计。
   if [[ -n "$inline_ignore" ]]; then
     if [[ "$inline_ignore" == *"ALL"* || "$inline_ignore" == *"$rule_id"* ]]; then
-      log_info "  ⏭️  Line ${line_num} in ${file} bypassed ${rule_id} via sec-ignore"
+      log_warn "  ⏭️  [SUPPRESSED] ${file}:${line_num} — ${rule_id} bypassed via sec-ignore (需在 PR review 中确认)"
+      SUPPRESSED_COUNT=$((SUPPRESSED_COUNT + 1))
       return 0
     fi
   fi
@@ -469,6 +473,7 @@ generate_json_report() {
   printf '  "ScanFileCount": %d,\n' "$TOTAL_FILES"
   printf '  "ReviewStatus": "%s",\n' "$review_status"
   printf '  "ThreatScore": %d,\n' "$THREAT_SCORE"
+  printf '  "SuppressedCount": %d,\n' "$SUPPRESSED_COUNT"
   printf '  "RiskLevel": "%s",\n' "$risk_level"
   printf '  "Threats": [\n'
   # 拼接威胁数组，用 first 标记控制逗号分隔
@@ -502,10 +507,11 @@ print_text_report() {
   echo "  Risk Level  : $(get_risk_level)"
   echo "  Review      : $(get_review_status)"
   echo "-------------------------------------------------"
-  echo "  Critical : ${CRITICAL_COUNT}"
-  echo "  High     : ${HIGH_COUNT}"
-  echo "  Medium   : ${MEDIUM_COUNT}"
-  echo "  Low      : ${LOW_COUNT}"
+  echo "  Critical   : ${CRITICAL_COUNT}"
+  echo "  High       : ${HIGH_COUNT}"
+  echo "  Medium     : ${MEDIUM_COUNT}"
+  echo "  Low        : ${LOW_COUNT}"
+  echo "  Suppressed : ${SUPPRESSED_COUNT}  (sec-ignore, 需审计)"
   echo "================================================="
   echo ""
 }
