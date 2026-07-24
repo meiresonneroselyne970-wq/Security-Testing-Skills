@@ -5,7 +5,7 @@ description: Skill 安全扫描器，检测 skill 文件中的恶意代码、隐
 
 # skill-security-scanner — Skill 安全扫描器
 
-**版本**: 2.0.0
+**版本**: 2.2.0
 **安全等级**: 企业级
 **适用场景**: Skill 上架审核、定期安全巡检、AI DevSecOps 管道集成
 
@@ -25,10 +25,11 @@ description: Skill 安全扫描器，检测 skill 文件中的恶意代码、隐
 
 ## 扫描范围
 
-默认扫描 `skills/` 目录下所有 `.md` 文件。用户可通过参数限定：
+默认扫描 `.claude/skills/` 和 `skills/` 目录下所有 `.md` 文件。用户可通过参数限定：
 
 - 指定目录：`扫描 .claude/skills/ 下所有文件`
-- 指定文件：`扫描 skills/card.md`
+- 指定文件：`扫描 .claude/skills/skill-security-scanner.md`
+- 指定多个范围：`扫描 scripts/ 和 .claude/skills/`
 - 全量扫描：`扫描所有 skill 文件`
 
 ---
@@ -304,7 +305,7 @@ whitelist:
 **扫描时间**: YYYY-MM-DD HH:MM:SS
 **扫描范围**: <目录/文件>
 **扫描文件数**: N
-**审核工具**: skill-security-scanner v1.0.0
+**审核工具**: skill-security-scanner v2.2.0
 
 ---
 
@@ -382,7 +383,7 @@ whitelist:
 
 ```yaml
 scan_config:
-  version: "1.0.0"
+  version: "2.2.0"
   rules_enabled: [T1, T2, T3, T4, T5, T6, T7]
   whitelist_enabled: true
   auto_approve_threshold: 4
@@ -419,20 +420,20 @@ whitelist:
 
 ```bash
 # 扫描所有 skill 文件（Linux / macOS / CI）
-bash scripts/security/ci-scan.sh --scope skills
-
-# 扫描单个文件
-bash scripts/security/ci-scan.sh --scope skills/card.md
-
-# 扫描 .claude/skills 目录
 bash scripts/security/ci-scan.sh --scope .claude/skills
 
+# 扫描多个目录
+bash scripts/security/ci-scan.sh --scope .claude/skills --scope scripts
+
+# 增量扫描（仅 PR 变更的 .md 文件）
+bash scripts/security/ci-scan.sh --scope .claude/skills --incremental --base origin/main
+
 # 生成 JSON 报告
-bash scripts/security/ci-scan.sh --scope skills --format json --output report.json
+bash scripts/security/ci-scan.sh --scope .claude/skills --format json --output report.json
 
 # Windows PowerShell
-.\scripts\security\skill-security-scan.ps1 -Scope skills/
-.\scripts\security\skill-security-scan.ps1 -Scope skills/ -Output report.json
+.\scripts\security\skill-security-scan.ps1 -Scope ".claude/skills/"
+.\scripts\security\skill-security-scan.ps1 -Scope ".claude/skills/" -Output report.json
 ```
 
 ---
@@ -465,15 +466,16 @@ bash scripts/security/ci-scan.sh --scope skills --format json --output report.js
 
 本扫描器作为 **AI DevSecOps Pipeline** ([skill-security-scan.yml](../../.github/workflows/skill-security-scan.yml)) 的 SAST 引擎运行。
 
-### 管道架构（单文件 6 Job 并行）
+### 管道架构（单文件 7 Job 并行）
 
 ```
 AI DevSecOps Pipeline
+├── 🔒 Protected Files     (安全策略文件完整性门禁)
 ├── 🔑 Secrets Scan        (TruffleHog 增量扫描)
 ├── 💉 Prompt Injection    (提示词注入/越狱检测 + 白名单)
 ├── 🛑 Execution Sandbox   (Bandit + ShellCheck + JS 系统调用)
 ├── 🐛 SAST Analysis       (Semgrep + ci-scan.sh 本扫描器)  ← 本 Skill
-├── 🧠 CodeQL Analysis     (JS/TS + Python 矩阵并行)
+├── 🧠 CodeQL Analysis     (Python)
 └── 🚨 Failure Report      (聚合通知：仅发一条 PR 评论)
 ```
 
@@ -494,20 +496,20 @@ sast-analysis:
     - name: Semgrep Scan
       run: |
         python -m pip install semgrep
-        semgrep scan --config "p/security-audit" --config "p/secrets" skills/ .claude/skills/
+        semgrep scan --config "p/security-audit" --config "p/secrets" .claude/skills/ scripts/
     - name: Internal Skill Security Scanner
       run: |
         chmod +x scripts/security/ci-scan.sh
         if [[ "${{ github.event_name }}" == "pull_request" ]]; then
           # PR: 增量扫描 — 仅扫描相对 base 分支变更的 .md 文件
           bash scripts/security/ci-scan.sh \
-            --scope skills --scope .claude/skills \
+            --scope .claude/skills --scope scripts \
             --format json --output skill-security-report.json --fail-on-high \
             --incremental --base "origin/${{ github.base_ref }}"
         else
           # Push/Schedule/手动: 全量扫描
           bash scripts/security/ci-scan.sh \
-            --scope skills --scope .claude/skills \
+            --scope .claude/skills --scope scripts \
             --format json --output skill-security-report.json --fail-on-high
         fi
     - name: Upload Security Report
@@ -545,7 +547,7 @@ sudo systemctl restart nginx <!-- sec-ignore: ALL -->
 
 | 事件 | 条件 |
 |------|------|
-| Push | `main`/`master`/`byl-v1.0.0` 分支 + 命中 `skills/**`、`.claude/skills/**`、`cards/**`、`scripts/**` |
+| Push | `main`/`master`/`byl-v1.0.0` 分支 + 命中 `.claude/skills/**`、`scripts/**`、`.github/workflows/**`、`.github/CODEOWNERS`、`.security-whitelist.yml` |
 | Pull Request | 同上分支 & 路径 |
 | Schedule | 每周四 21:31 (UTC+8) 全量扫描 |
 | Manual | `workflow_dispatch` 手动触发 |
@@ -579,12 +581,13 @@ echo "✅ Skill security scan passed."
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
+| 2.2.0 | 2026-07-24 | 新增受保护文件完整性门禁（CI + pre-commit Gate 1）；CI 扫描范围从 `skills/` 迁移至 `scripts/`；管道架构 6→7 Job 并行 |
 | 2.1.0 | 2026-07-16 | 新增增量扫描 (`--incremental`) 和内联豁免 (`<!-- sec-ignore -->`)，PR 事件自动启用增量模式 |
 | 2.0.0 | 2026-07-16 | CI/CD 集成更新：迁移至 AI DevSecOps Pipeline 单文件多并行架构；管道触发条件、聚合通知、独立重试机制 |
 | 1.0.0 | 2024-01-22 | 初始版本：T1-T7 威胁检测规则 |
 
 ---
 
-**维护者**: card-template Security Team
-**最后更新**: 2026-07-16
-**下次审查**: 2026-10-16
+**维护者**: 炎图科技
+**最后更新**: 2026-07-24
+**下次审查**: 2026-10-24
