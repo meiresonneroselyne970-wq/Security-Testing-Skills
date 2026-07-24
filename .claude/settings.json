@@ -3,7 +3,11 @@
     "allow": [
       "Bash(xxd)",
       "Bash(git branch *)",
-      "Bash(ALLOW_PROTECTED=1 git commit --amend -m \"docs: 将维护者统一改为炎图科技 [SECURITY-APPROVED]\")"
+      "Bash(ALLOW_PROTECTED=1 git commit --amend -m \"docs: 将维护者统一改为炎图科技 [SECURITY-APPROVED]\")",
+      "Bash(python -c \"import py_compile; py_compile.compile\\('.claude/skills/analyze-skills.py', doraise=True\\); print\\('analyze-skills.py OK'\\)\")",
+      "Bash(python -c \"import py_compile; py_compile.compile\\('scripts/security/sandbox_sdk.py', doraise=True\\); print\\('sandbox_sdk.py OK'\\)\")",
+      "Bash(bash -n scripts/security/pre-commit-hook.sh)",
+      "Bash(ALLOW_PROTECTED=1 git commit -m 'docs: 为安全扫描和技能分析代码添加详细中文注释 [SECURITY-APPROVED]' -m '为以下文件补充行内注释，说明关键逻辑、正则含义和设计决策： *)"
     ]
   }
 }
