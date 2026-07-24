@@ -118,7 +118,7 @@ jobs:
           done
           echo ""
 
-          # --- 检查 PR 标签 ---
+          # --- 检查安全审批 ---
           # ⚠️ 仅 PR label 可放行 — commit message 中的 [SECURITY-APPROVED] 不再有效。
           # 这确保只有 repo maintainer/triage 权限者能打标签审批，普通员工无法自助绕过。
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -129,6 +129,21 @@ jobs:
               exit 0
             else
               echo "❌ PR 没有 'security-approved' 标签"
+            fi
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            # push 事件（如 PR 合并）：从 merge commit 提取 PR 编号，回查其标签
+            PR_NUM=$(git log -1 --pretty=%B | grep -oP 'Merge pull request #\K\d+' | head -1)
+            if [[ -n "$PR_NUM" ]]; then
+              echo "🔍 检测到合并自 PR #$PR_NUM，回查 'security-approved' 标签..."
+              LABELS=$(gh pr view "$PR_NUM" --json labels --jq '.labels[].name' 2>/dev/null || echo "")
+              if echo "$LABELS" | grep -q "security-approved"; then
+                echo "✅ 合并自经审批的 PR #$PR_NUM ('security-approved')，放行"
+                exit 0
+              else
+                echo "❌ PR #$PR_NUM 没有 'security-approved' 标签"
+              fi
+            else
+              echo "⚡ 非 PR 合并的 push，继续检查..."
             fi
           fi
 
