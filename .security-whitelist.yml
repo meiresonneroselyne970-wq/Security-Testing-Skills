@@ -2,8 +2,6 @@
 # 文档类 skill 文件包含代码示例是正常行为，加入白名单跳过扫描
 
 file_whitelist:
-  # skill-security-scanner: 安全检测规则定义文档，自身含威胁特征示例
-  - ".claude/skills/skill-security-scanner.md"
   # skill-security-policy: 安全策略文档，含检测规则说明
   - ".claude/skills/skill-security-policy.md"
   # security-audit: 安全审计文档，含检测规则示例和威胁特征
