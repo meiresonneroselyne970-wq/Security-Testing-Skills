@@ -46,16 +46,18 @@ logging.basicConfig(
 logger = logging.getLogger("sandbox-sdk")
 
 # 危险命令黑名单 — 即使在受控环境中也应完全禁止
+# 每个条目是一个子串匹配模式：只要命令字符串包含该模式就拦截
 BLOCKED_COMMANDS = [
-    "rm -rf /",
-    "mkfs.",
-    "dd if=",
-    "> /dev/sda",
-    ":(){ :|:& };:",  # fork bomb
-    "chmod 777 /",
+    "rm -rf /",         # 递归删除根目录
+    "mkfs.",            # 格式化文件系统
+    "dd if=",           # 磁盘直接写入
+    "> /dev/sda",       # 覆盖磁盘设备
+    ":(){ :|:& };:",    # fork bomb
+    "chmod 777 /",      # 开放根目录权限
 ]
 
 # 外网出站白名单（仅在 allow_network=False 时生效）
+# 沙盒模式下仅允许访问 AI API 服务商的域名
 ALLOWED_DOMAINS = [
     "api.deepseek.com",
     "api.openai.com",
@@ -67,16 +69,16 @@ ALLOWED_DOMAINS = [
 # ============================================================
 
 class SandboxError(Exception):
-    """沙盒执行异常基类"""
+    """沙盒执行异常基类 — 所有沙盒相关异常继承自此"""
 
 class TimeoutError(SandboxError):
-    """执行超时"""
+    """执行超时 — 命令运行时间超过设定的 timeout"""
 
 class BlockedCommandError(SandboxError):
-    """命令在黑名单中"""
+    """命令在黑名单中 — 触发了 BLOCKED_COMMANDS 中的危险模式"""
 
 class NetworkPolicyViolation(SandboxError):
-    """违反网络策略"""
+    """违反网络策略 — 在 allow_network=False 时尝试调用网络工具"""
 
 # ============================================================
 # 沙盒核心
@@ -105,9 +107,10 @@ class Sandbox:
         self.timeout = timeout
         self.allow_network = allow_network
         self.allowed_domains = allowed_domains or ALLOWED_DOMAINS
-        self.cwd = cwd or os.getcwd()
+        self.cwd = cwd or os.getcwd()  # 默认使用当前工作目录
+        # 仅传递白名单中的环境变量到子进程，防止凭据等敏感变量泄露
         self.env_allowlist = env_allowlist or ["PATH", "HOME", "USER", "LANG", "PYTHONPATH"]
-        self.audit_log: List[Dict[str, Any]] = []
+        self.audit_log: List[Dict[str, Any]] = []  # 审计日志记录（运行期间内存存储）
 
     def run(
         self,
@@ -126,10 +129,11 @@ class Sandbox:
         Returns:
             {"exit_code": int, "stdout": str, "stderr": str, "elapsed_ms": int}
         """
-        cmd_str = " ".join(cmd)
+        cmd_str = " ".join(cmd)  # 将命令列表转为字符串，用于日志和匹配
         start_time = time.time()
 
         # ── 1. 命令黑名单检查 ──
+        # 用子串匹配检查命令是否包含危险模式
         for blocked in BLOCKED_COMMANDS:
             if blocked in cmd_str:
                 self._audit("BLOCKED", cmd_str, f"Matched blocked pattern: {blocked}")
@@ -139,6 +143,7 @@ class Sandbox:
                 )
 
         # ── 2. 网络策略检查 ──
+        # 在不允许网络时检查是否调用了 curl/wget/nc/telnet 等网络工具
         if not self.allow_network:
             for token in cmd:
                 if token in ("curl", "wget", "nc", "telnet"):
@@ -149,6 +154,7 @@ class Sandbox:
                     )
 
         # ── 3. 构建受限环境变量 ──
+        # 仅传递白名单中的环境变量到子进程，防止敏感信息（如 API Key）泄露
         safe_env = {k: os.environ.get(k, "") for k in self.env_allowlist}
         if extra_env:
             safe_env.update(extra_env)
@@ -157,17 +163,19 @@ class Sandbox:
         self._audit("EXEC", cmd_str, f"timeout={self.timeout}s, network={self.allow_network}")
 
         try:
+            # 首次执行（不带 stdin，或带 PIPE 但不传 input）
             proc = subprocess.run(
                 cmd,
-                capture_output=True,
-                text=True,
-                timeout=self.timeout,
+                capture_output=True,  # 捕获 stdout 和 stderr
+                text=True,            # 文本模式（而非 bytes）
+                timeout=self.timeout, # 超时保护
                 cwd=self.cwd,
                 env=safe_env,
                 stdin=subprocess.PIPE if stdin_data else None,
             )
             elapsed_ms = int((time.time() - start_time) * 1000)
 
+            # 如果需要传入 stdin，重新执行（subprocess.run 不支持同时 PIPE + input）
             if stdin_data:
                 proc = subprocess.run(
                     cmd,
@@ -180,6 +188,7 @@ class Sandbox:
                 )
                 elapsed_ms = int((time.time() - start_time) * 1000)
 
+            # 构建统一的结果字典
             result = {
                 "exit_code": proc.returncode,
                 "stdout": proc.stdout or "",
@@ -201,6 +210,8 @@ class Sandbox:
                 f"命令执行超时（>{self.timeout}s）。"
                 f"AI 是否生成了死循环？请检查代码后重试。"
             )
+        # 注：subprocess.CalledProcessError 不会被捕获 —
+        # 因为不使用 check=True, 子进程异常退出通过 returncode 反映
 
     def run_python(
         self,
@@ -220,6 +231,7 @@ class Sandbox:
         actual_timeout = timeout or self.timeout
 
         # 静态检查：拦截高危内置函数
+        # 这些函数在 AI 生成的代码中可能存在任意代码执行风险
         dangerous = ["__import__", "compile", "exec", "eval", "open"]
         for name in dangerous:
             if name in code:
@@ -227,20 +239,27 @@ class Sandbox:
                     f"Python 代码包含禁止的内置函数 '{name}'。"
                 )
 
+        # 委托给 run() 方法以复用沙盒机制（环境变量隔离、超时、审计）
         return self.run(
             [sys.executable, "-c", code],
         )
 
     def _audit(self, action: str, cmd: str, detail: str = "") -> None:
-        """记录审计日志"""
+        """记录审计日志。
+
+        每条日志写入两个位置：
+          1. 内存中的 audit_log 列表（可通过 api 查询）
+          2. 文件日志 LOG_DIR/sandbox-audit.log（持久化存储）
+        """
         entry = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "action": action,
+            "action": action,      # EXEC / DONE / FAIL / BLOCKED / TIMEOUT
             "command": cmd,
             "detail": detail,
         }
         self.audit_log.append(entry)
 
+        # 被拦截和超时事件使用 WARNING 级别，正常执行使用 INFO
         level = logging.WARNING if action in ("BLOCKED", "TIMEOUT") else logging.INFO
         logger.log(level, "%s | %s | %s", action, cmd, detail)
 
@@ -269,12 +288,13 @@ def safe_run(
 
 
 # ============================================================
-# 自测
+# 自测 — 直接运行此文件可快速验证沙盒功能
 # ============================================================
 
 if __name__ == "__main__":
     print("=== Sandbox SDK Self-Test ===\n")
 
+    # 测试基类：超时 5s，禁止网络
     sb = Sandbox(timeout=5, allow_network=False)
 
     PASS = "[PASS]"
