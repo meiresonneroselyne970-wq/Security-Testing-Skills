@@ -11,7 +11,8 @@
       "Bash(ALLOW_PROTECTED=1 git commit --amend -m 'fix: 修复 CI protected-files-check job 的 if 条件语法 [SECURITY-APPROVED] *)",
       "Bash(python3 -c \"import json; json.load\\(open\\(r'c:\\\\Users\\\\Pc\\\\Desktop\\\\card-template\\\\.claude\\\\settings.json'\\)\\); print\\('Valid JSON'\\)\")",
       "Bash(python3 -c \"import json; json.load\\(open\\(r'c:\\\\Users\\\\Pc\\\\Desktop\\\\card-template\\\\.claude\\\\settings.json', encoding='utf-8'\\)\\); print\\('Valid JSON'\\)\")",
-      "Bash(git branch *)"
+      "Bash(git branch *)",
+      "Bash(ALLOW_PROTECTED=1 git commit -m \"docs: 将维护者统一改为炎图科技\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\Pc\\Desktop\\card-template\\.git\\hooks"
