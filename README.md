@@ -2,6 +2,52 @@
 
 企业级 AI Skill 安全扫描管道，7 个并行安全门禁覆盖受保护文件完整性校验、凭据泄露、提示词注入、RCE 防御、SAST、CodeQL 全维度检测。
 
+![Version](https://img.shields.io/badge/version-2.2.1-blue)
+![CI](https://img.shields.io/badge/CI-passing-brightgreen)
+
+---
+
+## 合并流程 (Merge Workflow)
+
+本项目采用 **Feature Branch + PR** 工作流，受保护文件需经安全审批后方可合入 `master`。
+
+```
+master          ← 受保护分支 (仅通过 PR 合入)
+  └── develop   ← 集成分支
+       └── feature/xxx  ← 功能分支
+       └── fix/xxx      ← 修复分支
+       └── docs/xxx     ← 文档分支
+```
+
+### 提交流程
+
+```bash
+# 1. 从 develop 创建功能分支
+git checkout develop
+git pull origin develop
+git checkout -b feature/my-change
+
+# 2. 开发并提交
+git add <files>
+git commit -m "feat: 描述"
+
+# 3. 推送并创建 PR
+git push origin feature/my-change
+# → 在 GitHub 创建 PR 到 develop (或 master)
+
+# 4. 如果修改了受保护文件:
+#    → 给 PR 添加 "security-approved" 标签
+#    → CODEOWNERS 审批通过后合并
+```
+
+### 标签规范
+
+| 标签 | 说明 |
+|------|------|
+| `vX.Y.Z` | 正式版本 |
+| `vX.Y.Z-rc.N` | 候选版本 |
+| `vX.Y.Z-stable` | 稳定基线 |
+
 ---
 
 ## 管道架构
