@@ -4,7 +4,7 @@ on:
   push:
     branches: ['main', 'master']
     paths:
-      - '.claude/skills/**'
+      - '.claude/skill-security-skills/**'
       - 'scripts/**'
       - '.github/workflows/**'
       - '.github/CODEOWNERS'
@@ -12,7 +12,7 @@ on:
   pull_request:
     branches: ['main', 'master']
     paths:
-      - '.claude/skills/**'
+      - '.claude/skill-security-skills/**'
       - 'scripts/**'
       - '.github/workflows/**'
       - '.github/CODEOWNERS'
@@ -61,9 +61,9 @@ jobs:
             "scripts/security/skill-security-scan.ps1"
             "scripts/security/skill-security-scan.bat"
             "scripts/security/sandbox_sdk.py"
-            ".claude/skills/security-audit.md"
-            ".claude/skills/skill-security-policy.md"
-            ".claude/skills/skill-security-scanner.md"
+            ".claude/skill-security-skills/security-audit.md"
+            ".claude/skill-security-skills/skill-security-policy.md"
+            ".claude/skill-security-skills/skill-security-scanner.md"
           )
 
           echo "=============================================="
@@ -253,7 +253,7 @@ jobs:
           ]
 
           WHITELIST_FILE = ".security-whitelist.yml"
-          TARGET_DIRS = [".claude/skills", "scripts"]
+          TARGET_DIRS = [".claude/skill-security-skills", "scripts"]
           has_error = False
 
           # —— 加载白名单 ——
@@ -343,7 +343,7 @@ jobs:
       - name: Python Bandit Scan
         run: |
           pip install bandit
-          bandit -r .claude/skills/ scripts/ -ll -ii -s B404,B602,B603
+          bandit -r .claude/skill-security-skills/ scripts/ -ll -ii -s B404,B602,B603
 
       - name: ShellCheck for Bash
         uses: ludeeus/action-shellcheck@master
@@ -353,7 +353,7 @@ jobs:
 
       - name: JS/Node System Call Check
         run: |
-          if grep -Hn -E "child_process|execSync|spawnSync|fork\(" $(find .claude/skills scripts -name "*.js" -type f 2>/dev/null) 2>/dev/null; then
+          if grep -Hn -E "child_process|execSync|spawnSync|fork\(" $(find .claude/skill-security-skills scripts -name "*.js" -type f 2>/dev/null) 2>/dev/null; then
             echo "❌ SECURITY ALERT: Prohibited functions found. Use SandboxSDK."
             exit 1
           fi
@@ -373,15 +373,15 @@ jobs:
       - name: Semgrep Scan
         run: |
           python -m pip install semgrep
-          semgrep scan --config "p/security-audit" --config "p/secrets" .claude/skills/ scripts/
+          semgrep scan --config "p/security-audit" --config "p/secrets" .claude/skill-security-skills/ scripts/
 
       - name: Internal Skill Security Scanner
         run: |
           chmod +x scripts/security/ci-scan.sh
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            bash scripts/security/ci-scan.sh --scope .claude/skills --scope scripts --format json --output skill-security-report.json --fail-on-high --incremental --base "origin/${{ github.base_ref }}"
+            bash scripts/security/ci-scan.sh --scope .claude/skill-security-skills --scope scripts --format json --output skill-security-report.json --fail-on-high --incremental --base "origin/${{ github.base_ref }}"
           else
-            bash scripts/security/ci-scan.sh --scope .claude/skills --scope scripts --format json --output skill-security-report.json --fail-on-high
+            bash scripts/security/ci-scan.sh --scope .claude/skill-security-skills --scope scripts --format json --output skill-security-report.json --fail-on-high
           fi
 
       - name: Upload Security Report

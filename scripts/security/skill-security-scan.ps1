@@ -5,7 +5,7 @@
 # Aligned with ci-scan.sh v2.2.0 rule set
 
 param(
-    [string[]]$Scope = @("skills", ".claude/skills"),
+    [string[]]$Scope = @("skills", ".claude/skill-security-skills"),
     [string]$Output = "",
     [string]$Format = "text",
     [switch]$FailOnHigh,

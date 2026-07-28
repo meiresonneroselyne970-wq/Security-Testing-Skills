@@ -12,9 +12,9 @@
 # === 安全策略 & 管道（保护，需安全团队审批）===
 .github/workflows/skill-security-scan.yml    @meiresonneroselyne970-wq  # TODO: 替换为安全团队
 .security-whitelist.yml                      @meiresonneroselyne970-wq  # TODO: 替换为安全团队
-.claude/skills/security-audit.md             @meiresonneroselyne970-wq  # TODO: 替换为安全团队
-.claude/skills/skill-security-policy.md      @meiresonneroselyne970-wq  # TODO: 替换为安全团队
-.claude/skills/skill-security-scanner.md     @meiresonneroselyne970-wq  # TODO: 替换为安全团队
+.claude/skill-security-skills/security-audit.md             @meiresonneroselyne970-wq  # TODO: 替换为安全团队
+.claude/skill-security-skills/skill-security-policy.md      @meiresonneroselyne970-wq  # TODO: 替换为安全团队
+.claude/skill-security-skills/skill-security-scanner.md     @meiresonneroselyne970-wq  # TODO: 替换为安全团队
 scripts/security/                            @meiresonneroselyne970-wq  # TODO: 替换为安全团队
 
 # === 其余文件可由任意维护者审批 ===

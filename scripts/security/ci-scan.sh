@@ -565,7 +565,7 @@ main() {
 
   # 2. 设置默认扫描目录（未通过 --scope 指定时）
   if [[ ${#SCOPE_DIRS[@]} -eq 0 ]]; then
-    SCOPE_DIRS=("skills" ".claude/skills")
+    SCOPE_DIRS=("skills" ".claude/skill-security-skills")
   fi
 
   # 3. 加载白名单配置
