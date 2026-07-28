@@ -47,9 +47,9 @@ PROTECTED_FILES=(
   "scripts/security/skill-security-scan.ps1"
   "scripts/security/skill-security-scan.bat"
   "scripts/security/sandbox_sdk.py"
-  ".claude/skills/security-audit.md"
-  ".claude/skills/skill-security-policy.md"
-  ".claude/skills/skill-security-scanner.md"
+  ".claude/skill-security-skills/security-audit.md"
+  ".claude/skill-security-skills/skill-security-policy.md"
+  ".claude/skill-security-skills/skill-security-scanner.md"
 )
 
 echo ""
@@ -117,8 +117,8 @@ echo ""
 # 对暂存的 skill markdown 文件运行 ci-scan.sh 安全扫描。
 # 使用 --fail-on-high 模式：检测到 High/Critical 威胁则阻止提交。
 # ============================================================
-# 从暂存文件中筛选出 skills/ 和 .claude/skills/ 目录下的 .md 文件
-STAGED_SKILL_FILES=$(echo "$STAGED_ALL" | grep -E '^(skills/|\.claude/skills/).*\.md$' || true)
+# 从暂存文件中筛选出 skills/ 和 .claude/skill-security-skills/ 目录下的 .md 文件
+STAGED_SKILL_FILES=$(echo "$STAGED_ALL" | grep -E '^(skills/|\.claude/skill-security-skills/).*\.md$' || true)
 
 # 无 skill 文件变更则提前退出
 if [[ -z "$STAGED_SKILL_FILES" ]]; then
@@ -152,7 +152,7 @@ echo ""
 # 2>&1 合并 stderr 到 stdout，捕获所有输出供展示
 SCAN_OUTPUT=$(bash "$SCAN_SCRIPT" \
   --scope skills \
-  --scope .claude/skills \
+  --scope .claude/skill-security-skills \
   --fail-on-high \
   --whitelist "$WHITELIST_FILE" \
   2>&1) || SCAN_EXIT=$?  # || 防止 set -e 在扫描失败时中断脚本

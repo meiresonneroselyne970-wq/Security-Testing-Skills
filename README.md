@@ -32,7 +32,7 @@ AI DevSecOps Pipeline
 
 ```bash
 # Linux / macOS / CI（全量扫描）
-bash scripts/security/ci-scan.sh --scope skills --scope .claude/skills --fail-on-high
+bash scripts/security/ci-scan.sh --scope skills --scope .claude/skill-security-skills --fail-on-high
 
 # 增量扫描（仅扫描 PR 变更文件）
 bash scripts/security/ci-scan.sh --scope skills --incremental --base origin/main --fail-on-high
@@ -44,7 +44,7 @@ bash scripts/security/ci-scan.sh --scope skills --format json --output report.js
 ### Windows PowerShell
 
 ```powershell
-.\scripts\security\skill-security-scan.ps1 -Scope skills/,.claude/skills/ -FailOnHigh
+.\scripts\security\skill-security-scan.ps1 -Scope skills/,.claude/skill-security-skills/ -FailOnHigh
 .\scripts\security\skill-security-scan.ps1 -Scope skills/ -Incremental -BaseBranch origin/main
 ```
 
@@ -60,13 +60,10 @@ bash scripts/security/pre-commit-hook.sh
 .
 ├── .github/workflows/
 │   └── skill-security-scan.yml   # AI DevSecOps 管道定义
-├── .claude/skills/
+├── .claude/skill-security-skills/
 │   ├── security-audit.md         # 企业级安全审计（OWASP/CWE/GDPR/等保2.0）
 │   ├── skill-security-policy.md  # 安全策略定义与管道架构文档
-│   ├── skill-security-scanner.md # T1-T7 威胁检测规则引擎
-│   ├── skill-manager.md          # Skill 分析·提取·分类·打包管理器
-│   ├── gitee-repo.md             # Gitee 仓库管理（与 skill-manager 联动）
-│   └── analyze-skills.py         # Skill 结构化分析脚本
+│   └── skill-security-scanner.md # T1-T7 威胁检测规则引擎
 ├── scripts/security/
 │   ├── ci-scan.sh                # Bash 安全扫描器 (v2.2.0)
 │   ├── skill-security-scan.ps1   # PowerShell 安全扫描器 (v2.2.0)
