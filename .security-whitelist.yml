@@ -10,10 +10,6 @@ file_whitelist:
   - ".claude/skill-security-skills/security-audit.md"
   # sandbox_sdk: 沙箱 SDK 本身封装 subprocess/os.system 并提供安全替代方案
   - "scripts/security/sandbox_sdk.py"
-  # detection-test: 安全扫描器检测能力测试样本，含故意放置的 T1-T6 威胁模拟
-  - "skills/detection-test.md"
-  # sec-ignore-demo: sec-ignore 内联豁免功能演示，含带豁免注释的威胁样本
-  - "skills/sec-ignore-demo.md"
 
 pattern_whitelist:
   - "示例"
