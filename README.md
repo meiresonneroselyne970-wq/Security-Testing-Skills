@@ -78,20 +78,20 @@ AI DevSecOps Pipeline
 
 ```bash
 # Linux / macOS / CI（全量扫描）
-bash scripts/security/ci-scan.sh --scope skills --scope .claude/skill-security-skills --fail-on-high
+bash scripts/security/ci-scan.sh --scope scripts --scope .claude/skill-security-skills --fail-on-high
 
 # 增量扫描（仅扫描 PR 变更文件）
-bash scripts/security/ci-scan.sh --scope skills --incremental --base origin/main --fail-on-high
+bash scripts/security/ci-scan.sh --scope scripts --incremental --base origin/main --fail-on-high
 
 # 生成 JSON 报告
-bash scripts/security/ci-scan.sh --scope skills --format json --output report.json
+bash scripts/security/ci-scan.sh --scope scripts --format json --output report.json
 ```
 
 ### Windows PowerShell
 
 ```powershell
-.\scripts\security\skill-security-scan.ps1 -Scope skills/,.claude/skill-security-skills/ -FailOnHigh
-.\scripts\security\skill-security-scan.ps1 -Scope skills/ -Incremental -BaseBranch origin/main
+.\scripts\security\skill-security-scan.ps1 -Scope scripts/,.claude/skill-security-skills/ -FailOnHigh
+.\scripts\security\skill-security-scan.ps1 -Scope scripts/ -Incremental -BaseBranch origin/main
 ```
 
 ### Pre-commit Hook
@@ -104,8 +104,10 @@ bash scripts/security/pre-commit-hook.sh
 
 ```
 .
-├── .github/workflows/
-│   └── skill-security-scan.yml   # AI DevSecOps 管道定义
+├── .github/
+│   ├── workflows/
+│   │   └── skill-security-scan.yml   # AI DevSecOps 管道定义
+│   └── CODEOWNERS                    # 安全策略文件审批规则
 ├── .claude/skill-security-skills/
 │   ├── security-audit.md         # 企业级安全审计（OWASP/CWE/GDPR/等保2.0）
 │   ├── skill-security-policy.md  # 安全策略定义与管道架构文档
@@ -155,6 +157,7 @@ bash scripts/security/pre-commit-hook.sh
 
 | 工具 | 用途 | 管道 Job |
 |------|------|----------|
+| Git Diff + GitHub API | 受保护文件完整性校验 + 标签审批 | `protected-files-check` |
 | TruffleHog | 凭证扫描 | `secrets-audit` |
 | Python 自研脚本 | 提示词注入检测 | `prompt-security` |
 | Bandit | Python SAST | `execution-gate` |
@@ -165,4 +168,4 @@ bash scripts/security/pre-commit-hook.sh
 
 ---
 
-**版本**: 2.2.0 | **维护者**: 炎图科技 | **最后更新**: 2026-07
+**版本**: 2.2.1 | **维护者**: 炎图科技 | **最后更新**: 2026-08
